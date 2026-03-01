@@ -23,12 +23,24 @@ export async function unlockCourse(courseId: string, formData: FormData) {
             maxAge: 60 * 60 * 24 * 30, // 30 days
         });
 
-        if (alias) {
-            cookieStore.set("student_alias", alias, {
-                httpOnly: true,
-                path: "/",
-            });
-        }
+        // Generate a valid User record in Prisma for the Q&A Forum
+        const finalAlias = alias || "Estudiante Anónimo";
+        const safeEmail = `guest_${Date.now()}_${Math.random().toString(36).substring(7)}@doacademy.com`;
+
+        const user = await prisma.user.create({
+            data: {
+                name: finalAlias,
+                email: safeEmail,
+                password: "guest",
+                role: "STUDENT"
+            }
+        });
+
+        cookieStore.set("student_id", user.id, {
+            httpOnly: true,
+            path: "/",
+            maxAge: 60 * 60 * 24 * 30, // 30 days
+        });
 
         redirect(`/course/${courseId}`);
     } else {

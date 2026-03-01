@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, PlayCircle, FileText, Download, MessageSquare, Send } from "lucide-react";
+import { ChevronLeft, PlayCircle, FileText, Download, MessageSquare, Send, User } from "lucide-react";
+import { createPost } from "@/actions/forum";
 
-export default function CourseViewerClient({ course }: { course: any }) {
+export default function CourseViewerClient({ course, studentId }: { course: any, studentId: string }) {
     // If course has no weeks, safely fallback so UI doesn't crash
     const initialWeek = course.weeks?.[0] || { id: "0", title: "No content", days: [] };
     const initialDay = initialWeek.days?.[0] || { id: "0", title: "No content", videoId: "", materialUrl: "" };
@@ -12,12 +13,24 @@ export default function CourseViewerClient({ course }: { course: any }) {
     const [activeWeek, setActiveWeek] = useState(initialWeek);
     const [activeDay, setActiveDay] = useState(initialDay);
     const [newQuestion, setNewQuestion] = useState("");
+    const [isPosting, setIsPosting] = useState(false);
 
-    const handlePostQuestion = (e: React.FormEvent) => {
+    // Sync active day with fresh server props to update comments automatically
+    const activeDayData = course.weeks?.find((w: any) => w.id === activeWeek.id)?.days?.find((d: any) => d.id === activeDay.id) || activeDay;
+
+    const handlePostQuestion = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newQuestion.trim()) return;
-        alert("Preguntas implementadas próximamente: " + newQuestion);
-        setNewQuestion("");
+        if (!newQuestion.trim() || isPosting) return;
+
+        setIsPosting(true);
+        const res = await createPost(activeDayData.id, studentId, newQuestion, course.id);
+        setIsPosting(false);
+
+        if (res.success) {
+            setNewQuestion("");
+        } else {
+            alert("Error publicando pregunta: " + res.error);
+        }
     };
 
     return (
@@ -172,13 +185,65 @@ export default function CourseViewerClient({ course }: { course: any }) {
                                     <div className="flex justify-end mt-3">
                                         <button
                                             type="submit"
-                                            className="bg-[var(--color-primary)] hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 glow-accent text-sm flex items-center gap-2"
+                                            disabled={isPosting}
+                                            className="bg-[var(--color-primary)] hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 glow-accent text-sm flex items-center gap-2"
                                         >
-                                            Publicar Pregunta
+                                            {isPosting ? "Publicando..." : "Publicar Pregunta"}
                                             <Send size={14} />
                                         </button>
                                     </div>
                                 </form>
+                            </div>
+
+                            {/* Posts List */}
+                            <div className="flex flex-col gap-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
+                                {activeDayData.posts?.length > 0 ? (
+                                    activeDayData.posts.map((post: any) => (
+                                        <div key={post.id} className="glass-effect p-4 rounded-xl border border-[var(--color-glass-border)] flex gap-4">
+                                            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 flex-shrink-0 border border-slate-700">
+                                                <User size={20} />
+                                            </div>
+                                            <div className="flex-grow flex flex-col gap-1 w-full">
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className="font-semibold text-white text-sm">
+                                                        {post.user?.name || "Estudiante"}
+                                                        {post.user?.role === "ADMIN" && <span className="ml-2 text-xs bg-[var(--color-primary)]/20 text-[var(--color-primary)] px-2 py-0.5 rounded-full">Profesor</span>}
+                                                    </span>
+                                                    <span className="text-xs text-slate-500">{new Date(post.createdAt).toLocaleDateString()}</span>
+                                                </div>
+                                                <p className="text-slate-300 text-sm whitespace-pre-wrap leading-relaxed">{post.content}</p>
+
+
+                                                {/* Replies */}
+                                                {post.replies?.length > 0 && (
+                                                    <div className="mt-4 flex flex-col gap-3 pl-4 border-l-2 border-[var(--color-primary)]/30">
+                                                        {post.replies.map((reply: any) => (
+                                                            <div key={reply.id} className="flex gap-3 mt-1">
+                                                                <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 flex-shrink-0 text-xs shadow-inner">
+                                                                    <User size={12} />
+                                                                </div>
+                                                                <div className="flex-grow">
+                                                                    <div className="flex items-baseline gap-2 mb-0.5">
+                                                                        <span className="font-medium text-slate-200 text-xs">
+                                                                            {reply.user?.name || "Estudiante"}
+                                                                            {reply.user?.role === "ADMIN" && <span className="ml-2 text-[10px] bg-[var(--color-primary)]/20 text-[var(--color-primary)] px-1.5 py-[1px] rounded flex-inline">Profesor</span>}
+                                                                        </span>
+                                                                        <span className="text-[10px] text-slate-500">{new Date(reply.createdAt).toLocaleDateString()}</span>
+                                                                    </div>
+                                                                    <p className="text-slate-400 text-sm leading-relaxed">{reply.content}</p>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-sm text-slate-500 italic p-6 text-center border-t border-[var(--color-glass-border)]">
+                                        No hay preguntas aún. ¡Sé el primero en preguntar!
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

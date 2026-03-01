@@ -1,11 +1,14 @@
 import prisma from "@/lib/prisma";
 import CourseViewerClient from "./CourseViewerClient";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 export const dynamic = 'force-dynamic';
 
 export default async function CourseViewerPage({ params }: { params: Promise<{ courseId: string }> }) {
     const { courseId } = await params;
+    const cookieStore = await cookies();
+    const studentId = cookieStore.get("student_id")?.value || "student_01"; // Fallback to our dummy seed student
 
     const course = await prisma.course.findUnique({
         where: { id: courseId },
@@ -15,6 +18,18 @@ export default async function CourseViewerPage({ params }: { params: Promise<{ c
                 include: {
                     days: {
                         orderBy: { order: 'asc' },
+                        include: {
+                            posts: {
+                                orderBy: { createdAt: 'desc' },
+                                include: {
+                                    user: { select: { name: true, role: true } },
+                                    replies: {
+                                        orderBy: { createdAt: 'asc' },
+                                        include: { user: { select: { name: true, role: true } } }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -27,5 +42,5 @@ export default async function CourseViewerPage({ params }: { params: Promise<{ c
 
     const safeCourse = JSON.parse(JSON.stringify(course));
 
-    return <CourseViewerClient course={safeCourse} />;
+    return <CourseViewerClient course={safeCourse} studentId={studentId} />;
 }
