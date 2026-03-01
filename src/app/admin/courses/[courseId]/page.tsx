@@ -21,5 +21,7 @@ export default async function CourseEditorPage({ params }: { params: { courseId:
         return notFound();
     }
 
-    return <AdminCourseEditorClient initialCourse={course} />;
+    const safeCourse = JSON.parse(JSON.stringify(course));
+
+    return <AdminCourseEditorClient initialCourse={safeCourse} />;
 }

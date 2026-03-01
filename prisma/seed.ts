@@ -79,6 +79,47 @@ const COURSES = [
 async function main() {
     console.log("Start seeding database...");
 
+    // Clean existing user/social DB info to reset
+    await prisma.reply.deleteMany();
+    await prisma.post.deleteMany();
+    await prisma.enrollment.deleteMany();
+    await prisma.user.deleteMany();
+
+    console.log("Cleaned old user data.");
+
+    // Seed dummy Users
+    const admin = await prisma.user.create({
+        data: {
+            id: "admin_01",
+            name: "Profesor Diego",
+            email: "admin@doacademy.com",
+            password: "hashedpassword",
+            role: "ADMIN"
+        }
+    });
+
+    const student1 = await prisma.user.create({
+        data: {
+            id: "student_01",
+            name: "Estudiante Uno",
+            email: "uno@example.com",
+            password: "hashedpassword",
+            role: "STUDENT"
+        }
+    });
+
+    const student2 = await prisma.user.create({
+        data: {
+            id: "student_02",
+            name: "Estudiante Dos",
+            email: "dos@example.com",
+            password: "hashedpassword",
+            role: "STUDENT"
+        }
+    });
+
+    console.log("Created dummy students.");
+
     for (const c of COURSES) {
         const course = await prisma.course.upsert({
             where: { id: c.id },
@@ -110,6 +151,44 @@ async function main() {
         });
         console.log(`Created/Upserted course: ${course.title}`);
     }
+
+    // Seed Enrollments for testing
+    await prisma.enrollment.createMany({
+        data: [
+            { userId: student1.id, courseId: "01" },
+            { userId: student2.id, courseId: "01" }
+        ]
+    });
+
+    // Seed Comments on Day 1 (d1_01)
+    const post1 = await prisma.post.create({
+        data: {
+            id: "p1",
+            content: "¡Excelente video! Me quedó clarísimo qué es programar.",
+            userId: student1.id,
+            dayId: "d1_01"
+        }
+    });
+
+    await prisma.reply.create({
+        data: {
+            id: "r1",
+            content: "Muchas gracias, me alegro que te sirviera.",
+            userId: admin.id,
+            postId: post1.id
+        }
+    });
+
+    await prisma.post.create({
+        data: {
+            id: "p2",
+            content: "Tengo una duda con la parte de los paradigmas.",
+            userId: student2.id,
+            dayId: "d1_01"
+        }
+    });
+
+    console.log("Seeded enrollments and comments on course 01, day 1.");
 
     console.log("Seeding finished.");
 }

@@ -6,5 +6,7 @@ export default async function AdminCoursesPage() {
         orderBy: { id: 'asc' }
     });
 
-    return <AdminCoursesClient initialCourses={courses} />;
+    const safeCourses = JSON.parse(JSON.stringify(courses));
+
+    return <AdminCoursesClient initialCourses={safeCourses} />;
 }
