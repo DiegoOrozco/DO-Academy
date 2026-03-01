@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Edit3, Eye, EyeOff, Search, Plus } from "lucide-react";
 
 // Reuse Mock Data for Admin
@@ -83,10 +84,13 @@ export default function AdminCoursesPage() {
                             <p className="text-sm text-slate-400 mb-4">{course.students} estudiantes inscritos</p>
 
                             <div className="mt-auto flex gap-3 pt-4 border-t border-slate-700/30">
-                                <button className="flex-1 bg-white/5 hover:bg-white/10 text-white text-sm font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2 border border-white/5">
+                                <Link
+                                    href={`/admin/courses/${course.id}`}
+                                    className="flex-1 bg-white/5 hover:bg-white/10 text-white text-sm font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2 border border-white/5"
+                                >
                                     <Edit3 size={16} />
                                     Editar Contenido
-                                </button>
+                                </Link>
                             </div>
                         </div>
 
