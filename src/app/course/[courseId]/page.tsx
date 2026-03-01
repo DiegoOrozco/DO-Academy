@@ -2,6 +2,8 @@ import prisma from "@/lib/prisma";
 import CourseViewerClient from "./CourseViewerClient";
 import { redirect } from "next/navigation";
 
+export const dynamic = 'force-dynamic';
+
 export default async function CourseViewerPage({ params }: { params: Promise<{ courseId: string }> }) {
     const { courseId } = await params;
 
