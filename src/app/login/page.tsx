@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function LoginPage() {
     const [isLogin, setIsLogin] = useState(true);
@@ -51,8 +52,8 @@ export default function LoginPage() {
                         <button
                             onClick={() => setIsLogin(true)}
                             className={`flex-1 pb-4 text-center font-semibold transition-all duration-300 ${isLogin
-                                    ? "border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]"
-                                    : "text-slate-400 hover:text-slate-200"
+                                ? "border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]"
+                                : "text-slate-400 hover:text-slate-200"
                                 }`}
                         >
                             Iniciar Sesión
@@ -60,8 +61,8 @@ export default function LoginPage() {
                         <button
                             onClick={() => setIsLogin(false)}
                             className={`flex-1 pb-4 text-center font-semibold transition-all duration-300 ${!isLogin
-                                    ? "border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]"
-                                    : "text-slate-400 hover:text-slate-200"
+                                ? "border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]"
+                                : "text-slate-400 hover:text-slate-200"
                                 }`}
                         >
                             Registro
@@ -114,6 +115,16 @@ export default function LoginPage() {
                             {isLogin ? "Entrar al Portal" : "Crear Cuenta"}
                         </button>
                     </form>
+
+                    {/* Teacher Portal Link for testing */}
+                    <div className="mt-8 pt-6 border-t border-[var(--color-glass-border)] text-center">
+                        <Link
+                            href="/admin"
+                            className="text-xs text-slate-500 hover:text-[var(--color-primary)] transition-colors inline-flex items-center gap-1"
+                        >
+                            Acceso a Portal Profesor / Admin
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>
