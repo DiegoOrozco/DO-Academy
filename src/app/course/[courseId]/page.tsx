@@ -6,8 +6,8 @@ import { ChevronLeft, PlayCircle, FileText, Download, MessageSquare, Send } from
 
 // Mock Data
 const COURSE_DATA = {
-    id: "cm7yxy1",
-    title: "Mastering Next.js 15 & App Router",
+    id: "01",
+    title: "Aprende en DO Academy",
     weeks: [
         {
             id: "w1",
@@ -119,8 +119,8 @@ export default function CourseViewerPage({ params }: { params: { courseId: strin
                                         setActiveDay(week.days[0]);
                                     }}
                                     className={`flex-shrink-0 px-4 py-3 text-sm font-semibold transition-colors ${activeWeek.id === week.id
-                                            ? "active-tab"
-                                            : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                                        ? "active-tab"
+                                        : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
                                         }`}
                                 >
                                     {week.id.toUpperCase()}
@@ -137,8 +137,8 @@ export default function CourseViewerPage({ params }: { params: { courseId: strin
                                         key={day.id}
                                         onClick={() => setActiveDay(day)}
                                         className={`flex items-start text-left gap-3 p-3 rounded-xl transition-all ${isActive
-                                                ? "bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 text-white"
-                                                : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                                            ? "bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 text-white"
+                                            : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
                                             }`}
                                     >
                                         <div className={`mt-0.5 ${isActive ? "text-[var(--color-primary)]" : "text-slate-500"}`}>
