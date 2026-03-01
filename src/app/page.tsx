@@ -1,68 +1,22 @@
 import Link from "next/link";
 import { Lock, PlayCircle, BookOpen } from "lucide-react";
-
-// Mock data to demonstrate the UI - in a real app this comes from Prisma
-const MOCK_COURSES = [
-    {
-        id: "01",
-        title: "01 - Fundamentos de programación",
-        description: "Aprende las bases de la lógica de programación y la sintaxis fundamental para cualquier lenguaje.",
-        thumbnail: "/thumbnails/01.png",
-        progress: 100,
-        hasAccess: true,
-    },
-    {
-        id: "02",
-        title: "02 - Programación Orientada a Objetos",
-        description: "Domina el paradigma orientado a objetos creando clases, herencia y polimorfismo.",
-        thumbnail: "/thumbnails/02.png",
-        progress: 45,
-        hasAccess: true,
-    },
-    {
-        id: "03",
-        title: "03 - Bases de datos",
-        description: "Entiende el modelado y estructuración de datos utilizando tecnologías relacionales avanzadas.",
-        thumbnail: "/thumbnails/03.png",
-        progress: 0,
-        hasAccess: true,
-    },
-    {
-        id: "04",
-        title: "04 - Programación Avanzada",
-        description: "Algoritmos complejos, estructuras de datos avanzadas y patrones de diseño empresariales.",
-        thumbnail: "/thumbnails/04.png",
-        progress: 0,
-        hasAccess: false,
-    },
-    {
-        id: "05",
-        title: "05 - Desarrollo Seguro",
-        description: "Protege tus aplicaciones implementando principios sólidos de ciberseguridad.",
-        thumbnail: "/thumbnails/05.png",
-        progress: 0,
-        hasAccess: false,
-    },
-    {
-        id: "06",
-        title: "06 - Desarrollo asistido por IA",
-        description: "Multiplica tu productividad interactuando eficientemente con Inteligencia Artificial.",
-        thumbnail: "/thumbnails/06.png",
-        progress: 0,
-        hasAccess: false,
-    },
-];
-
 import { cookies } from "next/headers";
+import prisma from "@/lib/prisma";
 
 export default async function DashboardPage() {
     const cookieStore = await cookies();
 
-    const coursesWithAccess = MOCK_COURSES.map(course => {
+    // Fetch all courses from the real SQLite database
+    const dbCourses = await prisma.course.findMany({
+        orderBy: { id: 'asc' }
+    });
+
+    const coursesWithAccess = dbCourses.map((course: any) => {
         return {
             ...course,
             hasAccess: cookieStore.has(`course_access_${course.id}`),
-            progress: cookieStore.has(`course_access_${course.id}`) ? course.progress : 0
+            // Progress will be properly implemented per-user in the future, using generic 0 for now unless we have it
+            progress: cookieStore.has(`course_access_${course.id}`) ? 0 : 0
         };
     });
 
