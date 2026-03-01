@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id          String       @id @default(cuid())
+  email       String       @unique
+  name        String
+  password    String       // In a real app, hashed
+  role        String       @default("STUDENT") // STUDENT or ADMIN
+  createdAt   DateTime     @default(now())
+  enrollments Enrollment[]
+  posts       Post[]
+  replies     Reply[]
+}
+
+model Course {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  thumbnail   String?
+  createdAt   DateTime     @default(now())
+  enrollments Enrollment[]
+  weeks       Week[]
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  userId    String
+  courseId  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+}
+
+model Week {
+  id        String   @id @default(cuid())
+  title     String
+  order     Int
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  days      Day[]
+
+  @@unique([courseId, order])
+}
+
+model Day {
+  id        String     @id @default(cuid())
+  title     String
+  order     Int
+  videoId   String?    // YouTube video ID
+  weekId    String
+  week      Week       @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  resources Resource[]
+  posts     Post[]
+
+  @@unique([weekId, order])
+}
+
+model Resource {
+  id        String   @id @default(cuid())
+  title     String
+  url       String
+  type      String   // e.g., "DRIVE", "GITHUB", "PDF"
+  dayId     String
+  day       Day      @relation(fields: [dayId], references: [id], onDelete: Cascade)
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  userId    String
+  dayId     String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  day       Day      @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  replies   Reply[]
+}
+
+model Reply {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  userId    String
+  postId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+}

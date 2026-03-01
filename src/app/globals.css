@@ -1,26 +1,41 @@
 @import "tailwindcss";
 
+@theme {
+  --color-primary: #1313ec;
+  --color-secondary: #10b981;
+  --color-background-light: #f6f6f8;
+  --color-background-dark: #0a0a1a;
+  --color-glass: rgba(255, 255, 255, 0.03);
+  --color-glass-border: rgba(255, 255, 255, 0.1);
+  --font-display: "Inter", sans-serif;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: var(--color-background-dark);
+  --foreground: #f1f5f9;
+  /* slate-100 */
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-display);
+  min-height: 100vh;
+}
+
+@layer utilities {
+  .glass-effect {
+    background: var(--color-glass);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--color-glass-border);
+  }
+
+  .glow-accent {
+    box-shadow: 0 0 20px rgba(19, 19, 236, 0.3);
+  }
+
+  .active-tab {
+    border-bottom: 2px solid var(--color-primary);
+    color: var(--color-primary);
+  }
 }
