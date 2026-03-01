@@ -48,8 +48,6 @@ model Week {
   courseId  String
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   days      Day[]
-
-  @@unique([courseId, order])
 }
 
 model Day {
@@ -62,8 +60,6 @@ model Day {
   week      Week       @relation(fields: [weekId], references: [id], onDelete: Cascade)
   resources Resource[]
   posts     Post[]
-
-  @@unique([weekId, order])
 }
 
 model Resource {

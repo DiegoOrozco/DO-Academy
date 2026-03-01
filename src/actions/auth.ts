@@ -3,21 +3,18 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-// Mock passwords for courses
-const COURSE_PASSWORDS: Record<string, string> = {
-    "01": "doacademy",
-    "02": "doacademy",
-    "03": "doacademy",
-    "04": "doacademy",
-    "05": "doacademy",
-    "06": "doacademy",
-};
+import prisma from "@/lib/prisma";
 
 export async function unlockCourse(courseId: string, formData: FormData) {
     const password = formData.get("password") as string;
     const alias = formData.get("alias") as string;
 
-    if (password === COURSE_PASSWORDS[courseId]) {
+    const course = await prisma.course.findUnique({
+        where: { id: courseId },
+        select: { password: true }
+    });
+
+    if (course && password === course.password) {
         const cookieStore = await cookies();
         cookieStore.set(`course_access_${courseId}`, "true", {
             httpOnly: true,

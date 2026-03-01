@@ -2,9 +2,11 @@ import prisma from "@/lib/prisma";
 import CourseViewerClient from "./CourseViewerClient";
 import { redirect } from "next/navigation";
 
-export default async function CourseViewerPage({ params }: { params: { courseId: string } }) {
+export default async function CourseViewerPage({ params }: { params: Promise<{ courseId: string }> }) {
+    const { courseId } = await params;
+
     const course = await prisma.course.findUnique({
-        where: { id: params.courseId },
+        where: { id: courseId },
         include: {
             weeks: {
                 orderBy: { order: 'asc' },
