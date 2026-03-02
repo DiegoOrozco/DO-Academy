@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LayoutDashboard, BookOpen, MessageSquare, Settings, LogOut } from "lucide-react";
+import { logoutAdmin } from "../../actions/auth";
 
 export default function AdminLayout({
     children,
@@ -50,13 +51,15 @@ export default function AdminLayout({
                 </nav>
 
                 <div className="p-4 border-t border-[var(--color-glass-border)]">
-                    <Link
-                        href="/login"
-                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 rounded-xl hover:bg-red-500/10 hover:text-red-400 transition-colors"
-                    >
-                        <LogOut size={18} />
-                        Cerrar Sesión
-                    </Link>
+                    <form action={logoutAdmin}>
+                        <button
+                            type="submit"
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 rounded-xl hover:bg-red-500/10 hover:text-red-400 transition-colors text-left"
+                        >
+                            <LogOut size={18} />
+                            Cerrar Sesión
+                        </button>
+                    </form>
                 </div>
             </aside>
 

@@ -65,3 +65,10 @@ export async function loginAdmin(formData: FormData) {
         redirect("/admin/login?error=incorrect");
     }
 }
+
+export async function logoutAdmin() {
+    const cookieStore = await cookies();
+    // Remove admin session and send back to login page
+    cookieStore.delete("admin_session");
+    redirect("/admin/login");
+}
