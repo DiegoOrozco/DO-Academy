@@ -39,6 +39,13 @@ export default function AdminLayout({
                         Mis Cursos
                     </Link>
                     <Link
+                        href="/admin/students"
+                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-300 rounded-xl hover:bg-white/5 hover:text-white transition-colors"
+                    >
+                        <LayoutDashboard size={18} />
+                        Estudiantes
+                    </Link>
+                    <Link
                         href="/admin/qa"
                         className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-300 rounded-xl hover:bg-white/5 hover:text-white transition-colors relative"
                     >
