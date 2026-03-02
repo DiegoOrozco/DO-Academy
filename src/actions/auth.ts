@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 import prisma from "@/lib/prisma";
 
@@ -14,6 +15,7 @@ export async function registerStudent(formData: FormData) {
         redirect("/register?error=missing");
     }
 
+    let success = false;
     try {
         const user = await prisma.user.create({
             data: {
@@ -30,10 +32,16 @@ export async function registerStudent(formData: FormData) {
             path: "/",
             maxAge: 60 * 60 * 24 * 30, // 30 days
         });
-
-        redirect("/");
-    } catch (error) {
+        revalidatePath("/");
+        success = true;
+    } catch (error: any) {
+        if (error.digest?.includes('NEXT_REDIRECT')) throw error;
+        console.error("Registration error:", error);
         redirect("/register?error=exists");
+    }
+
+    if (success) {
+        redirect("/");
     }
 }
 
@@ -41,21 +49,32 @@ export async function loginStudent(formData: FormData) {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    const user = await prisma.user.findUnique({
-        where: { email }
-    });
-
-    if (user && user.password === password && user.role === "STUDENT") {
-        const cookieStore = await cookies();
-        cookieStore.set("student_id", user.id, {
-            httpOnly: true,
-            path: "/",
-            maxAge: 60 * 60 * 24 * 30,
+    let loginSuccess = false;
+    try {
+        const user = await prisma.user.findUnique({
+            where: { email }
         });
 
+        if (user && user.password === password && user.role === "STUDENT") {
+            const cookieStore = await cookies();
+            cookieStore.set("student_id", user.id, {
+                httpOnly: true,
+                path: "/",
+                maxAge: 60 * 60 * 24 * 30,
+            });
+            revalidatePath("/");
+            loginSuccess = true;
+        } else {
+            redirect("/login?error=incorrect");
+        }
+    } catch (error: any) {
+        if (error.digest?.includes('NEXT_REDIRECT')) throw error;
+        console.error("Login error:", error);
+        redirect("/login?error=db");
+    }
+
+    if (loginSuccess) {
         redirect("/");
-    } else {
-        redirect("/login?error=incorrect");
     }
 }
 
@@ -82,6 +101,7 @@ export async function unlockCourse(courseId: string, formData: FormData) {
 
     if (course && password === course.password) {
         // Create actual Enrollment in DB
+        let enrollmentSuccess = false;
         try {
             await prisma.enrollment.upsert({
                 where: {
@@ -103,10 +123,17 @@ export async function unlockCourse(courseId: string, formData: FormData) {
                 path: "/",
                 maxAge: 60 * 60 * 24 * 30,
             });
-
-            redirect(`/course/${courseId}`);
-        } catch (err) {
+            revalidatePath(`/course/${courseId}`);
+            revalidatePath("/");
+            enrollmentSuccess = true;
+        } catch (err: any) {
+            if (err.digest?.includes('NEXT_REDIRECT')) throw err;
+            console.error("Unlock error:", err);
             redirect(`/course/${courseId}/unlock?error=db`);
+        }
+
+        if (enrollmentSuccess) {
+            redirect(`/course/${courseId}`);
         }
     } else {
         redirect(`/course/${courseId}/unlock?error=incorrect`);
