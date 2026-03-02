@@ -103,12 +103,15 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                 body: file,
             });
 
-            if (!response.ok) throw new Error("Error al subir archivo");
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || "Error al subir archivo");
+            }
 
             const blob = await response.json();
             handleUpdateDay(weekId, dayId, "assignmentUrl", blob.url);
-        } catch (error) {
-            alert("Error al subir el archivo a Vercel Blob");
+        } catch (error: any) {
+            alert("Error: " + error.message);
             console.error(error);
         } finally {
             setIsUploadingFile(null);
