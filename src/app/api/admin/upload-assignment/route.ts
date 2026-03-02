@@ -29,6 +29,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         const arrayBuffer = await request.arrayBuffer();
 
         const blob = await put(filename, arrayBuffer, {
+            access: "private",
             token: process.env.BLOB_READ_WRITE_TOKEN,
         });
 
