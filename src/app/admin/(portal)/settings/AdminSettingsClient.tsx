@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { updateSiteConfig } from "@/actions/admin-settings";
-import { Save, User, Home, Share2, Award, Mail, MessageCircle } from "lucide-react";
+import { Save, User, Home, Share2, Award, Mail, MessageCircle, X } from "lucide-react";
 
 export default function AdminSettingsClient({ initialConfigs }: { initialConfigs: any }) {
     const [configs, setConfigs] = useState(initialConfigs);
@@ -128,7 +128,7 @@ export default function AdminSettingsClient({ initialConfigs }: { initialConfigs
                         />
                     </div>
 
-                    {/* Uploader de imagen (convierte a Data URL y guarda en config) */}
+                    {/* Uploader de imagen con optimización */}
                     <div className="space-y-3">
                         <label className="text-sm font-bold text-slate-400 uppercase tracking-widest">Subir Foto de Perfil</label>
                         <div className="flex items-center gap-4 flex-wrap">
@@ -148,31 +148,47 @@ export default function AdminSettingsClient({ initialConfigs }: { initialConfigs
                                     onChange={(e) => {
                                         const file = e.target.files?.[0];
                                         if (!file) return;
-                                        // Límite recomendado ~1.5MB para Data URL
-                                        if (file.size > 1.5 * 1024 * 1024) {
-                                            alert("La imagen es muy pesada. Usa una menor a 1.5MB o pega una URL.");
-                                            e.currentTarget.value = "";
-                                            return;
-                                        }
+
                                         const reader = new FileReader();
-                                        reader.onload = () => {
-                                            const dataUrl = reader.result as string;
-                                            updateAbout({ imageUrl: dataUrl });
+                                        reader.onload = (event) => {
+                                            const img = new Image();
+                                            img.onload = () => {
+                                                // Optimización de imagen usando Canvas
+                                                const canvas = document.createElement("canvas");
+                                                const MAX_WIDTH = 600;
+                                                let width = img.width;
+                                                let height = img.height;
+
+                                                if (width > MAX_WIDTH) {
+                                                    height *= MAX_WIDTH / width;
+                                                    width = MAX_WIDTH;
+                                                }
+
+                                                canvas.width = width;
+                                                canvas.height = height;
+                                                const ctx = canvas.getContext("2d");
+                                                ctx?.drawImage(img, 0, 0, width, height);
+
+                                                // Comprimir a JPEG con calidad 0.7 para ahorrar espacio drásticamente
+                                                const optimizedDataUrl = canvas.toDataURL("image/jpeg", 0.7);
+                                                updateAbout({ imageUrl: optimizedDataUrl });
+                                            };
+                                            img.src = event.target?.result as string;
                                         };
                                         reader.readAsDataURL(file);
                                     }}
                                 />
                                 <button
                                     type="button"
-                                    className="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-3 py-2 rounded-lg border border-white/10"
+                                    className="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-4 py-2 rounded-lg border border-white/10 transition-colors"
                                     onClick={() => fileInputRef.current?.click()}
                                 >
-                                    Seleccionar Imagen
+                                    Optimizar y Seleccionar Imagen
                                 </button>
                                 {about.imageUrl && (
                                     <button
                                         type="button"
-                                        className="text-slate-300 hover:text-white text-sm px-3 py-2"
+                                        className="text-red-400 hover:text-red-300 text-sm px-3 py-2 font-medium"
                                         onClick={() => updateAbout({ imageUrl: "" })}
                                     >
                                         Quitar
@@ -180,7 +196,9 @@ export default function AdminSettingsClient({ initialConfigs }: { initialConfigs
                                 )}
                             </div>
                         </div>
-                        <p className="text-xs text-slate-500">Sugerencia: usa imágenes cuadradas (400x400). Si no quieres usar Data URL, pega una URL pública en el campo de arriba.</p>
+                        <p className="text-xs text-slate-500">
+                            La imagen se redimensionará y comprimirá automáticamente para un guardado instantáneo.
+                        </p>
                     </div>
 
                     <div className="space-y-4">
@@ -234,11 +252,53 @@ export default function AdminSettingsClient({ initialConfigs }: { initialConfigs
 
                         <div className="space-y-4">
                             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <Share2 size={16} /> Redes & Contacto
+                                <Share2 size={16} /> Métodos de Contacto
                             </h3>
                             <div className="space-y-3">
-                                <FormField small label="Email" value={about.contactEmail} onChange={(v) => updateAbout({ contactEmail: v })} />
-                                <FormField small label="WhatsApp" value={about.contactWhatsapp} onChange={(v) => updateAbout({ contactWhatsapp: v })} />
+                                {about.contacts?.map((c: any, i: number) => (
+                                    <div key={i} className="flex gap-2 items-end">
+                                        <div className="flex-1 space-y-2">
+                                            <input
+                                                value={c.type}
+                                                placeholder="Tipo (Email, Telegram, etc.)"
+                                                onChange={(e) => {
+                                                    const next = [...about.contacts];
+                                                    next[i] = { ...c, type: e.target.value };
+                                                    updateAbout({ contacts: next });
+                                                }}
+                                                className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-[10px] text-slate-400 uppercase font-bold"
+                                            />
+                                            <input
+                                                value={c.value}
+                                                placeholder="Enlace o Valor"
+                                                onChange={(e) => {
+                                                    const next = [...about.contacts];
+                                                    next[i] = { ...c, value: e.target.value };
+                                                    updateAbout({ contacts: next });
+                                                }}
+                                                className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                const next = about.contacts.filter((_: any, idx: number) => idx !== i);
+                                                updateAbout({ contacts: next });
+                                            }}
+                                            className="p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                ))}
+                                <button
+                                    onClick={() => {
+                                        const next = [...(about.contacts || []), { type: "Nuevo", value: "" }];
+                                        updateAbout({ contacts: next });
+                                    }}
+                                    className="w-full py-2 border border-dashed border-white/10 rounded-lg text-slate-500 hover:text-white hover:border-white/20 transition-all text-xs font-bold"
+                                >
+                                    + Añadir Método de Contacto
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -264,8 +324,8 @@ function TabButton({ active, onClick, icon, label }: { active: boolean, onClick:
         <button
             onClick={onClick}
             className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all duration-300 font-bold text-sm ${active
-                    ? "bg-[var(--color-primary)] text-white shadow-lg shadow-blue-500/20"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                ? "bg-[var(--color-primary)] text-white shadow-lg shadow-blue-500/20"
+                : "text-slate-400 hover:text-white hover:bg-white/5"
                 }`}
         >
             {icon}

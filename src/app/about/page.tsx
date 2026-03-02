@@ -102,26 +102,72 @@ export default async function AboutPage() {
                         </div>
 
                         <div className="space-y-3">
-                            <a
-                                href={`mailto:${aboutConfig.contactEmail}`}
-                                className="w-full flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 hover:border-blue-500/50 hover:bg-white/10 transition-all group/btn"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <Mail size={18} className="text-blue-400" />
-                                    <span className="text-sm font-bold text-white">Email</span>
-                                </div>
-                                <ArrowRight size={16} className="text-slate-500 group-hover/btn:translate-x-1 transition-transform" />
-                            </a>
-                            <a
-                                href={aboutConfig.contactWhatsapp}
-                                className="w-full flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 hover:border-emerald-500/50 hover:bg-white/10 transition-all group/btn"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <MessageCircle size={18} className="text-emerald-400" />
-                                    <span className="text-sm font-bold text-white">WhatsApp</span>
-                                </div>
-                                <ArrowRight size={16} className="text-slate-500 group-hover/btn:translate-x-1 transition-transform" />
-                            </a>
+                            {aboutConfig.contacts?.length > 0 ? (
+                                aboutConfig.contacts.map((contact: any, i: number) => {
+                                    let Icon = Mail;
+                                    let colorClass = "text-blue-400";
+                                    let hoverBorder = "hover:border-blue-500/50";
+
+                                    const type = contact.type?.toLowerCase();
+                                    if (type.includes("whatsapp")) {
+                                        Icon = MessageCircle;
+                                        colorClass = "text-emerald-400";
+                                        hoverBorder = "hover:border-emerald-500/50";
+                                    } else if (type.includes("telegram")) {
+                                        Icon = MessageCircle;
+                                        colorClass = "text-sky-400";
+                                        hoverBorder = "hover:border-sky-500/50";
+                                    } else if (type.includes("email") || type.includes("correo")) {
+                                        Icon = Mail;
+                                        colorClass = "text-blue-400";
+                                        hoverBorder = "hover:border-blue-500/50";
+                                    }
+
+                                    const isEmail = type.includes("email") || type.includes("correo") || contact.value?.includes("@");
+                                    const href = isEmail && !contact.value?.startsWith("mailto:")
+                                        ? `mailto:${contact.value}`
+                                        : contact.value;
+
+                                    return (
+                                        <a
+                                            key={i}
+                                            href={href}
+                                            target={isEmail ? undefined : "_blank"}
+                                            rel={isEmail ? undefined : "noopener noreferrer"}
+                                            className={`w-full flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 ${hoverBorder} hover:bg-white/10 transition-all group/btn`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <Icon size={18} className={colorClass} />
+                                                <span className="text-sm font-bold text-white">{contact.type}</span>
+                                            </div>
+                                            <ArrowRight size={16} className="text-slate-500 group-hover/btn:translate-x-1 transition-transform" />
+                                        </a>
+                                    );
+                                })
+                            ) : (
+                                <>
+                                    <a
+                                        href={`mailto:${aboutConfig.contactEmail}`}
+                                        className="w-full flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 hover:border-blue-500/50 hover:bg-white/10 transition-all group/btn"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <Mail size={18} className="text-blue-400" />
+                                            <span className="text-sm font-bold text-white">Email</span>
+                                        </div>
+                                        <ArrowRight size={16} className="text-slate-500 group-hover/btn:translate-x-1 transition-transform" />
+                                    </a>
+                                    <a
+                                        href={aboutConfig.contactWhatsapp}
+                                        className="w-full flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 hover:border-emerald-500/50 hover:bg-white/10 transition-all group/btn"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <MessageCircle size={18} className="text-emerald-400" />
+                                            <span className="text-sm font-bold text-white">WhatsApp</span>
+                                        </div>
+                                        <ArrowRight size={16} className="text-slate-500 group-hover/btn:translate-x-1 transition-transform" />
+                                    </a>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
