@@ -108,7 +108,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
     };
 
     return (
-        <div className="flex flex-col gap-6 lg:h-[calc(100vh-80px)]">
+        <div className="flex flex-col gap-6 lg:h-auto">
             {/* Editor Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[var(--color-glass-border)] pb-6">
                 <div className="w-full sm:w-auto">
@@ -161,7 +161,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                 </div>
 
                 {/* Right Content Area */}
-                <div className="flex-1 glass-effect rounded-2xl border border-[var(--color-glass-border)] overflow-y-auto custom-scrollbar p-6">
+                <div className="flex-1 glass-effect rounded-2xl border border-[var(--color-glass-border)] overflow-visible lg:overflow-y-auto custom-scrollbar p-4 sm:p-6">
 
                     {/* TAB 1: SETTINGS */}
                     {activeTab === "settings" && (

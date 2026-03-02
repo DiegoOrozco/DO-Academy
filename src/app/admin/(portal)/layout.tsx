@@ -22,10 +22,11 @@ export default function AdminPortalLayout({ children }: { children: React.ReactN
         <div className="flex h-screen bg-[var(--background)] overflow-hidden">
             {/* Mobile Header Toggle */}
             <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-[var(--color-background-dark)] border-b border-[var(--color-glass-border)] flex items-center justify-between px-6 z-40 backdrop-blur-md">
-                <Link href="/admin" className="flex items-center gap-2">
+                <Link href="/admin" className="flex items-center gap-2 text-white font-bold">
                     <div className="w-8 h-8 rounded-lg bg-[var(--color-primary)] flex items-center justify-center text-white">
                         <span className="font-bold text-xs">DO</span>
                     </div>
+                    <span className="text-sm">Admin</span>
                 </Link>
                 <button
                     onClick={() => setIsSidebarOpen(true)}
@@ -47,7 +48,7 @@ export default function AdminPortalLayout({ children }: { children: React.ReactN
             <aside className={`fixed inset-y-0 left-0 w-64 bg-[var(--color-background-dark)] border-r border-[var(--color-glass-border)] z-[60] transform lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col ${isSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
                 }`}>
                 <div className="p-6 border-b border-[var(--color-glass-border)] flex items-center justify-between">
-                    <Link href="/admin" className="flex items-center gap-3 group">
+                    <Link href="/admin" className="hidden lg:flex items-center gap-3 group">
                         <div className="w-8 h-8 rounded-lg bg-[var(--color-primary)] flex items-center justify-center text-white glow-accent transition-all group-hover:scale-105">
                             <span className="font-bold text-sm">DO</span>
                         </div>
@@ -94,7 +95,7 @@ export default function AdminPortalLayout({ children }: { children: React.ReactN
             </aside>
 
             {/* Main Content Area */}
-            <main className="flex-1 relative overflow-y-auto custom-scrollbar pt-16 lg:pt-0">
+            <main className="flex-1 relative overflow-y-auto custom-scrollbar pt-16 lg:pt-0 min-h-screen">
                 <div className="absolute top-0 right-0 w-[60%] h-[500px] z-0 pointer-events-none">
                     <div className="absolute top-[-20%] right-[-10%] w-[100%] h-[100%] bg-[var(--color-primary)] opacity-[0.08] blur-[150px] rounded-full"></div>
                 </div>
