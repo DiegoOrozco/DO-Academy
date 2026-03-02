@@ -79,6 +79,8 @@ export async function saveCourseData(courseId: string, data: any) {
                         title: day.title,
                         videoId: day.videoId || null,
                         materialUrl: day.materialUrl || null,
+                        isDeliveryDay: !!day.isDeliveryDay,
+                        assignmentUrl: day.assignmentUrl || null,
                         order: dIndex
                     },
                     create: {
@@ -86,6 +88,8 @@ export async function saveCourseData(courseId: string, data: any) {
                         title: day.title,
                         videoId: day.videoId || null,
                         materialUrl: day.materialUrl || null,
+                        isDeliveryDay: !!day.isDeliveryDay,
+                        assignmentUrl: day.assignmentUrl || null,
                         order: dIndex,
                         weekId: weekRecord.id
                     }

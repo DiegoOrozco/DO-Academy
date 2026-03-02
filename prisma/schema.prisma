@@ -57,9 +57,11 @@ model Day {
   id        String     @id @default(cuid())
   title     String
   order     Int
-  videoId   String?    // YouTube video ID
+  videoId     String?    // YouTube video ID
   materialUrl String?
-  weekId    String
+  isDeliveryDay Boolean   @default(false)
+  assignmentUrl String?
+  weekId      String
   week      Week       @relation(fields: [weekId], references: [id], onDelete: Cascade)
   resources Resource[]
   posts     Post[]

@@ -22,10 +22,8 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
         setError(null);
     }, [day.id, initialSubmission]);
 
-    // Visibility Logic: Friday is usually Day 5 in a 5-day week
-    // Or we check the actual day of the week
-    const isFriday = new Date().getDay() === 5;
-    const isDeliveryDay = day.order === 5 || isFriday;
+    // Visibility Logic: Based on Admin configuration for this specific day
+    const isDeliveryDay = !!day.isDeliveryDay;
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files?.[0]) {
@@ -70,19 +68,21 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                 <div>
                     <h3 className="text-xl font-bold text-white flex items-center gap-2">
                         <FileText size={20} className="text-[var(--color-primary)]" />
-                        El Viernes de Entregas
+                        Zona de Entrega
                     </h3>
                     <p className="text-sm text-slate-400 mt-1">
-                        Descarga el enunciado y sube tu solución para ser calificada por IA.
+                        Descarga el enunciado y sube tu solución para ser calificada por el Profesor Virtual.
                     </p>
                 </div>
 
                 <a
-                    href="#"
-                    className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-xl border border-white/10 transition-all text-sm font-semibold group"
+                    href={day.assignmentUrl || "#"}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={`flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-xl border border-white/10 transition-all text-sm font-semibold group ${!day.assignmentUrl ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                     <Download size={16} className="text-blue-400 group-hover:scale-110 transition-transform" />
-                    Descargar Enunciado Semanal
+                    Descargar Enunciado
                 </a>
             </div>
 
@@ -197,7 +197,7 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                 <div className="bg-black/20 border border-dashed border-slate-700 rounded-xl p-8 text-center">
                     <AlertCircle size={32} className="text-slate-600 mx-auto mb-3" />
                     <p className="text-slate-400 font-medium italic">
-                        La zona de entrega se habilitará automáticamente el Viernes.
+                        No hay entregas habilitadas para este día.
                     </p>
                 </div>
             )}

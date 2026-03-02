@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Save, Settings, List, Plus, Trash2, GripVertical, Video, Link2, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Settings, List, Plus, Trash2, GripVertical, Video, Link2, Loader2, FileText } from "lucide-react";
 import { saveCourseData } from "@/actions/admin-course";
 import { useRouter } from "next/navigation";
 
@@ -54,7 +54,9 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                         id: `d${Date.now()}`,
                         title: `Día ${w.days.length + 1}: Nuevo Tema`,
                         videoId: "",
-                        materialUrl: ""
+                        materialUrl: "",
+                        isDeliveryDay: false,
+                        assignmentUrl: ""
                     };
                     return { ...w, days: [...w.days, newDay] };
                 }
@@ -63,7 +65,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
         });
     };
 
-    const handleUpdateDay = (weekId: string, dayId: string, field: string, value: string) => {
+    const handleUpdateDay = (weekId: string, dayId: string, field: string, value: any) => {
         setCourse({
             ...course,
             weeks: course.weeks.map((w: any) => {
@@ -315,6 +317,37 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                 placeholder="https://github.com/..."
                                                             />
                                                         </div>
+                                                    </div>
+
+                                                    <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                                                        <label className="flex items-center gap-3 cursor-pointer group/toggle">
+                                                            <div className="relative inline-flex items-center">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    className="sr-only peer"
+                                                                    checked={!!day.isDeliveryDay}
+                                                                    onChange={(e) => handleUpdateDay(week.id, day.id, "isDeliveryDay", e.target.checked)}
+                                                                />
+                                                                <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-primary)]"></div>
+                                                            </div>
+                                                            <span className="text-xs font-bold text-white uppercase tracking-widest group-hover/toggle:text-[var(--color-primary)] transition-colors">Es día de entrega</span>
+                                                        </label>
+
+                                                        {day.isDeliveryDay && (
+                                                            <div className="flex-1 w-full animate-in fade-in slide-in-from-left-2 duration-300">
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <FileText size={12} className="text-blue-400" />
+                                                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">URL del Enunciado (PDF/Doc)</label>
+                                                                </div>
+                                                                <input
+                                                                    type="text"
+                                                                    value={day.assignmentUrl || ""}
+                                                                    onChange={(e) => handleUpdateDay(week.id, day.id, "assignmentUrl", e.target.value)}
+                                                                    className="w-full bg-[rgba(0,100,255,0.05)] border border-blue-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600"
+                                                                    placeholder="Enlace al documento del laboratorio o tarea..."
+                                                                />
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             ))}
