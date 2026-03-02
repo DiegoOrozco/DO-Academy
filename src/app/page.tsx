@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Lock, PlayCircle, BookOpen } from "lucide-react";
+import Navbar from "@/components/Navbar";
+import { Lock, PlayCircle, BookOpen, ArrowRight, Sparkles } from "lucide-react";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { getStudent } from "@/lib/student-auth";
@@ -20,55 +21,54 @@ export default async function DashboardPage() {
     const availableCourses = allCourses.filter(c => !enrolledCourseIds.includes(c.id));
 
     return (
-        <div className="min-h-screen bg-[var(--background)] p-6 sm:p-10 pb-20 relative overflow-hidden">
+        <div className="min-h-screen bg-[var(--background)] relative overflow-hidden">
             {/* Background Decorative Elements */}
-            <div className="absolute top-0 left-0 w-full h-[500px] overflow-hidden z-0 pointer-events-none">
-                <div className="absolute top-[-20%] left-[20%] w-[50%] h-[100%] bg-[var(--color-primary)] opacity-[0.15] blur-[150px] rounded-full"></div>
+            <div className="absolute top-0 left-0 w-full h-[800px] overflow-hidden z-0 pointer-events-none">
+                <div className="absolute top-[-20%] left-[10%] w-[70%] h-[100%] bg-[var(--color-primary)] opacity-[0.12] blur-[150px] rounded-full"></div>
+                <div className="absolute top-[10%] right-[-5%] w-[40%] h-[60%] bg-blue-400 opacity-[0.05] blur-[120px] rounded-full"></div>
             </div>
 
-            <div className="max-w-7xl mx-auto relative z-10">
-                <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12 gap-6">
-                    <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-white mb-2">DO Academy</h1>
-                        {student ? (
-                            <p className="text-slate-400 font-medium tracking-wide">
-                                Hola, <span className="text-white font-bold">{student.name}</span>. 👋 ¡Qué bueno verte de nuevo!
-                            </p>
-                        ) : (
-                            <p className="text-slate-400">Catálogo de cursos premium. Inicia sesión para ver tu progreso.</p>
-                        )}
+            <div className="max-w-7xl mx-auto px-6 sm:px-10 pt-32 pb-20 relative z-10">
+                {/* Hero Section */}
+                <header className="mb-20 text-center md:text-left max-w-3xl">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-widest mb-6 animate-pulse">
+                        <Sparkles size={14} />
+                        Plataforma Premium
                     </div>
-
-                    <div className="flex items-center gap-6">
-                        {student ? (
-                            <form action={logoutStudent}>
-                                <button type="submit" className="text-sm font-semibold text-slate-500 hover:text-red-400 transition-colors">
-                                    Cerrar Sesión
-                                </button>
-                            </form>
-                        ) : (
-                            <div className="flex items-center gap-4">
-                                <Link href="/login" className="text-sm font-semibold text-white hover:text-[var(--color-primary)] transition-colors">
+                    <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white mb-6 leading-tight">
+                        Domina la Tecnología con <span className="text-[var(--color-primary)]">DO Academy</span>
+                    </h1>
+                    {student ? (
+                        <p className="text-xl text-slate-400 font-medium leading-relaxed mb-8">
+                            Hola, <span className="text-white font-bold">{student.name}</span>. 👋 Tienes <span className="text-white font-bold">{myCourses.length}</span> cursos activos. ¡Continúa tu aprendizaje hoy mismo!
+                        </p>
+                    ) : (
+                        <div className="space-y-6">
+                            <p className="text-xl text-slate-400 font-medium leading-relaxed">
+                                Accede a contenido exclusivo diseñado por expertos para llevar tus habilidades al siguiente nivel profesional.
+                            </p>
+                            <div className="flex flex-wrap justify-center md:justify-start gap-4">
+                                <Link
+                                    href="/register"
+                                    className="bg-[var(--color-primary)] hover:bg-blue-600 text-white font-black py-4 px-8 rounded-2xl transition-all shadow-xl shadow-blue-500/30 flex items-center gap-2 group"
+                                >
+                                    Empezar Ahora
+                                    <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                                </Link>
+                                <Link
+                                    href="/login"
+                                    className="bg-white/5 hover:bg-white/10 text-white font-black py-4 px-8 rounded-2xl transition-all border border-white/10"
+                                >
                                     Iniciar Sesión
                                 </Link>
-                                <Link href="/register" className="bg-[var(--color-secondary)] hover:bg-emerald-600 text-white text-xs font-bold py-2 px-4 rounded-lg transition-all shadow-lg shadow-emerald-500/20">
-                                    Registrarse
-                                </Link>
                             </div>
-                        )}
-                        <span className="w-px h-6 bg-slate-800 hidden sm:block"></span>
-                        <Link
-                            href="/admin/login"
-                            className="text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-[var(--color-primary)] transition-colors bg-slate-900/50 px-3 py-1.5 rounded-md border border-slate-800"
-                        >
-                            Admin
-                        </Link>
-                    </div>
+                        </div>
+                    )}
                 </header>
 
                 {/* My Courses Section */}
                 {student && myCourses.length > 0 && (
-                    <section className="mb-16">
+                    <section className="mb-24 scroll-mt-32" id="my-courses">
                         <div className="flex items-center gap-3 mb-8">
                             <div className="w-1.5 h-8 bg-[var(--color-secondary)] rounded-full"></div>
                             <h2 className="text-2xl font-bold text-white">Mis Cursos</h2>

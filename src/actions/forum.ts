@@ -23,21 +23,41 @@ export async function createPost(dayId: string, userId: string, content: string,
 
 export async function createReply(postId: string, content: string) {
     try {
-        // Teacher reply using hardcoded admin user for now or find admin 01
+        // Teacher reply using hardcoded admin user for now or find admin
         const adminUser = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
 
         if (!adminUser) return { success: false, error: "No Admin User found" };
 
-        await prisma.reply.create({
+        const reply = await prisma.reply.create({
             data: {
                 content,
                 postId,
                 userId: adminUser.id
+            },
+            include: {
+                post: {
+                    include: {
+                        day: {
+                            include: {
+                                week: {
+                                    select: { courseId: true }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         });
 
-        // Revalidate admin and courses (too complex to get exact course id easily, so revalidate all)
+        const courseId = reply.post.day.week.courseId;
+
+        // Revalidate admin and the specific course for the student
         revalidatePath(`/admin/qa`);
+        if (courseId) {
+            revalidatePath(`/course/${courseId}`);
+        }
+        revalidatePath("/");
+
         return { success: true };
     } catch (error: any) {
         console.error("Create Reply Error:", error);

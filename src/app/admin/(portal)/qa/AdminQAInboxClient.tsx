@@ -7,7 +7,7 @@ import { createReply } from "@/actions/forum";
 
 export default function AdminQAInboxClient({ initialQuestions }: { initialQuestions: any[] }) {
     const [activeTab, setActiveTab] = useState("pending");
-    const [replyText, setReplyText] = useState("");
+    const [replyTexts, setReplyTexts] = useState<{ [key: string]: string }>({});
     const [questions, setQuestions] = useState(initialQuestions);
     const [isReplying, setIsReplying] = useState<string | null>(null);
 
@@ -15,17 +15,23 @@ export default function AdminQAInboxClient({ initialQuestions }: { initialQuesti
 
     const handleReply = async (id: string, e: React.FormEvent) => {
         e.preventDefault();
-        if (!replyText.trim() || isReplying) return;
+        const text = replyTexts[id] || "";
+        if (!text.trim() || isReplying) return;
 
         setIsReplying(id);
-        const res = await createReply(id, replyText);
+        const res = await createReply(id, text);
         setIsReplying(null);
 
         if (res.success) {
             setQuestions(questions.map(q =>
                 q.id === id ? { ...q, status: "resolved" } : q
             ));
-            setReplyText("");
+            // Clear the specific reply text
+            setReplyTexts(prev => {
+                const updated = { ...prev };
+                delete updated[id];
+                return updated;
+            });
         } else {
             alert("Error al enviar respuesta: " + res.error);
         }
@@ -119,8 +125,8 @@ export default function AdminQAInboxClient({ initialQuestions }: { initialQuesti
                                                 <CornerDownRight size={20} />
                                             </div>
                                             <textarea
-                                                value={replyText}
-                                                onChange={(e) => setReplyText(e.target.value)}
+                                                value={replyTexts[q.id] || ""}
+                                                onChange={(e) => setReplyTexts(prev => ({ ...prev, [q.id]: e.target.value }))}
                                                 placeholder="Escribe tu respuesta como profesor..."
                                                 className="w-full bg-[rgba(0,0,0,0.3)] border border-slate-700/50 rounded-xl p-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[var(--color-primary)] transition-all min-h-[80px] resize-y"
                                                 required

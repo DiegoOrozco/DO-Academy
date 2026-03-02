@@ -6,6 +6,8 @@ import { revalidatePath } from "next/cache";
 
 import prisma from "@/lib/prisma";
 
+import bcrypt from "bcryptjs";
+
 export async function registerStudent(formData: FormData) {
     const name = formData.get("name") as string;
     const email = formData.get("email") as string;
@@ -17,11 +19,14 @@ export async function registerStudent(formData: FormData) {
 
     let success = false;
     try {
+        // Hash the password before saving
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         const user = await prisma.user.create({
             data: {
                 name,
                 email,
-                password, // In a real app, hash this
+                password: hashedPassword,
                 role: "STUDENT"
             }
         });
@@ -55,15 +60,22 @@ export async function loginStudent(formData: FormData) {
             where: { email }
         });
 
-        if (user && user.password === password && user.role === "STUDENT") {
-            const cookieStore = await cookies();
-            cookieStore.set("student_id", user.id, {
-                httpOnly: true,
-                path: "/",
-                maxAge: 60 * 60 * 24 * 30,
-            });
-            revalidatePath("/");
-            loginSuccess = true;
+        if (user && user.role === "STUDENT") {
+            // Verify the hashed password
+            const isMatch = await bcrypt.compare(password, user.password);
+
+            if (isMatch) {
+                const cookieStore = await cookies();
+                cookieStore.set("student_id", user.id, {
+                    httpOnly: true,
+                    path: "/",
+                    maxAge: 60 * 60 * 24 * 30,
+                });
+                revalidatePath("/");
+                loginSuccess = true;
+            } else {
+                redirect("/login?error=incorrect");
+            }
         } else {
             redirect("/login?error=incorrect");
         }
@@ -142,8 +154,9 @@ export async function unlockCourse(courseId: string, formData: FormData) {
 
 export async function loginAdmin(formData: FormData) {
     const password = formData.get("password") as string;
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
-    if (password === "admin123") {
+    if (password === ADMIN_PASSWORD) {
         const cookieStore = await cookies();
         cookieStore.set("admin_session", "valid", {
             httpOnly: true,
