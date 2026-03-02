@@ -9,9 +9,10 @@ export function middleware(request: NextRequest) {
         const adminSession = request.cookies.get("admin_session");
 
         if (!adminSession || adminSession.value !== "valid") {
+            // Return 404 to hide the existence of admin routes for unauthenticated users
             const url = request.nextUrl.clone();
-            url.pathname = "/admin/login";
-            return NextResponse.redirect(url);
+            url.pathname = "/404";
+            return NextResponse.rewrite(url);
         }
     }
 
