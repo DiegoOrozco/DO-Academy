@@ -8,7 +8,7 @@ import { createPost } from "@/actions/forum";
 export default function CourseViewerClient({ course, studentId }: { course: any, studentId: string }) {
     // If course has no weeks, safely fallback so UI doesn't crash
     const initialWeek = course.weeks?.[0] || { id: "0", title: "No content", days: [] };
-    const initialDay = initialWeek.days?.[0] || { id: "0", title: "No content", videoId: "", materialUrl: "" };
+    const initialDay = initialWeek.days?.[0] || { id: "0", title: "No content", videoId: "", materialUrl: "", posts: [], replies: [] };
 
     const [activeWeek, setActiveWeek] = useState(initialWeek);
     const [activeDay, setActiveDay] = useState(initialDay);
@@ -16,7 +16,21 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
     const [isPosting, setIsPosting] = useState(false);
 
     // Sync active day with fresh server props to update comments automatically
-    const activeDayData = course.weeks?.find((w: any) => w.id === activeWeek.id)?.days?.find((d: any) => d.id === activeDay.id) || activeDay;
+    const dayFromCourse = course.weeks?.find((w: any) => w.id === activeWeek.id)?.days?.find((d: any) => d.id === activeDay.id);
+    const activeDayData = dayFromCourse || activeDay;
+
+    // Prevent hydration mismatches with dates and complex UI
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => { setIsMounted(true); }, []);
+
+    const formatDate = (date: any) => {
+        if (!isMounted || !date) return "...";
+        try {
+            return new Date(date).toLocaleDateString();
+        } catch {
+            return "...";
+        }
+    };
 
     const handlePostQuestion = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -135,19 +149,6 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeDay.id, activeDay.videoId]);
 
-    // Prevent hydration mismatches with dates
-    const [isMounted, setIsMounted] = useState(false);
-    useEffect(() => { setIsMounted(true); }, []);
-
-    const formatDate = (date: string) => {
-        if (!isMounted) return "...";
-        try {
-            return new Date(date).toLocaleDateString();
-        } catch {
-            return "...";
-        }
-    };
-
     return (
         <div className="min-h-screen bg-[var(--background)] flex flex-col">
             {/* Top Navbar */}
@@ -235,7 +236,9 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
 
                     {/* Video Player Embed */}
                     <div className="w-full aspect-video rounded-2xl overflow-hidden glass-effect border border-[var(--color-glass-border)] shadow-2xl relative">
-                        {activeDay.videoId ? (
+                        {!isMounted ? (
+                            <div className="absolute top-0 left-0 w-full h-full bg-black/20 animate-pulse" />
+                        ) : activeDay.videoId ? (
                             usePlainIframe ? (
                                 <iframe
                                     src={`https://www.youtube.com/embed/${activeDay.videoId}?rel=0&modestbranding=1`}
@@ -317,7 +320,7 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
                             {/* Posts List */}
                             <div className="flex flex-col gap-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
                                 {(activeDayData.posts || []).length > 0 ? (
-                                    activeDayData.posts.map((post: any) => (
+                                    (activeDayData.posts || []).map((post: any) => (
                                         <div key={post.id} className="glass-effect p-4 rounded-xl border border-[var(--color-glass-border)] flex gap-4">
                                             <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 flex-shrink-0 border border-slate-700">
                                                 <User size={20} />
@@ -336,7 +339,7 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
                                                 {/* Replies */}
                                                 {(post.replies || []).length > 0 && (
                                                     <div className="mt-4 flex flex-col gap-3 pl-4 border-l-2 border-[var(--color-primary)]/30">
-                                                        {post.replies.map((reply: any) => (
+                                                        {(post.replies || []).map((reply: any) => (
                                                             <div key={reply.id} className="flex gap-3 mt-1">
                                                                 <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 flex-shrink-0 text-xs shadow-inner">
                                                                     <User size={12} />
