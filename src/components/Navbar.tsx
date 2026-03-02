@@ -33,10 +33,6 @@ export default function Navbar({ user }: NavbarProps) {
         }
     };
 
-    if (pathname.startsWith("/course/") || pathname.startsWith("/admin")) {
-        return null;
-    }
-
     useEffect(() => {
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 20);
@@ -44,6 +40,10 @@ export default function Navbar({ user }: NavbarProps) {
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
+
+    if (pathname.startsWith("/course/") || pathname.startsWith("/admin")) {
+        return null;
+    }
 
     const navLinks = [
         { name: "Inicio", href: "/", icon: <Home size={18} /> },

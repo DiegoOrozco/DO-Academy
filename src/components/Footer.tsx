@@ -7,6 +7,7 @@ import { Github, Linkedin, Twitter, Sparkles, Heart } from "lucide-react";
 export default function Footer() {
     const pathname = usePathname();
 
+
     if (pathname.startsWith("/admin") || pathname.startsWith("/course/")) {
         return null;
     }

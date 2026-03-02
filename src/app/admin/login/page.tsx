@@ -7,8 +7,9 @@ import { loginAdmin } from "../../../actions/auth";
 export default async function AdminLoginPage({
     searchParams,
 }: {
-    searchParams: { error?: string };
+    searchParams: Promise<{ error?: string }>;
 }) {
+    const { error } = await searchParams;
     const cookieStore = await cookies();
     const isAdmin = cookieStore.get("admin_session")?.value === "valid";
 
@@ -41,7 +42,7 @@ export default async function AdminLoginPage({
 
                 {/* Login Card */}
                 <div className="glass-effect rounded-2xl p-8 shadow-2xl border border-[var(--color-glass-border)]">
-                    {searchParams?.error === "incorrect" && (
+                    {error === "incorrect" && (
                         <div className="mb-4 bg-red-500/20 text-red-500 text-sm p-3 rounded-lg border border-red-500/30 text-center font-medium">
                             Credenciales incorrectas. Acceso denegado.
                         </div>
