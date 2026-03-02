@@ -1,6 +1,17 @@
 import { Users, BookOpen, MessageSquare, TrendingUp } from "lucide-react";
+import prisma from "@/lib/prisma";
 
-export default function AdminDashboardPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function AdminDashboardPage() {
+    const [studentCount, courseCount, pendingQuestions] = await Promise.all([
+        // Distinct estudiantes con al menos una matrícula
+        prisma.enrollment.groupBy({ by: ["userId"] }).then((rows) => rows.length),
+        // Solo cursos publicados
+        prisma.course.count({ where: { status: "published" } }),
+        // Posts sin respuesta
+        prisma.post.count({ where: { replies: { none: {} } } }),
+    ]);
     return (
         <div className="flex flex-col gap-8">
             <div>
@@ -22,7 +33,7 @@ export default function AdminDashboardPage() {
                     </div>
                     <div>
                         <h3 className="text-slate-400 text-sm font-medium mb-1">Estudiantes Activos</h3>
-                        <p className="text-3xl font-bold text-white">1,248</p>
+                        <p className="text-3xl font-bold text-white">{studentCount.toLocaleString()}</p>
                     </div>
                 </div>
 
@@ -34,7 +45,7 @@ export default function AdminDashboardPage() {
                     </div>
                     <div>
                         <h3 className="text-slate-400 text-sm font-medium mb-1">Cursos Publicados</h3>
-                        <p className="text-3xl font-bold text-white">6</p>
+                        <p className="text-3xl font-bold text-white">{courseCount.toLocaleString()}</p>
                     </div>
                 </div>
 
@@ -47,7 +58,7 @@ export default function AdminDashboardPage() {
                     </div>
                     <div className="relative z-10">
                         <h3 className="text-slate-400 text-sm font-medium mb-1">Dudas Pendientes</h3>
-                        <p className="text-3xl font-bold text-white">4</p>
+                        <p className="text-3xl font-bold text-white">{pendingQuestions.toLocaleString()}</p>
                     </div>
                 </div>
             </div>

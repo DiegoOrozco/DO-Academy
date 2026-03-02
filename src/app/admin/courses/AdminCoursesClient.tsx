@@ -102,7 +102,7 @@ export default function AdminCoursesClient({ initialCourses }: { initialCourses:
 
                         <div className="p-5 flex flex-col flex-grow bg-gradient-to-b from-transparent to-black/20">
                             <h3 className="text-lg font-bold text-white mb-2 leading-tight line-clamp-2">{course.title}</h3>
-                            <p className="text-sm text-slate-400 mb-4">{Math.floor(Math.random() * 100)} estudiantes inscritos</p>
+                            <p className="text-sm text-slate-400 mb-4">{course.enrollments.length} estudiantes inscritos</p>
 
                             <div className="mt-auto flex gap-3 pt-4 border-t border-slate-700/30">
                                 <Link
