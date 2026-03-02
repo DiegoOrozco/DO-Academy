@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Github, Linkedin, Twitter, Sparkles, Heart } from "lucide-react";
 
-export default function Footer() {
+export default function Footer({ user }: { user?: any }) {
     const pathname = usePathname();
 
 
@@ -56,7 +56,9 @@ export default function Footer() {
                             <FooterLink href="#">Términos</FooterLink>
                             <FooterLink href="#">Privacidad</FooterLink>
                             <FooterLink href="#">Cookies</FooterLink>
-                            <FooterLink href="/admin">Portal Admin</FooterLink>
+                            {user?.role === "STUDENT" ? null : (
+                                <FooterLink href="/admin">Portal Admin</FooterLink>
+                            )}
                         </ul>
                     </div>
                 </div>

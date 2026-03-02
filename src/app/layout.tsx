@@ -26,7 +26,7 @@ export default async function RootLayout({
         {children}
 
         {/* Global Footer */}
-        <Footer />
+        <Footer user={user} />
         <SpeedInsights />
       </body>
     </html>
