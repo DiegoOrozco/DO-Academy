@@ -39,6 +39,7 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
     const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const lastSentAtRef = useRef<number>(0);
     const lastSecondsRef = useRef<number>(0);
+    const [usePlainIframe, setUsePlainIframe] = useState(false);
 
     const sendProgress = async (seconds: number, percent: number | null) => {
         const now = Date.now();
@@ -97,36 +98,33 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
             }
         });
 
-        ensureYT().then(() => {
-            if (cancelled || !playerDivRef.current) return;
-            // Destroy previous
-            try { playerRef.current?.destroy?.(); } catch {}
-            playerRef.current = new (window as any).YT.Player(playerDivRef.current, {
-                videoId: activeDay.videoId,
-                playerVars: { rel: 0, modestbranding: 1 },
-                events: {
-                    onReady: () => {
-                        startPolling();
-                    },
-                    onStateChange: (e: any) => {
-                        const YT = (window as any).YT;
-                        const p: any = playerRef.current;
-                        const sec = p?.getCurrentTime ? p.getCurrentTime() : 0;
-                        const dur = p?.getDuration ? p.getDuration() : 0;
-                        const pct = dur > 0 ? Math.min(100, Math.round((sec / dur) * 100)) : null;
-                        if (e.data === YT.PlayerState.PLAYING) {
-                            startPolling();
-                        } else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.BUFFERING) {
-                            stopPolling();
-                            sendProgress(sec, pct);
-                        } else if (e.data === YT.PlayerState.ENDED) {
-                            stopPolling();
-                            sendProgress(dur || sec, 100);
+        (async () => {
+            try {
+                await ensureYT();
+                if (cancelled || !playerDivRef.current) return;
+                try { playerRef.current?.destroy?.(); } catch {}
+                playerRef.current = new (window as any).YT.Player(playerDivRef.current, {
+                    videoId: activeDay.videoId,
+                    playerVars: { rel: 0, modestbranding: 1 },
+                    events: {
+                        onReady: () => { startPolling(); },
+                        onStateChange: (e: any) => {
+                            const YT = (window as any).YT;
+                            const p: any = playerRef.current;
+                            const sec = p?.getCurrentTime ? p.getCurrentTime() : 0;
+                            const dur = p?.getDuration ? p.getDuration() : 0;
+                            const pct = dur > 0 ? Math.min(100, Math.round((sec / dur) * 100)) : null;
+                            if (e.data === YT.PlayerState.PLAYING) startPolling();
+                            else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.BUFFERING) { stopPolling(); sendProgress(sec, pct); }
+                            else if (e.data === YT.PlayerState.ENDED) { stopPolling(); sendProgress(dur || sec, 100); }
                         }
                     }
-                }
-            });
-        });
+                });
+            } catch (err) {
+                // If anything goes wrong, fall back to a plain iframe (no tracking)
+                setUsePlainIframe(true);
+            }
+        })();
 
         return () => {
             cancelled = true;
@@ -225,7 +223,17 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
                     {/* Video Player Embed */}
                     <div className="w-full aspect-video rounded-2xl overflow-hidden glass-effect border border-[var(--color-glass-border)] shadow-2xl relative">
                         {activeDay.videoId ? (
-                            <div ref={playerDivRef} className="absolute top-0 left-0 w-full h-full" />
+                            usePlainIframe ? (
+                                <iframe
+                                    src={`https://www.youtube.com/embed/${activeDay.videoId}?rel=0&modestbranding=1`}
+                                    title="YouTube video player"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                    className="absolute top-0 left-0 w-full h-full"
+                                />
+                            ) : (
+                                <div ref={playerDivRef} className="absolute top-0 left-0 w-full h-full" />
+                            )
                         ) : (
                             <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-slate-500 bg-black/50">
                                 No hay video disponible
