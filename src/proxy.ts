@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Protect Admin Routes
@@ -9,8 +9,12 @@ export function proxy(request: NextRequest) {
         const adminSession = request.cookies.get("admin_session");
 
         if (!adminSession || adminSession.value !== "valid") {
-            // Return 404 to hide the existence of admin routes for unauthenticated users
             const url = request.nextUrl.clone();
+            if (pathname === "/admin") {
+                url.pathname = "/admin/login";
+                return NextResponse.redirect(url);
+            }
+            // Hide deeper admin routes behind 404
             url.pathname = "/404";
             return NextResponse.rewrite(url);
         }
