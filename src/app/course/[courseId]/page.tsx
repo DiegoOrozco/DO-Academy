@@ -1,14 +1,24 @@
 import prisma from "@/lib/prisma";
 import CourseViewerClient from "./CourseViewerClient";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import { getStudent } from "@/lib/student-auth";
 
 export const dynamic = 'force-dynamic';
 
 export default async function CourseViewerPage({ params }: { params: Promise<{ courseId: string }> }) {
     const { courseId } = await params;
-    const cookieStore = await cookies();
-    const studentId = cookieStore.get("student_id")?.value || "student_01"; // Fallback to our dummy seed student
+    const student = await getStudent();
+
+    if (!student) {
+        redirect("/login");
+    }
+
+    const hasAccess = student.enrollments.some(e => e.courseId === courseId);
+    if (!hasAccess) {
+        redirect(`/course/${courseId}/unlock`);
+    }
+
+    const studentId = student.id;
 
     const course = await prisma.course.findUnique({
         where: { id: courseId },

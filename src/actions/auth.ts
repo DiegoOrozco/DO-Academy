@@ -5,44 +5,109 @@ import { redirect } from "next/navigation";
 
 import prisma from "@/lib/prisma";
 
-export async function unlockCourse(courseId: string, formData: FormData) {
+export async function registerStudent(formData: FormData) {
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
     const password = formData.get("password") as string;
-    const alias = formData.get("alias") as string;
 
-    const course = await prisma.course.findUnique({
-        where: { id: courseId },
-        select: { password: true }
-    });
+    if (!name || !email || !password) {
+        redirect("/register?error=missing");
+    }
 
-    if (course && password === course.password) {
-        const cookieStore = await cookies();
-        cookieStore.set(`course_access_${courseId}`, "true", {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            path: "/",
-            maxAge: 60 * 60 * 24 * 30, // 30 days
-        });
-
-        // Generate a valid User record in Prisma for the Q&A Forum
-        const finalAlias = alias || "Estudiante Anónimo";
-        const safeEmail = `guest_${Date.now()}_${Math.random().toString(36).substring(7)}@doacademy.com`;
-
+    try {
         const user = await prisma.user.create({
             data: {
-                name: finalAlias,
-                email: safeEmail,
-                password: "guest",
+                name,
+                email,
+                password, // In a real app, hash this
                 role: "STUDENT"
             }
         });
 
+        const cookieStore = await cookies();
         cookieStore.set("student_id", user.id, {
             httpOnly: true,
             path: "/",
             maxAge: 60 * 60 * 24 * 30, // 30 days
         });
 
-        redirect(`/course/${courseId}`);
+        redirect("/");
+    } catch (error) {
+        redirect("/register?error=exists");
+    }
+}
+
+export async function loginStudent(formData: FormData) {
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    const user = await prisma.user.findUnique({
+        where: { email }
+    });
+
+    if (user && user.password === password && user.role === "STUDENT") {
+        const cookieStore = await cookies();
+        cookieStore.set("student_id", user.id, {
+            httpOnly: true,
+            path: "/",
+            maxAge: 60 * 60 * 24 * 30,
+        });
+
+        redirect("/");
+    } else {
+        redirect("/login?error=incorrect");
+    }
+}
+
+export async function logoutStudent() {
+    const cookieStore = await cookies();
+    cookieStore.delete("student_id");
+    redirect("/login");
+}
+
+export async function unlockCourse(courseId: string, formData: FormData) {
+    const password = formData.get("password") as string;
+
+    const cookieStore = await cookies();
+    const studentId = cookieStore.get("student_id")?.value;
+
+    if (!studentId) {
+        redirect("/login");
+    }
+
+    const course = await prisma.course.findUnique({
+        where: { id: courseId },
+        select: { id: true, password: true }
+    });
+
+    if (course && password === course.password) {
+        // Create actual Enrollment in DB
+        try {
+            await prisma.enrollment.upsert({
+                where: {
+                    userId_courseId: {
+                        userId: studentId,
+                        courseId: courseId
+                    }
+                },
+                create: {
+                    userId: studentId,
+                    courseId: courseId
+                },
+                update: {} // Do nothing if already exists
+            });
+
+            // Keep legacy cookie for quick UI checks but DB is the source of truth now
+            cookieStore.set(`course_access_${courseId}`, "true", {
+                httpOnly: true,
+                path: "/",
+                maxAge: 60 * 60 * 24 * 30,
+            });
+
+            redirect(`/course/${courseId}`);
+        } catch (err) {
+            redirect(`/course/${courseId}/unlock?error=db`);
+        }
     } else {
         redirect(`/course/${courseId}/unlock?error=incorrect`);
     }

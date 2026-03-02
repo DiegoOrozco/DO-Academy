@@ -3,18 +3,25 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { Lock, ArrowLeft } from "lucide-react";
 import { unlockCourse } from "../../../../actions/auth";
+import { getStudent } from "@/lib/student-auth";
 
 export default async function UnlockCoursePage({
     params,
     searchParams,
 }: {
-    params: { courseId: string };
-    searchParams: { error?: string };
+    params: Promise<{ courseId: string }>;
+    searchParams: Promise<{ error?: string }>;
 }) {
     const { courseId } = await params;
-    const cookieStore = await cookies();
-    const hasAccess = cookieStore.has(`course_access_${courseId}`);
+    const { error } = await searchParams;
 
+    // Check if student is logged in
+    const student = await getStudent();
+    if (!student) {
+        redirect("/login");
+    }
+
+    const hasAccess = student.enrollments.some(e => e.courseId === courseId);
     if (hasAccess) {
         redirect(`/course/${courseId}`);
     }
@@ -41,34 +48,28 @@ export default async function UnlockCoursePage({
                     <div className="inline-block p-4 rounded-2xl glass-effect mb-4 shadow-[0_0_15px_rgba(255,255,255,0.05)]">
                         <Lock className="w-10 h-10 text-slate-300" />
                     </div>
-                    <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Curso Privado</h1>
-                    <p className="text-slate-400 font-medium tracking-wide">Ingresa la contraseña para desbloquear el contenido.</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Desbloquear Curso</h1>
+                    <p className="text-slate-400 font-medium tracking-wide">
+                        Hola <span className="text-white font-bold">{student.name}</span>, ingresa la contraseña para matricularte.
+                    </p>
                 </div>
 
                 {/* Lock Card */}
                 <div className="glass-effect rounded-2xl p-8 shadow-2xl border border-[var(--color-glass-border)]">
-                    {searchParams?.error === "incorrect" && (
+                    {error === "incorrect" && (
                         <div className="mb-4 bg-red-500/20 text-red-500 text-sm p-3 rounded-lg border border-red-500/30 text-center font-medium">
                             Contraseña incorrecta. Inténtalo de nuevo.
                         </div>
                     )}
+                    {error === "db" && (
+                        <div className="mb-4 bg-red-500/20 text-red-500 text-sm p-3 rounded-lg border border-red-500/30 text-center font-medium">
+                            Error al procesar la matrícula.
+                        </div>
+                    )}
 
                     <form action={unlockAction} className="space-y-5">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
-                                Tu Alias o Nombre (opcional)
-                            </label>
-                            <input
-                                type="text"
-                                name="alias"
-                                className="w-full bg-[rgba(0,0,0,0.3)] border border-[var(--color-glass-border)] rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
-                                placeholder="Ej. Hacker Anon"
-                            />
-                            <p className="text-xs text-slate-500 mt-1">Se usará para el foro de preguntas.</p>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-slate-300">
                                 Contraseña del Curso
                             </label>
                             <input
@@ -82,15 +83,15 @@ export default async function UnlockCoursePage({
 
                         <button
                             type="submit"
-                            className="w-full bg-[var(--color-primary)] hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 glow-accent mt-4 flex items-center justify-center gap-2"
+                            className="w-full bg-[var(--color-primary)] hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 glow-accent mt-4 flex items-center justify-center gap-2 font-bold"
                         >
                             <Lock size={18} />
-                            Desbloquear Ahora
+                            Desbloquear con Contraseña
                         </button>
                     </form>
                     <div className="mt-4 text-center">
                         <p className="text-xs text-slate-500">
-                            Contraseña de prueba para todos los cursos: <strong>doacademy</strong>
+                            Contraseña de prueba: <strong>doacademy</strong>
                         </p>
                     </div>
                 </div>
@@ -98,3 +99,4 @@ export default async function UnlockCoursePage({
         </div>
     );
 }
+
