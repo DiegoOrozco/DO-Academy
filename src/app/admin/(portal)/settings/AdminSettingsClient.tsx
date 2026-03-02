@@ -120,6 +120,11 @@ export default function AdminSettingsClient({ initialConfigs }: { initialConfigs
                             value={about.title}
                             onChange={(v) => updateAbout({ title: v })}
                         />
+                        <FormField
+                            label="URL de Foto de Perfil"
+                            value={about.imageUrl}
+                            onChange={(v) => updateAbout({ imageUrl: v })}
+                        />
                     </div>
 
                     <div className="space-y-4">

@@ -50,7 +50,7 @@ export default async function AboutPage() {
                         <div className="absolute inset-0 bg-blue-500 rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
                         <div className="w-48 h-48 md:w-64 md:h-64 rounded-full border-2 border-white/10 p-2 relative z-10 bg-slate-900/50 backdrop-blur-sm overflow-hidden">
                             <img
-                                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop"
+                                src={aboutConfig.imageUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop"}
                                 alt={aboutConfig.name}
                                 className="w-full h-full object-cover rounded-full grayscale hover:grayscale-0 transition-all duration-500"
                             />
