@@ -40,6 +40,11 @@ export default async function CourseViewerPage({ params }: { params: Promise<{ c
                                         include: { user: { select: { name: true, role: true } } }
                                     }
                                 }
+                            },
+                            submissions: {
+                                where: { userId: studentId },
+                                orderBy: { createdAt: 'desc' },
+                                take: 1
                             }
                         }
                     }

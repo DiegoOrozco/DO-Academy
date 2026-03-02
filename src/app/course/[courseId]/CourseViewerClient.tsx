@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, PlayCircle, FileText, Download, MessageSquare, Send, User, Menu, X, BookOpen } from "lucide-react";
 import { createPost } from "@/actions/forum";
+import DayDelivery from "@/components/DayDelivery";
 
 export default function CourseViewerClient({ course, studentId }: { course: any, studentId: string }) {
     // If course has no weeks, safely fallback so UI doesn't crash
@@ -292,6 +293,12 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
                             </div>
                         )}
                     </div>
+                    {/* Delivery Section (AI Grading) */}
+                    <DayDelivery
+                        day={activeDayData}
+                        studentId={studentId}
+                        initialSubmission={activeDayData.submissions?.[0]}
+                    />
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Resources Column */}

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": "20.x"
+    "node": ">=20.x"
   },
   "scripts": {
     "dev": "next dev",
@@ -19,6 +19,7 @@
     "purge:users:keep-prof": "tsx scripts/purge-users.ts --keep-role=ADMIN --yes"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@prisma/adapter-pg": "^7.4.2",
     "@prisma/client": "^7.4.2",
     "@types/pg": "^8.18.0",

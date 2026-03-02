@@ -15,9 +15,10 @@ model User {
   role        String       @default("STUDENT") // STUDENT or ADMIN
   createdAt   DateTime     @default(now())
   enrollments Enrollment[]
-  posts       Post[]
-  replies     Reply[]
+  posts           Post[]
+  replies         Reply[]
   videoProgresses VideoProgress[]
+  submissions     Submission[]
 }
 
 model Course {
@@ -63,6 +64,7 @@ model Day {
   resources Resource[]
   posts     Post[]
   videoProgresses VideoProgress[]
+  submissions     Submission[]
 }
 
 model Resource {
@@ -112,4 +114,22 @@ model VideoProgress {
 model SiteConfig {
   key   String @id
   value Json
+}
+
+model Submission {
+  id           String   @id @default(cuid())
+  userId       String
+  dayId        String
+  content      String   @db.Text
+  fileName     String
+  status       String   @default("PENDING") // PENDING, GRADED, FAILED
+  grade        Float?
+  feedback     Json?
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  day  Day  @relation(fields: [dayId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([dayId])
 }
