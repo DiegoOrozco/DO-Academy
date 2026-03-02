@@ -1,11 +1,12 @@
 import prisma from "@/lib/prisma";
+import { deleteStudent } from "@/actions/admin-students";
 import Link from "next/link";
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminStudentDetailPage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = await params;
-  const student = await prisma.user.findUnique({
+  let student = await prisma.user.findUnique({
     where: { id: userId },
     include: {
       enrollments: {
@@ -34,19 +35,25 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
           post: true,
         },
       },
-      videoProgresses: {
-        include: {
-          day: {
-            select: {
-              id: true,
-              title: true,
-              week: { select: { id: true, title: true, courseId: true } },
-            },
-          },
-        },
-      },
+      // Video progresses are optional. If model doesn't exist yet, this will throw;
+      // we'll catch and fallback to an empty list so page doesn't crash on prod.
     },
   });
+
+  // Best-effort fallback if VideoProgress isn't available (e.g., schema not migrated yet)
+  if (student) {
+    try {
+      const progresses = await prisma.videoProgress.findMany({
+        where: { userId },
+        include: {
+          day: { select: { id: true, title: true, week: { select: { id: true, title: true, courseId: true } } } },
+        },
+      });
+      (student as any).videoProgresses = progresses;
+    } catch {
+      (student as any).videoProgresses = [];
+    }
+  }
 
   if (!student) {
     return <div className="p-8 text-slate-400">Estudiante no encontrado.</div>;
@@ -59,7 +66,20 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
           <h1 className="text-2xl font-bold text-white">{student.name}</h1>
           <p className="text-slate-400 text-sm">{student.email}</p>
         </div>
-        <Link href="/admin/students" className="text-slate-400 hover:text-white">Volver</Link>
+        <div className="flex items-center gap-3">
+          <Link href="/admin/students" className="text-slate-400 hover:text-white">Volver</Link>
+          {student.role !== 'ADMIN' && (
+            <form action={async () => { 'use server'; await deleteStudent(student.id); }}>
+              <button
+                type="submit"
+                className="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-3 py-1.5 rounded-lg"
+                onClick={(e) => { if(!confirm('¿Eliminar este estudiante? Esta acción es irreversible.')) e.preventDefault(); }}
+              >
+                Eliminar
+              </button>
+            </form>
+          )}
+        </div>
       </div>
 
       {/* Inscripciones */}
