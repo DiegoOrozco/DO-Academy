@@ -1,7 +1,16 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Github, Linkedin, Twitter, Sparkles, Heart } from "lucide-react";
 
 export default function Footer() {
+    const pathname = usePathname();
+
+    if (pathname.startsWith("/admin") || pathname.startsWith("/course/")) {
+        return null;
+    }
+
     return (
         <footer className="bg-[#050510] border-t border-white/5 pt-12 md:pt-20 pb-10 relative overflow-hidden">
             {/* Background Glow */}

@@ -24,7 +24,7 @@ export default function Navbar({ student, logoutAction }: NavbarProps) {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    if (pathname.startsWith("/course/")) {
+    if (pathname.startsWith("/course/") || pathname.startsWith("/admin")) {
         return null;
     }
 
