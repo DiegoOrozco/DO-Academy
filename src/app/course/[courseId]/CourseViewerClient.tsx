@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, PlayCircle, FileText, Download, MessageSquare, Send, User } from "lucide-react";
 import { createPost } from "@/actions/forum";
@@ -31,6 +31,27 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
         } else {
             alert("Error publicando pregunta: " + res.error);
         }
+    };
+
+    // Progress tracking
+    const lastSentRef = useRef<number>(0);
+
+    useEffect(() => {
+        lastSentRef.current = 0;
+    }, [activeDay.id]);
+
+    const handleProgress = async (seconds: number) => {
+        const now = Date.now();
+        if (now - lastSentRef.current < 5000) return; // throttle 5s
+        lastSentRef.current = now;
+        const percent = 0; // without YT API time we approximate later
+        try {
+            await fetch("/api/progress", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ dayId: activeDay.id, seconds, percent })
+            });
+        } catch {}
     };
 
     return (
@@ -122,11 +143,23 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
                     <div className="w-full aspect-video rounded-2xl overflow-hidden glass-effect border border-[var(--color-glass-border)] shadow-2xl relative">
                         {activeDay.videoId ? (
                             <iframe
-                                src={`https://www.youtube.com/embed/${activeDay.videoId}?rel=0&modestbranding=1`}
+                                src={`https://www.youtube.com/embed/${activeDay.videoId}?rel=0&modestbranding=1&enablejsapi=1`}
                                 title="YouTube video player"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowFullScreen
                                 className="absolute top-0 left-0 w-full h-full"
+                                onLoad={() => {
+                                    // Basic time approximation via wall clock while the iframe is mounted
+                                    let start = performance.now();
+                                    let raf: number;
+                                    const tick = () => {
+                                        const elapsedSec = (performance.now() - start) / 1000;
+                                        handleProgress(elapsedSec);
+                                        raf = requestAnimationFrame(tick);
+                                    };
+                                    raf = requestAnimationFrame(tick);
+                                    return () => cancelAnimationFrame(raf);
+                                }}
                             ></iframe>
                         ) : (
                             <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-slate-500 bg-black/50">

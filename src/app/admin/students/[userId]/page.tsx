@@ -34,6 +34,17 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
           post: true,
         },
       },
+      videoProgresses: {
+        include: {
+          day: {
+            select: {
+              id: true,
+              title: true,
+              week: { select: { id: true, title: true, courseId: true } },
+            },
+          },
+        },
+      },
     },
   });
 
@@ -108,12 +119,38 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
         </div>
       </div>
 
-      {/* Placeholder de tracking de video: a integrar más adelante */}
+      {/* Progreso de Video */}
       <div className="glass-effect rounded-2xl border border-[var(--color-glass-border)] p-5">
         <h2 className="text-lg font-semibold text-white mb-2">Consumo de Video</h2>
-        <p className="text-slate-500 text-sm">Aún no registramos progreso de video. Podemos añadir un modelo `VideoProgress` con porcentaje visto por día.</p>
+        {student.videoProgresses.length === 0 ? (
+          <p className="text-slate-500 text-sm">Sin datos de reproducción aún.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-white/5 text-slate-400">
+                <tr>
+                  <th className="text-left font-semibold px-4 py-3">Semana / Día</th>
+                  <th className="text-left font-semibold px-4 py-3">Título</th>
+                  <th className="text-left font-semibold px-4 py-3">Segundos</th>
+                  <th className="text-left font-semibold px-4 py-3">% Aprox</th>
+                  <th className="text-left font-semibold px-4 py-3">Actualizado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {student.videoProgresses.map((vp) => (
+                  <tr key={vp.id} className="border-t border-[var(--color-glass-border)]">
+                    <td className="px-4 py-3 text-slate-300">{vp.day.week.title}</td>
+                    <td className="px-4 py-3 text-white">{vp.day.title}</td>
+                    <td className="px-4 py-3 text-slate-300">{vp.seconds}s</td>
+                    <td className="px-4 py-3 text-slate-300">{vp.percent ?? 0}%</td>
+                    <td className="px-4 py-3 text-slate-300">{new Date(vp.updatedAt).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
 }
-
