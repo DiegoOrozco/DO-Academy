@@ -1,4 +1,0 @@
-{
-  "buildCommand": "npm ci --prefer-offline && npm run vercel-build",
-  "git": { "deploymentEnabled": { "main": true } }
-}
