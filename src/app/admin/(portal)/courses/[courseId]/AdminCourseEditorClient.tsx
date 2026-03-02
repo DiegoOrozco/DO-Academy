@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Save, Settings, List, Plus, Trash2, GripVertical, Video, Link2, Loader2, FileText } from "lucide-react";
+import { ArrowLeft, Save, Settings, List, Plus, Trash2, GripVertical, Video, Link2, Loader2, FileText, Upload } from "lucide-react";
 import { saveCourseData } from "@/actions/admin-course";
 import { useRouter } from "next/navigation";
 
@@ -81,6 +81,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
     };
 
     const handleDeleteDay = (weekId: string, dayId: string) => {
+        if (!confirm("¿Eliminar este día?")) return;
         setCourse({
             ...course,
             weeks: course.weeks.map((w: any) => {
@@ -90,6 +91,28 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                 return w;
             })
         });
+    };
+
+    const [isUploadingFile, setIsUploadingFile] = useState<string | null>(null);
+
+    const handleUploadAssignment = async (weekId: string, dayId: string, file: File) => {
+        setIsUploadingFile(dayId);
+        try {
+            const response = await fetch(`/api/admin/upload-assignment?filename=${file.name}`, {
+                method: "POST",
+                body: file,
+            });
+
+            if (!response.ok) throw new Error("Error al subir archivo");
+
+            const blob = await response.json();
+            handleUpdateDay(weekId, dayId, "assignmentUrl", blob.url);
+        } catch (error) {
+            alert("Error al subir el archivo a Vercel Blob");
+            console.error(error);
+        } finally {
+            setIsUploadingFile(null);
+        }
     };
 
     const handleSave = async () => {
@@ -335,16 +358,42 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
 
                                                         {day.isDeliveryDay && (
                                                             <div className="flex-1 w-full animate-in fade-in slide-in-from-left-2 duration-300">
-                                                                <div className="flex items-center gap-2 mb-1">
-                                                                    <FileText size={12} className="text-blue-400" />
-                                                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">URL del Enunciado (PDF/Doc)</label>
+                                                                <div className="flex items-center justify-between mb-1">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <FileText size={12} className="text-blue-400" />
+                                                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Enunciado (PDF/Doc)</label>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <input
+                                                                            type="file"
+                                                                            id={`upload-${day.id}`}
+                                                                            className="hidden"
+                                                                            accept=".pdf,.doc,.docx"
+                                                                            onChange={(e) => {
+                                                                                const f = e.target.files?.[0];
+                                                                                if (f) handleUploadAssignment(week.id, day.id, f);
+                                                                            }}
+                                                                        />
+                                                                        <button
+                                                                            disabled={!!isUploadingFile}
+                                                                            onClick={() => document.getElementById(`upload-${day.id}`)?.click()}
+                                                                            className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--color-primary)] hover:text-white transition-colors uppercase tracking-widest bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20"
+                                                                        >
+                                                                            {isUploadingFile === day.id ? (
+                                                                                <Loader2 size={12} className="animate-spin" />
+                                                                            ) : (
+                                                                                <Upload size={12} />
+                                                                            )}
+                                                                            {isUploadingFile === day.id ? "Subiendo..." : "Subir PDF"}
+                                                                        </button>
+                                                                    </div>
                                                                 </div>
                                                                 <input
                                                                     type="text"
                                                                     value={day.assignmentUrl || ""}
                                                                     onChange={(e) => handleUpdateDay(week.id, day.id, "assignmentUrl", e.target.value)}
                                                                     className="w-full bg-[rgba(0,100,255,0.05)] border border-blue-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600"
-                                                                    placeholder="Enlace al documento del laboratorio o tarea..."
+                                                                    placeholder="Subir archivo o pegar enlace externo..."
                                                                 />
                                                             </div>
                                                         )}
