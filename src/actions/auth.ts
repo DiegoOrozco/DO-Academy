@@ -97,7 +97,7 @@ export async function loginStudent(formData: FormData) {
 export async function logoutStudent() {
     const cookieStore = await cookies();
     cookieStore.delete("student_id");
-    redirect("/login");
+    redirect("/");
 }
 
 export async function unlockCourse(courseId: string, formData: FormData) {
@@ -177,7 +177,7 @@ export async function loginAdmin(formData: FormData) {
 
 export async function logoutAdmin() {
     const cookieStore = await cookies();
-    // Remove admin session and send back to login page
+    // Remove admin session and send back to home page
     cookieStore.delete("admin_session");
-    redirect("/admin/login");
+    redirect("/");
 }
