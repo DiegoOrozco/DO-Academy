@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 export async function deleteStudent(userId: string) {
   if (!userId) return redirect("/admin/students");
@@ -14,6 +15,10 @@ export async function deleteStudent(userId: string) {
   }
 
   await prisma.user.delete({ where: { id: userId } });
+
+  revalidatePath("/admin/students");
+  revalidatePath("/admin");
+
   redirect("/admin/students");
 }
 

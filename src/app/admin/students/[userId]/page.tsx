@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
-import { deleteStudent } from "@/actions/admin-students";
 import Link from "next/link";
+import DeleteStudentButton from "./DeleteStudentButton";
 
 export const dynamic = 'force-dynamic';
 
@@ -35,12 +35,10 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
           post: true,
         },
       },
-      // Video progresses are optional. If model doesn't exist yet, this will throw;
-      // we'll catch and fallback to an empty list so page doesn't crash on prod.
     },
   });
 
-  // Best-effort fallback if VideoProgress isn't available (e.g., schema not migrated yet)
+  // Best-effort fallback if VideoProgress isn't available
   let videoProgresses: any[] = [];
   if (student) {
     try {
@@ -69,15 +67,7 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
         <div className="flex items-center gap-3">
           <Link href="/admin/students" className="text-slate-400 hover:text-white">Volver</Link>
           {student.role !== 'ADMIN' && (
-            <form action={async () => { 'use server'; await deleteStudent(student.id); }}>
-              <button
-                type="submit"
-                className="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-3 py-1.5 rounded-lg"
-                onClick={(e) => { if(!confirm('¿Eliminar este estudiante? Esta acción es irreversible.')) e.preventDefault(); }}
-              >
-                Eliminar
-              </button>
-            </form>
+            <DeleteStudentButton userId={student.id} />
           )}
         </div>
       </div>
@@ -113,9 +103,9 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
               <ul className="space-y-2">
                 {student.posts.map((p) => (
                   <li key={p.id} className="text-slate-300">
-                    <span className="text-white font-medium">{p.day.title}</span>
+                    <span className="text-white font-medium">{p.day?.title || "Día eliminado"}</span>
                     <span className="ml-2 text-xs text-slate-500">{new Date(p.createdAt).toLocaleDateString()}</span>
-                    <span className="ml-3 text-xs text-slate-500">Respuestas: {p.replies.length}</span>
+                    <span className="ml-3 text-xs text-slate-500">Respuestas: {p.replies?.length || 0}</span>
                   </li>
                 ))}
               </ul>
@@ -129,7 +119,7 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
               <ul className="space-y-2">
                 {student.replies.map((r) => (
                   <li key={r.id} className="text-slate-300">
-                    <span className="text-white font-medium">Post: {r.post.id}</span>
+                    <span className="text-white font-medium">Post: {r.post?.id || "Post eliminado"}</span>
                     <span className="ml-2 text-xs text-slate-500">{new Date(r.createdAt).toLocaleDateString()}</span>
                   </li>
                 ))}
@@ -159,8 +149,8 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
               <tbody>
                 {videoProgresses.map((vp) => (
                   <tr key={vp.id} className="border-t border-[var(--color-glass-border)]">
-                    <td className="px-4 py-3 text-slate-300">{vp.day.week.title}</td>
-                    <td className="px-4 py-3 text-white">{vp.day.title}</td>
+                    <td className="px-4 py-3 text-slate-300">{vp.day?.week?.title || "Semana"}</td>
+                    <td className="px-4 py-3 text-white">{vp.day?.title || "Día"}</td>
                     <td className="px-4 py-3 text-slate-300">{vp.seconds}s</td>
                     <td className="px-4 py-3 text-slate-300">{vp.percent ?? 0}%</td>
                     <td className="px-4 py-3 text-slate-300">{new Date(vp.updatedAt).toLocaleString()}</td>
