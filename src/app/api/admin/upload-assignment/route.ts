@@ -14,6 +14,10 @@ export async function POST(request: Request): Promise<NextResponse> {
         const { searchParams } = new URL(request.url);
         const filename = searchParams.get("filename");
 
+        // Debug: Check token (truncated for security)
+        console.log("Upload attempt for:", filename);
+        console.log("Token present:", !!process.env.BLOB_READ_WRITE_TOKEN);
+
         if (!filename) {
             return NextResponse.json({ error: "Filename is required" }, { status: 400 });
         }
@@ -24,8 +28,10 @@ export async function POST(request: Request): Promise<NextResponse> {
 
         const blob = await put(filename, request.body, {
             access: "public",
+            token: process.env.BLOB_READ_WRITE_TOKEN, // Explicitly pass it just in case
         });
 
+        console.log("Upload successful:", blob.url);
         return NextResponse.json(blob);
     } catch (error: any) {
         console.error("Upload error:", error);
