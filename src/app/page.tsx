@@ -77,7 +77,7 @@ export default async function DashboardPage() {
                 <main className="space-y-20">
                     {/* My Courses */}
                     {student && myCourses.length > 0 && (
-                        <section className="space-y-8">
+                        <section id="my-courses" className="space-y-8 scroll-mt-24">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-2xl font-black text-white flex items-center gap-3">
                                     <div className="w-1.5 h-6 bg-[var(--color-primary)] rounded-full"></div>
@@ -129,7 +129,7 @@ export default async function DashboardPage() {
                     )}
 
                     {/* Available Courses */}
-                    <section className="space-y-8">
+                    <section id="explore-courses" className="space-y-8 scroll-mt-24">
                         <div className="flex items-center justify-between">
                             <h2 className="text-2xl font-black text-white flex items-center gap-3">
                                 <div className="w-1.5 h-6 bg-blue-500/30 rounded-full"></div>

@@ -10,6 +10,10 @@
   --font-display: "Inter", sans-serif;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 :root {
   --background: var(--color-background-dark);
   --foreground: #f1f5f9;
