@@ -1,13 +1,23 @@
 import Link from "next/link";
 import { UserPlus, ArrowLeft, Mail, Key, User } from "lucide-react";
 import { registerStudent } from "@/actions/auth";
+import { getStudent } from "@/lib/student-auth";
+import { redirect } from "next/navigation";
 
 export default async function StudentRegisterPage({
     searchParams,
 }: {
-    searchParams: Promise<{ error?: string }>;
+    searchParams: Promise<{ error?: string; courseId?: string }>;
 }) {
-    const { error } = await searchParams;
+    const { error, courseId } = await searchParams;
+
+    const student = await getStudent();
+    if (student) {
+        if (courseId) {
+            redirect(`/course/${courseId}/unlock`);
+        }
+        redirect("/");
+    }
 
     return (
         <div className="min-h-screen bg-[var(--background)] flex flex-col items-center justify-center p-4 relative overflow-hidden">
@@ -45,6 +55,7 @@ export default async function StudentRegisterPage({
                     )}
 
                     <form action={registerStudent} className="space-y-5">
+                        <input type="hidden" name="courseId" value={courseId || ""} />
                         <div className="space-y-2">
                             <label className="block text-sm font-medium text-slate-300">
                                 Nombre Completo

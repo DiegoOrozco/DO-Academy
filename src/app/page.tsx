@@ -166,7 +166,7 @@ export default async function DashboardPage() {
                                                 Cerrado
                                             </div>
                                             <Link
-                                                href={student ? `/register?courseId=${course.id}` : "/register"}
+                                                href={student ? `/course/${course.id}/unlock` : `/register?courseId=${course.id}`}
                                                 className="bg-white/10 hover:bg-white/20 text-white text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl transition-all border border-white/10"
                                             >
                                                 Inscribirse

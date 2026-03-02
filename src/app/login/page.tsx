@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Lock, ArrowLeft, Mail, Key } from "lucide-react";
 import { loginStudent } from "@/actions/auth";
+import { getStudent } from "@/lib/student-auth";
+import { redirect } from "next/navigation";
 
 export default async function StudentLoginPage({
     searchParams,
@@ -8,6 +10,11 @@ export default async function StudentLoginPage({
     searchParams: Promise<{ error?: string }>;
 }) {
     const { error } = await searchParams;
+
+    const student = await getStudent();
+    if (student) {
+        redirect("/");
+    }
 
     return (
         <div className="min-h-screen bg-[var(--background)] flex flex-col items-center justify-center p-4 relative overflow-hidden">

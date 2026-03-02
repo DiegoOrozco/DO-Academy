@@ -12,6 +12,7 @@ export async function registerStudent(formData: FormData) {
     const name = formData.get("name") as string;
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
+    const courseId = formData.get("courseId") as string;
 
     if (!name || !email || !password) {
         redirect("/register?error=missing");
@@ -46,6 +47,9 @@ export async function registerStudent(formData: FormData) {
     }
 
     if (success) {
+        if (courseId) {
+            redirect(`/course/${courseId}/unlock`);
+        }
         redirect("/");
     }
 }
