@@ -108,3 +108,8 @@ model VideoProgress {
 
   @@unique([userId, dayId])
 }
+
+model SiteConfig {
+  key   String @id
+  value Json
+}

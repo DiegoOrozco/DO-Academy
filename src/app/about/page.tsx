@@ -1,20 +1,39 @@
+import { getSiteConfig } from "@/lib/config";
 import Link from "next/link";
 import {
     Github,
     Linkedin,
     Twitter,
     Instagram,
-    ExternalLink,
     Mail,
     MessageCircle,
     ArrowRight
 } from "lucide-react";
 import SocialLink from "@/components/SocialLink";
 import { getStudent } from "@/lib/student-auth";
-import { logoutStudent } from "@/actions/auth";
 
 export default async function AboutPage() {
     const student = await getStudent();
+    const aboutConfig = await getSiteConfig("about") || {
+        name: "Diego Orozco",
+        title: "Creador de Experiencias Digitales & Mentor Tech",
+        bioParagraphs: [
+            "Apasionado por la educación y el desarrollo de software. He dedicado los últimos años a construir plataformas que ayudan a miles de estudiantes a dominar nuevas tecnologías.",
+            "En DO Academy, mi misión es democratizar el acceso al conocimiento técnico de alta calidad, creando no solo cursos, sino experiencias de aprendizaje que transformen carreras."
+        ],
+        stats: [
+            { label: "Años Exp.", value: "8+" },
+            { label: "Cursos", value: "12" },
+            { label: "Estudiantes", value: "5k+" },
+            { label: "Cafés/Día", value: "3" }
+        ],
+        socialLinks: [
+            { platform: "GitHub", url: "#" },
+            { platform: "LinkedIn", url: "#" }
+        ],
+        contactEmail: "diego@doacademy.com",
+        contactWhatsapp: "#"
+    };
 
     return (
         <div className="min-h-screen bg-[var(--background)] relative overflow-hidden">
@@ -32,7 +51,7 @@ export default async function AboutPage() {
                         <div className="w-48 h-48 md:w-64 md:h-64 rounded-full border-2 border-white/10 p-2 relative z-10 bg-slate-900/50 backdrop-blur-sm overflow-hidden">
                             <img
                                 src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop"
-                                alt="Diego Orozco"
+                                alt={aboutConfig.name}
                                 className="w-full h-full object-cover rounded-full grayscale hover:grayscale-0 transition-all duration-500"
                             />
                         </div>
@@ -40,16 +59,20 @@ export default async function AboutPage() {
 
                     <div className="flex-1 text-center md:text-left">
                         <h1 className="text-4xl md:text-6xl font-black text-white mb-4 tracking-tight">
-                            Diego <span className="text-[var(--color-primary)]">Orozco</span>
+                            {aboutConfig.name?.split(" ")[0]} <span className="text-[var(--color-primary)]">{aboutConfig.name?.split(" ").slice(1).join(" ")}</span>
                         </h1>
                         <p className="text-xl md:text-2xl font-semibold text-slate-300 mb-6">
-                            Creador de Experiencias Digitales & Mentor Tech
+                            {aboutConfig.title}
                         </p>
                         <div className="flex flex-wrap justify-center md:justify-start gap-4">
-                            <SocialLink href="#" icon={<Github size={20} />} label="GitHub" />
-                            <SocialLink href="#" icon={<Linkedin size={20} />} label="LinkedIn" />
-                            <SocialLink href="#" icon={<Twitter size={20} />} label="Twitter" />
-                            <SocialLink href="#" icon={<Instagram size={20} />} label="Instagram" />
+                            {aboutConfig.socialLinks?.map((link: any, i: number) => {
+                                let Icon = Github;
+                                if (link.platform === "LinkedIn") Icon = Linkedin;
+                                if (link.platform === "Twitter") Icon = Twitter;
+                                if (link.platform === "Instagram") Icon = Instagram;
+
+                                return <SocialLink key={i} href={link.url} icon={<Icon size={20} />} label={link.platform} />;
+                            })}
                         </div>
                     </div>
                 </div>
@@ -62,15 +85,9 @@ export default async function AboutPage() {
                             Mi Historia
                         </h2>
                         <div className="space-y-4 text-lg text-slate-400 leading-relaxed font-medium">
-                            <p>
-                                Apasionado por la educación y el desarrollo de software. He dedicado los últimos años a construir plataformas que ayudan a miles de estudiantes a dominar nuevas tecnologías.
-                            </p>
-                            <p>
-                                En <span className="text-white font-bold">DO Academy</span>, mi misión es democratizar el acceso al conocimiento técnico de alta calidad, creando no solo cursos, sino experiencias de aprendizaje que transformen carreras.
-                            </p>
-                            <p>
-                                Creo firmemente que la tecnología es la herramienta más poderosa para el cambio social y personal. Mi enfoque combina el rigor técnico con una pedagogía moderna y accesible.
-                            </p>
+                            {aboutConfig.bioParagraphs?.map((p: string, i: number) => (
+                                <p key={i}>{p}</p>
+                            ))}
                         </div>
                     </div>
 
@@ -86,7 +103,7 @@ export default async function AboutPage() {
 
                         <div className="space-y-3">
                             <a
-                                href="mailto:diego@doacademy.com"
+                                href={`mailto:${aboutConfig.contactEmail}`}
                                 className="w-full flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 hover:border-blue-500/50 hover:bg-white/10 transition-all group/btn"
                             >
                                 <div className="flex items-center gap-3">
@@ -96,7 +113,7 @@ export default async function AboutPage() {
                                 <ArrowRight size={16} className="text-slate-500 group-hover/btn:translate-x-1 transition-transform" />
                             </a>
                             <a
-                                href="#"
+                                href={aboutConfig.contactWhatsapp}
                                 className="w-full flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 hover:border-emerald-500/50 hover:bg-white/10 transition-all group/btn"
                             >
                                 <div className="flex items-center gap-3">
@@ -111,10 +128,9 @@ export default async function AboutPage() {
 
                 {/* Values/Quick Facts */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <StatCard label="Años Exp." value="8+" />
-                    <StatCard label="Cursos" value="12" />
-                    <StatCard label="Estudiantes" value="5k+" />
-                    <StatCard label="Cafés/Día" value="3" />
+                    {aboutConfig.stats?.map((stat: any, i: number) => (
+                        <StatCard key={i} label={stat.label} value={stat.value} />
+                    ))}
                 </div>
             </div>
         </div>

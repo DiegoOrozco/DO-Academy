@@ -46,6 +46,7 @@ export default function Footer() {
                             <FooterLink href="#">Términos</FooterLink>
                             <FooterLink href="#">Privacidad</FooterLink>
                             <FooterLink href="#">Cookies</FooterLink>
+                            <FooterLink href="/admin">Portal Admin</FooterLink>
                         </ul>
                     </div>
                 </div>

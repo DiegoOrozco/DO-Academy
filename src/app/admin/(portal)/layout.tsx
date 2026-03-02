@@ -30,6 +30,10 @@ export default function AdminPortalLayout({ children }: { children: React.ReactN
                         <LayoutDashboard size={18} />
                         Estudiantes
                     </Link>
+                    <Link href="/admin/settings" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-300 rounded-xl hover:bg-white/5 hover:text-white transition-colors">
+                        <Settings size={18} />
+                        Ajustes del Sitio
+                    </Link>
                     <Link href="/admin/qa" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-300 rounded-xl hover:bg-white/5 hover:text-white transition-colors relative">
                         <MessageSquare size={18} />
                         Q&A Inbox

@@ -1,0 +1,236 @@
+"use client";
+
+import { useState } from "react";
+import { updateSiteConfig } from "@/actions/admin-settings";
+import { Save, User, Home, Share2, Award, Mail, MessageCircle } from "lucide-react";
+
+export default function AdminSettingsClient({ initialConfigs }: { initialConfigs: any }) {
+    const [configs, setConfigs] = useState(initialConfigs);
+    const [isSaving, setIsSaving] = useState(false);
+    const [activeTab, setActiveTab] = useState("home");
+
+    const home = configs.home || {};
+    const about = configs.about || {};
+
+    const handleSave = async (key: string, value: any) => {
+        setIsSaving(true);
+        const res = await updateSiteConfig(key, value);
+        setIsSaving(false);
+
+        if (res.success) {
+            alert("Configuración guardada correctamente.");
+        } else {
+            alert("Error al guardar: " + res.error);
+        }
+    };
+
+    const updateHome = (updates: any) => {
+        setConfigs((prev: any) => ({
+            ...prev,
+            home: { ...prev.home, ...updates }
+        }));
+    };
+
+    const updateAbout = (updates: any) => {
+        setConfigs((prev: any) => ({
+            ...prev,
+            about: { ...prev.about, ...updates }
+        }));
+    };
+
+    return (
+        <div className="space-y-8">
+            {/* Tabs */}
+            <div className="flex gap-2 p-1 bg-white/5 rounded-2xl border border-white/5 w-fit">
+                <TabButton
+                    active={activeTab === "home"}
+                    onClick={() => setActiveTab("home")}
+                    icon={<Home size={18} />}
+                    label="Inicio"
+                />
+                <TabButton
+                    active={activeTab === "about"}
+                    onClick={() => setActiveTab("about")}
+                    icon={<User size={18} />}
+                    label="Sobre Mí"
+                />
+            </div>
+
+            {activeTab === "home" && (
+                <div className="glass-effect rounded-3xl border border-white/10 p-8 space-y-6 animate-in fade-in slide-in-from-bottom-4">
+                    <div className="flex items-center gap-3 pb-6 border-b border-white/5">
+                        <Home className="text-[var(--color-primary)]" />
+                        <h2 className="text-xl font-bold text-white">Configuración de Inicio</h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-6">
+                        <FormField
+                            label="Título Hero"
+                            value={home.heroTitle}
+                            onChange={(v) => updateHome({ heroTitle: v })}
+                        />
+                        <FormField
+                            label="Subtítulo Hero"
+                            textarea
+                            value={home.heroSubtitle}
+                            onChange={(v) => updateHome({ heroSubtitle: v })}
+                        />
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                label="Texto Botón"
+                                value={home.heroButtonText}
+                                onChange={(v) => updateHome({ heroButtonText: v })}
+                            />
+                            <FormField
+                                label="Enlace Botón"
+                                value={home.heroButtonLink}
+                                onChange={(v) => updateHome({ heroButtonLink: v })}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end pt-4">
+                        <button
+                            onClick={() => handleSave("home", home)}
+                            disabled={isSaving}
+                            className="bg-[var(--color-primary)] hover:bg-blue-600 disabled:opacity-50 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-blue-500/20 flex items-center gap-2"
+                        >
+                            <Save size={18} />
+                            {isSaving ? "Guardando..." : "Guardar Cambios de Inicio"}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === "about" && (
+                <div className="glass-effect rounded-3xl border border-white/10 p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4">
+                    <div className="flex items-center gap-3 pb-6 border-b border-white/5">
+                        <User className="text-[var(--color-primary)]" />
+                        <h2 className="text-xl font-bold text-white">Configuración "Sobre Mí"</h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                            label="Nombre"
+                            value={about.name}
+                            onChange={(v) => updateAbout({ name: v })}
+                        />
+                        <FormField
+                            label="Título Profesional"
+                            value={about.title}
+                            onChange={(v) => updateAbout({ title: v })}
+                        />
+                    </div>
+
+                    <div className="space-y-4">
+                        <label className="text-sm font-bold text-slate-400 uppercase tracking-widest">Biografía (Párrafos)</label>
+                        {about.bioParagraphs?.map((p: string, i: number) => (
+                            <textarea
+                                key={i}
+                                value={p}
+                                onChange={(e) => {
+                                    const next = [...about.bioParagraphs];
+                                    next[i] = e.target.value;
+                                    updateAbout({ bioParagraphs: next });
+                                }}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-[var(--color-primary)] transition-all min-h-[100px]"
+                            />
+                        ))}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <Award size={16} /> Estadísticas
+                            </h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                {about.stats?.map((s: any, i: number) => (
+                                    <div key={i} className="space-y-2">
+                                        <input
+                                            value={s.label}
+                                            placeholder="Label"
+                                            onChange={(e) => {
+                                                const next = [...about.stats];
+                                                next[i] = { ...next[i], label: e.target.value };
+                                                updateAbout({ stats: next });
+                                            }}
+                                            className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-slate-400 font-bold"
+                                        />
+                                        <input
+                                            value={s.value}
+                                            placeholder="Valor"
+                                            onChange={(e) => {
+                                                const next = [...about.stats];
+                                                next[i] = { ...next[i], value: e.target.value };
+                                                updateAbout({ stats: next });
+                                            }}
+                                            className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-white font-bold"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <Share2 size={16} /> Redes & Contacto
+                            </h3>
+                            <div className="space-y-3">
+                                <FormField small label="Email" value={about.contactEmail} onChange={(v) => updateAbout({ contactEmail: v })} />
+                                <FormField small label="WhatsApp" value={about.contactWhatsapp} onChange={(v) => updateAbout({ contactWhatsapp: v })} />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end pt-4">
+                        <button
+                            onClick={() => handleSave("about", about)}
+                            disabled={isSaving}
+                            className="bg-[var(--color-primary)] hover:bg-blue-600 disabled:opacity-50 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-blue-500/20 flex items-center gap-2"
+                        >
+                            <Save size={18} />
+                            {isSaving ? "Guardando..." : "Guardar Cambios de Perfil"}
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function TabButton({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
+    return (
+        <button
+            onClick={onClick}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all duration-300 font-bold text-sm ${active
+                    ? "bg-[var(--color-primary)] text-white shadow-lg shadow-blue-500/20"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+        >
+            {icon}
+            {label}
+        </button>
+    );
+}
+
+function FormField({ label, value, onChange, textarea, small }: { label: string, value: string, onChange: (v: string) => void, textarea?: boolean, small?: boolean }) {
+    return (
+        <div className="space-y-2">
+            <label className={`${small ? "text-[10px]" : "text-sm"} font-bold text-slate-400 uppercase tracking-widest`}>{label}</label>
+            {textarea ? (
+                <textarea
+                    value={value || ""}
+                    onChange={(e) => onChange(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-[var(--color-primary)] transition-all min-h-[120px]"
+                />
+            ) : (
+                <input
+                    type="text"
+                    value={value || ""}
+                    onChange={(e) => onChange(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-[var(--color-primary)] transition-all"
+                />
+            )}
+        </div>
+    );
+}
