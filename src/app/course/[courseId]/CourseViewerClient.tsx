@@ -36,7 +36,7 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
     // Accurate video progress via YouTube IFrame API
     const playerRef = useRef<any>(null);
     const playerDivRef = useRef<HTMLDivElement | null>(null);
-    const pollTimerRef = useRef<NodeJS.Timer | null>(null);
+    const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const lastSentAtRef = useRef<number>(0);
     const lastSecondsRef = useRef<number>(0);
 
