@@ -3,7 +3,7 @@ import { Github, Linkedin, Twitter, Sparkles, Heart } from "lucide-react";
 
 export default function Footer() {
     return (
-        <footer className="bg-[#050510] border-t border-white/5 pt-20 pb-10 relative overflow-hidden">
+        <footer className="bg-[#050510] border-t border-white/5 pt-12 md:pt-20 pb-10 relative overflow-hidden">
             {/* Background Glow */}
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-[600px] h-[300px] bg-blue-600/10 blur-[120px] rounded-full pointer-events-none"></div>
 

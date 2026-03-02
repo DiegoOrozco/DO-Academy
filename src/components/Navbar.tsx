@@ -52,13 +52,13 @@ export default function Navbar({ student, logoutAction }: NavbarProps) {
                 : "py-6 bg-transparent"
                 }`}
         >
-            <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center">
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-2 group">
-                    <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-primary)] to-blue-400 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
-                        <span className="text-white font-black text-xl">DO</span>
+                    <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-[var(--color-primary)] to-blue-400 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
+                        <span className="text-white font-black text-lg md:text-xl">DO</span>
                     </div>
-                    <span className="text-xl font-bold tracking-tight text-white group-hover:text-blue-400 transition-colors">
+                    <span className="text-lg md:text-xl font-bold tracking-tight text-white group-hover:text-blue-400 transition-colors">
                         Academy
                     </span>
                 </Link>

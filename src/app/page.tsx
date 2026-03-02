@@ -32,14 +32,14 @@ export default async function DashboardPage() {
                 <div className="absolute top-[10%] right-[-5%] w-[40%] h-[60%] bg-blue-400 opacity-[0.05] blur-[120px] rounded-full"></div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 sm:px-10 pt-32 pb-20 relative z-10">
+            <div className="max-w-7xl mx-auto px-6 sm:px-10 pt-24 md:pt-32 pb-12 md:pb-20 relative z-10">
                 {/* Hero Section */}
-                <header className="mb-20 text-center md:text-left max-w-3xl">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-widest mb-6 animate-pulse">
+                <header className="mb-12 md:mb-20 text-center md:text-left max-w-4xl">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] md:text-xs font-bold uppercase tracking-widest mb-6 animate-pulse">
                         <Sparkles size={14} />
                         Plataforma Premium
                     </div>
-                    <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white mb-6 leading-tight">
+                    <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tighter text-white mb-6 leading-[1.1]">
                         {homeConfig.heroTitle?.split("DO Academy")[0]}
                         <span className="text-[var(--color-primary)]">
                             {homeConfig.heroTitle?.includes("DO Academy") ? "DO Academy" : ""}
@@ -47,25 +47,25 @@ export default async function DashboardPage() {
                         {homeConfig.heroTitle?.split("DO Academy")[1]}
                     </h1>
                     {student ? (
-                        <p className="text-xl text-slate-400 font-medium leading-relaxed mb-8">
-                            Hola, <span className="text-white font-bold">{student.name}</span>. 👋 Tienes <span className="text-white font-bold">{myCourses.length}</span> cursos activos. ¡Continúa tu aprendizaje hoy mismo!
+                        <p className="text-lg md:text-xl text-slate-400 font-medium leading-relaxed mb-8">
+                            Hola, <span className="text-white font-bold">{student.name}</span>. 👋 Tienes <span className="text-white font-bold">{myCourses.length}</span> cursos activos.
                         </p>
                     ) : (
                         <div className="space-y-6">
-                            <p className="text-xl text-slate-400 font-medium leading-relaxed">
+                            <p className="text-lg md:text-xl text-slate-400 font-medium leading-relaxed max-w-2xl">
                                 {homeConfig.heroSubtitle}
                             </p>
-                            <div className="flex flex-wrap justify-center md:justify-start gap-4">
+                            <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-4">
                                 <Link
                                     href={homeConfig.heroButtonLink || "/register"}
-                                    className="bg-[var(--color-primary)] hover:bg-blue-600 text-white font-black py-4 px-8 rounded-2xl transition-all shadow-xl shadow-blue-500/30 flex items-center gap-2 group"
+                                    className="bg-[var(--color-primary)] hover:bg-blue-600 text-white font-black py-4 px-8 rounded-2xl transition-all shadow-xl shadow-blue-500/30 flex items-center justify-center gap-2 group"
                                 >
                                     {homeConfig.heroButtonText || "Empezar Ahora"}
                                     <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                                 </Link>
                                 <Link
                                     href="/login"
-                                    className="bg-white/5 hover:bg-white/10 text-white font-black py-4 px-8 rounded-2xl transition-all border border-white/10"
+                                    className="bg-white/5 hover:bg-white/10 text-white font-black py-4 px-8 rounded-2xl transition-all border border-white/10 flex items-center justify-center"
                                 >
                                     Iniciar Sesión
                                 </Link>

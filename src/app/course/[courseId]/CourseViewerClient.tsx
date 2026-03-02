@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, PlayCircle, FileText, Download, MessageSquare, Send, User } from "lucide-react";
+import { ChevronLeft, PlayCircle, FileText, Download, MessageSquare, Send, User, Menu, X, BookOpen } from "lucide-react";
 import { createPost } from "@/actions/forum";
 
 export default function CourseViewerClient({ course, studentId }: { course: any, studentId: string }) {
@@ -14,6 +14,7 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
     const [activeDay, setActiveDay] = useState(initialDay);
     const [newQuestion, setNewQuestion] = useState("");
     const [isPosting, setIsPosting] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // Sync active day with fresh server props to update comments automatically
     const dayFromCourse = course.weeks?.find((w: any) => w.id === activeWeek.id)?.days?.find((d: any) => d.id === activeDay.id);
@@ -152,27 +153,52 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
     return (
         <div className="min-h-screen bg-[var(--background)] flex flex-col">
             {/* Top Navbar */}
-            <header className="sticky top-0 z-50 w-full border-b border-[var(--color-glass-border)] bg-[var(--color-background-dark)]/80 backdrop-blur-md px-6 py-4">
+            <header className="sticky top-0 z-50 w-full border-b border-[var(--color-glass-border)] bg-[var(--color-background-dark)]/80 backdrop-blur-md px-4 sm:px-6 py-4">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
                         <Link
                             href="/"
-                            className="text-slate-400 hover:text-white transition-colors flex items-center gap-2"
+                            className="text-slate-400 hover:text-white transition-colors flex items-center gap-2 flex-shrink-0"
                         >
                             <ChevronLeft size={20} />
-                            Volver al Catálogo
+                            <span className="hidden xs:block">Catálogo</span>
                         </Link>
-                        <div className="h-6 w-px bg-slate-700 mx-2"></div>
-                        <h1 className="text-xl font-bold text-white hidden sm:block">{course.title}</h1>
+                        <div className="h-6 w-px bg-slate-700 mx-1 sm:mx-2 flex-shrink-0"></div>
+                        <h1 className="text-sm sm:text-lg md:text-xl font-bold text-white truncate">{course.title}</h1>
                     </div>
+
+                    {/* Mobile Toggle Button */}
+                    <button
+                        onClick={() => setIsSidebarOpen(true)}
+                        className="lg:hidden flex items-center gap-2 bg-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/20 text-[var(--color-primary)] px-3 py-1.5 rounded-lg border border-[var(--color-primary)]/20 transition-all text-xs font-bold"
+                    >
+                        <BookOpen size={16} />
+                        <span className="hidden sm:inline">Ver Contenido</span>
+                    </button>
                 </div>
             </header>
 
-            <main className="flex-grow max-w-7xl mx-auto w-full flex flex-col lg:flex-row gap-6 p-4 sm:p-6 lg:p-8">
+            <main className="flex-grow max-w-7xl mx-auto w-full flex flex-col lg:flex-row gap-6 p-4 sm:p-6 lg:p-8 relative">
 
-                {/* Left Sidebar (Navigation) */}
-                <div className="w-full lg:w-80 flex-shrink-0 flex flex-col gap-4">
-                    <div className="glass-effect rounded-2xl overflow-hidden shadow-lg border border-[var(--color-glass-border)]">
+                {/* Mobile Sidebar Overlay (Backdrop) */}
+                {isSidebarOpen && (
+                    <div
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] lg:hidden transition-opacity"
+                        onClick={() => setIsSidebarOpen(false)}
+                    />
+                )}
+
+                {/* Left Sidebar (Navigation) - Becomes a Drawer on Mobile */}
+                <div className={`fixed inset-y-0 left-0 w-[280px] sm:w-80 bg-[var(--color-background-dark)] z-[70] lg:relative lg:z-10 lg:w-80 flex-shrink-0 flex flex-col gap-4 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${isSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
+                    }`}>
+                    <div className="lg:hidden p-4 border-b border-[var(--color-glass-border)] flex items-center justify-between">
+                        <span className="font-bold text-white uppercase tracking-widest text-xs">Contenido del Curso</span>
+                        <button onClick={() => setIsSidebarOpen(false)} className="text-slate-400 hover:text-white">
+                            <X size={20} />
+                        </button>
+                    </div>
+
+                    <div className="glass-effect rounded-none lg:rounded-2xl overflow-hidden shadow-lg border-0 lg:border border-[var(--color-glass-border)] h-full lg:h-auto flex flex-col">
                         {/* Week Selector Tabs */}
                         <div className="flex overflow-x-auto custom-scrollbar border-b border-[var(--color-glass-border)] bg-black/20">
                             {course.weeks?.map((week: any, idx: number) => (
@@ -181,9 +207,11 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
                                     onClick={() => {
                                         setActiveWeek(week);
                                         setActiveDay(week.days?.[0] || initialDay);
+                                        // On mobile, keep sidebar open to select day, or close?
+                                        // Let's keep it open so they see the days changed
                                     }}
                                     className={`flex-shrink-0 px-4 py-3 text-sm font-semibold transition-colors ${activeWeek.id === week.id
-                                        ? "active-tab"
+                                        ? "active-tab text-[var(--color-primary)] border-b-2 border-[var(--color-primary)]"
                                         : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
                                         }`}
                                 >
@@ -193,13 +221,17 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
                         </div>
 
                         {/* Days List */}
-                        <div className="flex flex-col p-2 gap-1 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                        <div className="flex flex-col p-2 gap-1 overflow-y-auto custom-scrollbar flex-grow">
                             {activeWeek.days?.map((day: any, idx: number) => {
                                 const isActive = activeDay.id === day.id;
                                 return (
                                     <button
                                         key={day.id}
-                                        onClick={() => setActiveDay(day)}
+                                        onClick={() => {
+                                            setActiveDay(day);
+                                            // Close sidebar on mobile after selecting a day
+                                            if (window.innerWidth < 1024) setIsSidebarOpen(false);
+                                        }}
                                         className={`flex items-start text-left gap-3 p-3 rounded-xl transition-all ${isActive
                                             ? "bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 text-white"
                                             : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
@@ -228,14 +260,18 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
 
                     {/* Main Content Header */}
                     <div className="mb-2">
-                        <h2 className="text-3xl font-bold text-white mb-2">{activeDay.title}</h2>
-                        <p className="text-[var(--color-secondary)] font-medium text-sm tracking-wide uppercase">
-                            {activeWeek.title}
-                        </p>
+                        <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 mb-1">
+                            <p className="text-[var(--color-secondary)] font-bold text-[10px] md:text-sm tracking-[0.2em] uppercase">
+                                {activeWeek.title}
+                            </p>
+                            <span className="hidden sm:block text-slate-700">•</span>
+                            <p className="text-slate-400 text-[10px] md:text-sm font-semibold">Día {activeWeek.days?.indexOf(activeDay) + 1}</p>
+                        </div>
+                        <h2 className="text-2xl md:text-3xl lg:text-4xl font-black text-white leading-tight">{activeDay.title}</h2>
                     </div>
 
                     {/* Video Player Embed */}
-                    <div className="w-full aspect-video rounded-2xl overflow-hidden glass-effect border border-[var(--color-glass-border)] shadow-2xl relative">
+                    <div className="w-full aspect-video rounded-2xl overflow-hidden glass-effect border border-[var(--color-glass-border)] shadow-2xl relative bg-black/40">
                         {!isMounted ? (
                             <div className="absolute top-0 left-0 w-full h-full bg-black/20 animate-pulse" />
                         ) : activeDay.videoId ? (
