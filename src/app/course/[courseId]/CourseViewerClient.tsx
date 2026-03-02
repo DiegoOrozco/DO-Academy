@@ -33,26 +33,109 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
         }
     };
 
-    // Progress tracking
-    const lastSentRef = useRef<number>(0);
+    // Accurate video progress via YouTube IFrame API
+    const playerRef = useRef<any>(null);
+    const playerDivRef = useRef<HTMLDivElement | null>(null);
+    const pollTimerRef = useRef<NodeJS.Timer | null>(null);
+    const lastSentAtRef = useRef<number>(0);
+    const lastSecondsRef = useRef<number>(0);
 
-    useEffect(() => {
-        lastSentRef.current = 0;
-    }, [activeDay.id]);
-
-    const handleProgress = async (seconds: number) => {
+    const sendProgress = async (seconds: number, percent: number | null) => {
         const now = Date.now();
-        if (now - lastSentRef.current < 5000) return; // throttle 5s
-        lastSentRef.current = now;
-        const percent = 0; // without YT API time we approximate later
+        // throttle ~4s or if almost identical second
+        if (now - lastSentAtRef.current < 4000 && Math.abs(seconds - lastSecondsRef.current) < 1) return;
+        lastSentAtRef.current = now;
+        lastSecondsRef.current = seconds;
         try {
             await fetch("/api/progress", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ dayId: activeDay.id, seconds, percent })
+                body: JSON.stringify({ dayId: activeDay.id, seconds: Math.floor(seconds), percent: percent ?? undefined })
             });
         } catch {}
     };
+
+    const startPolling = () => {
+        stopPolling();
+        pollTimerRef.current = setInterval(() => {
+            const p: any = playerRef.current;
+            if (!p || typeof p.getCurrentTime !== "function") return;
+            const sec = p.getCurrentTime() || 0;
+            const dur = p.getDuration && p.getDuration() ? p.getDuration() : 0;
+            const pct = dur > 0 ? Math.min(100, Math.round((sec / dur) * 100)) : null;
+            sendProgress(sec, pct);
+        }, 5000);
+    };
+
+    const stopPolling = () => {
+        if (pollTimerRef.current) {
+            clearInterval(pollTimerRef.current);
+            pollTimerRef.current = null;
+        }
+    };
+
+    // Load YT script and instantiate player per active day
+    useEffect(() => {
+        if (!activeDay.videoId) return;
+        let cancelled = false;
+
+        const ensureYT = () => new Promise<void>((resolve) => {
+            const w = window as any;
+            if (w.YT && w.YT.Player) return resolve();
+            // Avoid duplicate script tags
+            if (!document.getElementById("yt-iframe-api")) {
+                const tag = document.createElement("script");
+                tag.src = "https://www.youtube.com/iframe_api";
+                tag.id = "yt-iframe-api";
+                document.body.appendChild(tag);
+            }
+            const onReady = () => resolve();
+            if (!w.onYouTubeIframeAPIReady) w.onYouTubeIframeAPIReady = onReady;
+            else {
+                const prev = w.onYouTubeIframeAPIReady;
+                w.onYouTubeIframeAPIReady = () => { prev(); onReady(); };
+            }
+        });
+
+        ensureYT().then(() => {
+            if (cancelled || !playerDivRef.current) return;
+            // Destroy previous
+            try { playerRef.current?.destroy?.(); } catch {}
+            playerRef.current = new (window as any).YT.Player(playerDivRef.current, {
+                videoId: activeDay.videoId,
+                playerVars: { rel: 0, modestbranding: 1 },
+                events: {
+                    onReady: () => {
+                        startPolling();
+                    },
+                    onStateChange: (e: any) => {
+                        const YT = (window as any).YT;
+                        const p: any = playerRef.current;
+                        const sec = p?.getCurrentTime ? p.getCurrentTime() : 0;
+                        const dur = p?.getDuration ? p.getDuration() : 0;
+                        const pct = dur > 0 ? Math.min(100, Math.round((sec / dur) * 100)) : null;
+                        if (e.data === YT.PlayerState.PLAYING) {
+                            startPolling();
+                        } else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.BUFFERING) {
+                            stopPolling();
+                            sendProgress(sec, pct);
+                        } else if (e.data === YT.PlayerState.ENDED) {
+                            stopPolling();
+                            sendProgress(dur || sec, 100);
+                        }
+                    }
+                }
+            });
+        });
+
+        return () => {
+            cancelled = true;
+            stopPolling();
+            try { playerRef.current?.destroy?.(); } catch {}
+            playerRef.current = null;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeDay.id, activeDay.videoId]);
 
     return (
         <div className="min-h-screen bg-[var(--background)] flex flex-col">
@@ -142,25 +225,7 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
                     {/* Video Player Embed */}
                     <div className="w-full aspect-video rounded-2xl overflow-hidden glass-effect border border-[var(--color-glass-border)] shadow-2xl relative">
                         {activeDay.videoId ? (
-                            <iframe
-                                src={`https://www.youtube.com/embed/${activeDay.videoId}?rel=0&modestbranding=1&enablejsapi=1`}
-                                title="YouTube video player"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                                className="absolute top-0 left-0 w-full h-full"
-                                onLoad={() => {
-                                    // Basic time approximation via wall clock while the iframe is mounted
-                                    let start = performance.now();
-                                    let raf: number;
-                                    const tick = () => {
-                                        const elapsedSec = (performance.now() - start) / 1000;
-                                        handleProgress(elapsedSec);
-                                        raf = requestAnimationFrame(tick);
-                                    };
-                                    raf = requestAnimationFrame(tick);
-                                    return () => cancelAnimationFrame(raf);
-                                }}
-                            ></iframe>
+                            <div ref={playerDivRef} className="absolute top-0 left-0 w-full h-full" />
                         ) : (
                             <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-slate-500 bg-black/50">
                                 No hay video disponible
