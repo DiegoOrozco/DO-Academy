@@ -14,15 +14,24 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
+import { logoutStudent, logoutAdmin } from "@/actions/auth";
+
 interface NavbarProps {
-    student: any;
-    logoutAction: () => Promise<void>;
+    user: any;
 }
 
-export default function Navbar({ student, logoutAction }: NavbarProps) {
+export default function Navbar({ user }: NavbarProps) {
     const pathname = usePathname();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    const handleLogout = async () => {
+        if (user?.role === "ADMIN") {
+            await logoutAdmin();
+        } else {
+            await logoutStudent();
+        }
+    };
 
     if (pathname.startsWith("/course/") || pathname.startsWith("/admin")) {
         return null;
@@ -41,8 +50,12 @@ export default function Navbar({ student, logoutAction }: NavbarProps) {
         { name: "Sobre Mí", href: "/about", icon: <Info size={18} /> },
     ];
 
-    if (student) {
+    if (user?.role === "STUDENT") {
         navLinks.splice(1, 0, { name: "Mis Cursos", href: "/#my-courses", icon: <BookOpen size={18} /> });
+    }
+
+    if (user?.role === "ADMIN") {
+        navLinks.push({ name: "Panel Admin", href: "/admin", icon: <Shield size={18} /> });
     }
 
     return (
@@ -86,11 +99,13 @@ export default function Navbar({ student, logoutAction }: NavbarProps) {
 
                     <div className="w-px h-6 bg-slate-800"></div>
 
-                    {student ? (
+                    {user ? (
                         <div className="flex items-center gap-4">
                             <div className="flex flex-col items-end mr-2">
-                                <span className="text-xs font-bold text-white leading-none">{student.name}</span>
-                                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mt-1">Estudiante</span>
+                                <span className="text-xs font-bold text-white leading-none">{user.name}</span>
+                                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mt-1">
+                                    {user.role === "ADMIN" ? "Administrador" : "Estudiante"}
+                                </span>
                             </div>
                             <div className="relative group">
                                 <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 overflow-hidden cursor-pointer group-hover:border-[var(--color-primary)] transition-colors">
@@ -99,7 +114,7 @@ export default function Navbar({ student, logoutAction }: NavbarProps) {
                                 {/* Dropdown placeholder or action */}
                                 <div className="absolute right-0 top-full mt-2 w-48 py-2 bg-[#1a1a2e] border border-slate-800 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all transform translate-y-2 group-hover:translate-y-0 z-50">
                                     <button
-                                        onClick={() => logoutAction()}
+                                        onClick={() => handleLogout()}
                                         className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors font-semibold"
                                     >
                                         <LogOut size={16} />
@@ -154,11 +169,11 @@ export default function Navbar({ student, logoutAction }: NavbarProps) {
                     </div>
 
                     <div className="pt-6 border-t border-slate-800 flex flex-col gap-4">
-                        {student ? (
+                        {user ? (
                             <button
                                 onClick={() => {
                                     setIsMobileMenuOpen(false);
-                                    logoutAction();
+                                    handleLogout();
                                 }}
                                 className="flex items-center justify-center gap-3 p-4 rounded-2xl bg-red-500/10 text-red-500 font-bold border border-red-500/20"
                             >
