@@ -41,17 +41,17 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
   });
 
   // Best-effort fallback if VideoProgress isn't available (e.g., schema not migrated yet)
+  let videoProgresses: any[] = [];
   if (student) {
     try {
-      const progresses = await prisma.videoProgress.findMany({
+      videoProgresses = await prisma.videoProgress.findMany({
         where: { userId },
         include: {
           day: { select: { id: true, title: true, week: { select: { id: true, title: true, courseId: true } } } },
         },
       });
-      (student as any).videoProgresses = progresses;
     } catch {
-      (student as any).videoProgresses = [];
+      videoProgresses = [];
     }
   }
 
@@ -142,7 +142,7 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
       {/* Progreso de Video */}
       <div className="glass-effect rounded-2xl border border-[var(--color-glass-border)] p-5">
         <h2 className="text-lg font-semibold text-white mb-2">Consumo de Video</h2>
-        {student.videoProgresses.length === 0 ? (
+        {videoProgresses.length === 0 ? (
           <p className="text-slate-500 text-sm">Sin datos de reproducción aún.</p>
         ) : (
           <div className="overflow-x-auto">
@@ -157,7 +157,7 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
                 </tr>
               </thead>
               <tbody>
-                {student.videoProgresses.map((vp) => (
+                {videoProgresses.map((vp) => (
                   <tr key={vp.id} className="border-t border-[var(--color-glass-border)]">
                     <td className="px-4 py-3 text-slate-300">{vp.day.week.title}</td>
                     <td className="px-4 py-3 text-white">{vp.day.title}</td>
