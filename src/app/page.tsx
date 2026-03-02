@@ -88,7 +88,7 @@ export default async function DashboardPage() {
                                 {myCourses.map((course: any) => (
                                     <Link
                                         key={course.id}
-                                        href={`/courses/${course.id}`}
+                                        href={`/course/${course.id}`}
                                         className="group glass-effect rounded-3xl border border-white/10 overflow-hidden hover:border-[var(--color-primary)]/50 transition-all duration-500 flex flex-col h-full"
                                     >
                                         <div className="relative h-48 overflow-hidden">

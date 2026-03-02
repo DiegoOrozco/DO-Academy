@@ -17,7 +17,7 @@ export async function getStudent() {
             }
         });
 
-        if (!student || student.role !== "STUDENT") return null;
+        if (!student) return null;
         return student;
     } catch (error) {
         return null;
