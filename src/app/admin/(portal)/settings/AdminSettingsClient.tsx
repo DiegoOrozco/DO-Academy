@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { updateSiteConfig } from "@/actions/admin-settings";
 import { Save, User, Home, Share2, Award, Mail, MessageCircle } from "lucide-react";
 
@@ -8,6 +8,7 @@ export default function AdminSettingsClient({ initialConfigs }: { initialConfigs
     const [configs, setConfigs] = useState(initialConfigs);
     const [isSaving, setIsSaving] = useState(false);
     const [activeTab, setActiveTab] = useState("home");
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const home = configs.home || {};
     const about = configs.about || {};
@@ -125,6 +126,61 @@ export default function AdminSettingsClient({ initialConfigs }: { initialConfigs
                             value={about.imageUrl}
                             onChange={(v) => updateAbout({ imageUrl: v })}
                         />
+                    </div>
+
+                    {/* Uploader de imagen (convierte a Data URL y guarda en config) */}
+                    <div className="space-y-3">
+                        <label className="text-sm font-bold text-slate-400 uppercase tracking-widest">Subir Foto de Perfil</label>
+                        <div className="flex items-center gap-4 flex-wrap">
+                            {about.imageUrl && (
+                                <img
+                                    src={about.imageUrl}
+                                    alt="Preview"
+                                    className="w-20 h-20 rounded-full object-cover border border-white/10"
+                                />
+                            )}
+                            <div className="flex items-center gap-2">
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+                                        // Límite recomendado ~1.5MB para Data URL
+                                        if (file.size > 1.5 * 1024 * 1024) {
+                                            alert("La imagen es muy pesada. Usa una menor a 1.5MB o pega una URL.");
+                                            e.currentTarget.value = "";
+                                            return;
+                                        }
+                                        const reader = new FileReader();
+                                        reader.onload = () => {
+                                            const dataUrl = reader.result as string;
+                                            updateAbout({ imageUrl: dataUrl });
+                                        };
+                                        reader.readAsDataURL(file);
+                                    }}
+                                />
+                                <button
+                                    type="button"
+                                    className="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-3 py-2 rounded-lg border border-white/10"
+                                    onClick={() => fileInputRef.current?.click()}
+                                >
+                                    Seleccionar Imagen
+                                </button>
+                                {about.imageUrl && (
+                                    <button
+                                        type="button"
+                                        className="text-slate-300 hover:text-white text-sm px-3 py-2"
+                                        onClick={() => updateAbout({ imageUrl: "" })}
+                                    >
+                                        Quitar
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                        <p className="text-xs text-slate-500">Sugerencia: usa imágenes cuadradas (400x400). Si no quieres usar Data URL, pega una URL pública en el campo de arriba.</p>
                     </div>
 
                     <div className="space-y-4">
