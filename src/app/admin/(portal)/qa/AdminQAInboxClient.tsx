@@ -38,10 +38,10 @@ export default function AdminQAInboxClient({ initialQuestions }: { initialQuesti
     };
 
     return (
-        <div className="flex flex-col gap-6 h-[calc(100vh-80px)]">
+        <div className="flex flex-col gap-6 lg:h-[calc(100vh-80px)]">
             <div>
-                <h1 className="text-3xl font-bold text-white mb-2">Q&A Inbox</h1>
-                <p className="text-slate-400">Responde las dudas de tus estudiantes desde este panel centralizado.</p>
+                <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Q&A Inbox</h1>
+                <p className="text-sm md:text-base text-slate-400">Responde las dudas de tus estudiantes desde este panel centralizado.</p>
             </div>
 
             {/* Tabs */}

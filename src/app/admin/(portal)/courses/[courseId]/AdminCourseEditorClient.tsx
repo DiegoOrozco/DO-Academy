@@ -108,27 +108,27 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
     };
 
     return (
-        <div className="flex flex-col gap-6 h-[calc(100vh-80px)]">
+        <div className="flex flex-col gap-6 lg:h-[calc(100vh-80px)]">
             {/* Editor Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[var(--color-glass-border)] pb-6">
-                <div>
+                <div className="w-full sm:w-auto">
                     <Link
                         href="/admin/courses"
-                        className="inline-flex items-center gap-2 text-xs text-[var(--color-primary)] hover:text-white transition-colors mb-2 font-semibold uppercase tracking-wider"
+                        className="inline-flex items-center gap-2 text-[10px] md:text-xs text-[var(--color-primary)] hover:text-white transition-colors mb-2 font-semibold uppercase tracking-wider"
                     >
                         <ArrowLeft size={14} /> Volver a cursos
                     </Link>
-                    <h1 className="text-3xl font-bold text-white mb-1 flex items-center gap-3">
-                        Editando: {course.title}
+                    <h1 className="text-2xl md:text-3xl font-bold text-white mb-1 flex items-center gap-3 truncate">
+                        {course.title}
                     </h1>
                 </div>
                 <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className={`${isSaving ? "opacity-70 cursor-not-allowed" : ""} bg-[var(--color-primary)] hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-300 glow-accent flex items-center gap-2`}
+                    className={`${isSaving ? "opacity-70 cursor-not-allowed" : ""} w-full sm:w-auto bg-[var(--color-primary)] hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-300 glow-accent flex items-center justify-center gap-2`}
                 >
                     {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                    {isSaving ? "Guardando..." : "Guardar Cambios"}
+                    <span className="text-sm">{isSaving ? "Guardando..." : "Guardar Cambios"}</span>
                 </button>
             </div>
 

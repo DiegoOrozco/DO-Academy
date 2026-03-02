@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export default async function AdminDashboardPage() {
     const [studentCount, courseCount, pendingQuestions] = await Promise.all([
         // Distinct estudiantes con al menos una matrícula
-        prisma.enrollment.groupBy({ by: ["userId"] }).then((rows) => rows.length),
+        prisma.enrollment.groupBy({ by: ["userId"] }).then((rows: any[]) => rows.length),
         // Solo cursos publicados
         prisma.course.count({ where: { status: "published" } }),
         // Posts sin respuesta
@@ -15,8 +15,8 @@ export default async function AdminDashboardPage() {
     return (
         <div className="flex flex-col gap-8">
             <div>
-                <h1 className="text-3xl font-bold text-white mb-2">Visión General</h1>
-                <p className="text-slate-400">Bienvenido al portal de administración, Diego.</p>
+                <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Visión General</h1>
+                <p className="text-sm md:text-base text-slate-400">Bienvenido al portal de administración, Diego.</p>
             </div>
 
             {/* KPI Cards */}

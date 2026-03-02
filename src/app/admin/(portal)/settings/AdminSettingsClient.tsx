@@ -42,7 +42,7 @@ export default function AdminSettingsClient({ initialConfigs }: { initialConfigs
     return (
         <div className="space-y-8">
             {/* Tabs */}
-            <div className="flex gap-2 p-1 bg-white/5 rounded-2xl border border-white/5 w-fit">
+            <div className="flex gap-2 p-1 bg-white/5 rounded-2xl border border-white/5 w-full sm:w-fit overflow-x-auto custom-scrollbar">
                 <TabButton
                     active={activeTab === "home"}
                     onClick={() => setActiveTab("home")}
