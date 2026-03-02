@@ -7,7 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "cleanup:fakes": "tsx scripts/cleanup-fake-users.ts",
+    "cleanup:fakes:dry": "tsx scripts/cleanup-fake-users.ts --dry-run",
+    "cleanup:fakes:by-password": "tsx scripts/cleanup-fake-users.ts --by-password",
+    "purge:users:dry": "tsx scripts/purge-users.ts --dry-run --keep-role=ADMIN",
+    "purge:users": "tsx scripts/purge-users.ts --yes",
+    "purge:users:keep-prof": "tsx scripts/purge-users.ts --keep-role=ADMIN --yes"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.4.2",
