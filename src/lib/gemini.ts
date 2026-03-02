@@ -25,7 +25,14 @@ export async function gradeSubmission(fileName: string, content: string) {
 
         const result = await model.generateContent([SYSTEM_PROMPT, prompt]);
         const response = await result.response;
-        const text = response.text();
+        let text = response.text();
+
+        // Robust JSON extraction (removes markdown code blocks if present)
+        if (text.includes("```json")) {
+            text = text.split("```json")[1].split("```")[0];
+        } else if (text.includes("```")) {
+            text = text.split("```")[1].split("```")[0];
+        }
 
         return JSON.parse(text);
     } catch (error) {
