@@ -53,7 +53,7 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ dayId: activeDay.id, seconds: Math.floor(seconds), percent: percent ?? undefined })
             });
-        } catch {}
+        } catch { }
     };
 
     const startPolling = () => {
@@ -102,7 +102,7 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
             try {
                 await ensureYT();
                 if (cancelled || !playerDivRef.current) return;
-                try { playerRef.current?.destroy?.(); } catch {}
+                try { playerRef.current?.destroy?.(); } catch { }
                 playerRef.current = new (window as any).YT.Player(playerDivRef.current, {
                     videoId: activeDay.videoId,
                     playerVars: { rel: 0, modestbranding: 1 },
@@ -129,11 +129,24 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
         return () => {
             cancelled = true;
             stopPolling();
-            try { playerRef.current?.destroy?.(); } catch {}
+            try { playerRef.current?.destroy?.(); } catch { }
             playerRef.current = null;
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeDay.id, activeDay.videoId]);
+
+    // Prevent hydration mismatches with dates
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => { setIsMounted(true); }, []);
+
+    const formatDate = (date: string) => {
+        if (!isMounted) return "...";
+        try {
+            return new Date(date).toLocaleDateString();
+        } catch {
+            return "...";
+        }
+    };
 
     return (
         <div className="min-h-screen bg-[var(--background)] flex flex-col">
@@ -166,7 +179,7 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
                                     key={week.id}
                                     onClick={() => {
                                         setActiveWeek(week);
-                                        setActiveDay(week.days[0] || initialDay);
+                                        setActiveDay(week.days?.[0] || initialDay);
                                     }}
                                     className={`flex-shrink-0 px-4 py-3 text-sm font-semibold transition-colors ${activeWeek.id === week.id
                                         ? "active-tab"
@@ -303,7 +316,7 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
 
                             {/* Posts List */}
                             <div className="flex flex-col gap-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
-                                {activeDayData.posts?.length > 0 ? (
+                                {(activeDayData.posts || []).length > 0 ? (
                                     activeDayData.posts.map((post: any) => (
                                         <div key={post.id} className="glass-effect p-4 rounded-xl border border-[var(--color-glass-border)] flex gap-4">
                                             <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 flex-shrink-0 border border-slate-700">
@@ -315,13 +328,13 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
                                                         {post.user?.name || "Estudiante"}
                                                         {post.user?.role === "ADMIN" && <span className="ml-2 text-xs bg-[var(--color-primary)]/20 text-[var(--color-primary)] px-2 py-0.5 rounded-full">Profesor</span>}
                                                     </span>
-                                                    <span className="text-xs text-slate-500">{new Date(post.createdAt).toLocaleDateString()}</span>
+                                                    <span className="text-xs text-slate-500">{formatDate(post.createdAt)}</span>
                                                 </div>
                                                 <p className="text-slate-300 text-sm whitespace-pre-wrap leading-relaxed">{post.content}</p>
 
 
                                                 {/* Replies */}
-                                                {post.replies?.length > 0 && (
+                                                {(post.replies || []).length > 0 && (
                                                     <div className="mt-4 flex flex-col gap-3 pl-4 border-l-2 border-[var(--color-primary)]/30">
                                                         {post.replies.map((reply: any) => (
                                                             <div key={reply.id} className="flex gap-3 mt-1">
@@ -334,7 +347,7 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
                                                                             {reply.user?.name || "Estudiante"}
                                                                             {reply.user?.role === "ADMIN" && <span className="ml-2 text-[10px] bg-[var(--color-primary)]/20 text-[var(--color-primary)] px-1.5 py-[1px] rounded flex-inline">Profesor</span>}
                                                                         </span>
-                                                                        <span className="text-[10px] text-slate-500">{new Date(reply.createdAt).toLocaleDateString()}</span>
+                                                                        <span className="text-[10px] text-slate-500">{formatDate(reply.createdAt)}</span>
                                                                     </div>
                                                                     <p className="text-slate-400 text-sm leading-relaxed">{reply.content}</p>
                                                                 </div>

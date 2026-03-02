@@ -18,6 +18,8 @@ export async function getStudent() {
         });
 
         if (!student) return null;
+        // Defensive check: ensure enrollments is an array
+        if (!student.enrollments) (student as any).enrollments = [];
         return student;
     } catch (error) {
         return null;

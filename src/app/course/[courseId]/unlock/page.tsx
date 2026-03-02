@@ -21,7 +21,8 @@ export default async function UnlockCoursePage({
         redirect("/login");
     }
 
-    const hasAccess = student.enrollments.some(e => e.courseId === courseId);
+    const isAdmin = student.role === "ADMIN";
+    const hasAccess = isAdmin || student.enrollments.some((e: any) => e.courseId === courseId);
     if (hasAccess) {
         redirect(`/course/${courseId}`);
     }
