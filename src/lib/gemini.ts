@@ -10,20 +10,29 @@ Eres el evaluador automático de DO Academy. Tu objetivo es calificar tareas de 
 { "nota": num, "feedback_positivo": ["punto 1", "punto 2"], "mejoras": ["mejora 1", "mejora 2"], "comentario": "resumen general" }
 `;
 
-export async function gradeSubmission(fileName: string, content: string) {
+export async function gradeSubmission(fileName: string, content: string | Buffer, mimeType?: string) {
     try {
         const model = genAI.getGenerativeModel({
             model: "gemini-1.5-flash",
             generationConfig: { responseMimeType: "application/json" }
         });
 
-        const prompt = `
-        Archivo: ${fileName}
-        Contenido a evaluar:
-        ${content}
-        `;
+        const prompt = `Archivo: ${fileName}\nPor favor, evalúa esta entrega según los criterios de DO Academy.`;
 
-        const result = await model.generateContent([SYSTEM_PROMPT, prompt]);
+        const parts: any[] = [SYSTEM_PROMPT, prompt];
+
+        if (mimeType === "application/pdf") {
+            parts.push({
+                inlineData: {
+                    data: (content as Buffer).toString("base64"),
+                    mimeType: "application/pdf"
+                }
+            });
+        } else {
+            parts.push(`Contenido a evaluar:\n${content.toString()}`);
+        }
+
+        const result = await model.generateContent(parts);
         const response = await result.response;
         let text = response.text();
 

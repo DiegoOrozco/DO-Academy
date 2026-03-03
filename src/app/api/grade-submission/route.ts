@@ -18,28 +18,32 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Missing file or dayId" }, { status: 400 });
         }
 
-        const content = await file.text();
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
         const fileName = file.name;
+        const mimeType = file.type;
 
-        console.log(`Grading Request: File="${fileName}", Size=${file.size} bytes, TextLength=${content.length}`);
-        if (content.length === 0) {
-            console.warn("Warning: File content is empty!");
-        }
+        console.log(`Grading Request: File="${fileName}", Size=${file.size} bytes, MimeType=${mimeType}`);
 
         // Create initial pending submission
+        // For PDFs, we don't store the binary in the text content field
+        const dbContent = mimeType === "application/pdf"
+            ? `[PDF Document: ${fileName}]`
+            : buffer.toString("utf-8");
+
         const submission = await prisma.submission.create({
             data: {
                 userId: user.id,
                 dayId: dayId,
-                content: content,
+                content: dbContent,
                 fileName: fileName,
                 status: "PENDING",
             }
         });
 
         try {
-            // Call Gemini for grading
-            const gradingResult = await gradeSubmission(fileName, content);
+            // Call Gemini for grading (now supporting buffers)
+            const gradingResult = await gradeSubmission(fileName, buffer, mimeType);
 
             // Update submission with results
             const updatedSubmission = await prisma.submission.update({
