@@ -21,6 +21,11 @@ export async function POST(req: NextRequest) {
         const content = await file.text();
         const fileName = file.name;
 
+        console.log(`Grading Request: File="${fileName}", Size=${file.size} bytes, TextLength=${content.length}`);
+        if (content.length === 0) {
+            console.warn("Warning: File content is empty!");
+        }
+
         // Create initial pending submission
         const submission = await prisma.submission.create({
             data: {

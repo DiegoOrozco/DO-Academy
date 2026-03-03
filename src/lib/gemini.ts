@@ -27,16 +27,30 @@ export async function gradeSubmission(fileName: string, content: string) {
         const response = await result.response;
         let text = response.text();
 
-        // Robust JSON extraction (removes markdown code blocks if present)
-        if (text.includes("```json")) {
-            text = text.split("```json")[1].split("```")[0];
-        } else if (text.includes("```")) {
-            text = text.split("```")[1].split("```")[0];
-        }
+        console.log("Gemini Raw Response:", text);
 
-        return JSON.parse(text);
+        // Robust JSON extraction
+        try {
+            // First try direct parse
+            return JSON.parse(text);
+        } catch (e) {
+            // If it fails, try to extract from code blocks
+            console.log("Direct JSON parse failed, attempting extraction...");
+            if (text.includes("```json")) {
+                text = text.split("```json")[1].split("```")[0];
+            } else if (text.includes("```")) {
+                text = text.split("```")[1].split("```")[0];
+            }
+
+            try {
+                return JSON.parse(text);
+            } catch (innerError) {
+                console.error("JSON Extraction failed. Text was:", text);
+                throw innerError;
+            }
+        }
     } catch (error) {
         console.error("Error grading with Gemini:", error);
-        throw new Error("Failed to grade submission");
+        throw error;
     }
 }

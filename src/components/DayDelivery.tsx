@@ -132,7 +132,7 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                                 {isUploading ? (
                                     <>
                                         <Loader2 size={18} className="animate-spin" />
-                                        El profesor virtual de DO Academy está revisando tu código...
+                                        El profesor virtual está revisando tu código...
                                     </>
                                 ) : (
                                     "Enviar Tarea"
@@ -140,56 +140,75 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                             </button>
                         </div>
                     ) : (
-                        <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-6">
+                        <div className={`border rounded-xl p-6 ${submission.status === "FAILED" ? "bg-red-500/5 border-red-500/20" : "bg-emerald-500/5 border-emerald-500/20"}`}>
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500">
-                                        <CheckCircle2 size={24} />
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${submission.status === "FAILED" ? "bg-red-500/20 text-red-500" : "bg-emerald-500/20 text-emerald-500"}`}>
+                                        {submission.status === "FAILED" ? <AlertCircle size={24} /> : <CheckCircle2 size={24} />}
                                     </div>
                                     <div>
-                                        <h4 className="text-white font-bold">¡Tarea Calificada!</h4>
-                                        <p className="text-xs text-slate-400">Entregado el {new Date(submission.createdAt).toLocaleDateString()}</p>
+                                        <h4 className={`font-bold ${submission.status === "FAILED" ? "text-red-400" : "text-white"}`}>
+                                            {submission.status === "FAILED" ? "Error en la Calificación" : "¡Tarea Calificada!"}
+                                        </h4>
+                                        <p className="text-xs text-slate-400">
+                                            {submission.status === "FAILED"
+                                                ? "Hubo un problema procesando tu entrega. Intenta nuevamente o usa otro formato."
+                                                : `Entregado el ${new Date(submission.createdAt).toLocaleDateString()}`}
+                                        </p>
                                     </div>
                                 </div>
-                                <div className="text-center">
-                                    <span className="text-2xl font-black text-white">{submission.grade}</span>
-                                    <span className="text-xs text-slate-500 block uppercase font-bold tracking-tighter">Nota Final</span>
-                                </div>
+                                {submission.status === "GRADED" && (
+                                    <div className="text-center">
+                                        <span className="text-2xl font-black text-white">{submission.grade || "0"}</span>
+                                        <span className="text-xs text-slate-500 block uppercase font-bold tracking-tighter">Nota Final</span>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="space-y-4 mt-6">
-                                <div>
-                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Comentario del Profesor</p>
-                                    <p className="text-slate-300 text-sm leading-relaxed italic border-l-2 border-emerald-500/30 pl-4">
-                                        "{submission.feedback?.comentario}"
-                                    </p>
-                                </div>
+                            {submission.status === "GRADED" ? (
+                                <div className="space-y-4 mt-6">
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Comentario del Profesor</p>
+                                        <p className="text-slate-300 text-sm leading-relaxed italic border-l-2 border-emerald-500/30 pl-4">
+                                            "{submission.feedback?.comentario || "Sin comentarios."}"
+                                        </p>
+                                    </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="bg-black/20 p-4 rounded-lg">
-                                        <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-2">Puntos Positivos</p>
-                                        <ul className="text-xs text-slate-400 space-y-1">
-                                            {submission.feedback?.feedback_positivo?.map((item: string, i: number) => (
-                                                <li key={i} className="flex items-start gap-2">
-                                                    <span className="text-emerald-500 mt-0.5">•</span>
-                                                    {item}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                    <div className="bg-black/20 p-4 rounded-lg">
-                                        <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest mb-2">Oportunidades de Mejora</p>
-                                        <ul className="text-xs text-slate-400 space-y-1">
-                                            {submission.feedback?.mejoras?.map((item: string, i: number) => (
-                                                <li key={i} className="flex items-start gap-2">
-                                                    <span className="text-amber-500 mt-0.5">•</span>
-                                                    {item}
-                                                </li>
-                                            ))}
-                                        </ul>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="bg-black/20 p-4 rounded-lg">
+                                            <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-2">Puntos Positivos</p>
+                                            <ul className="text-xs text-slate-400 space-y-1">
+                                                {submission.feedback?.feedback_positivo?.map((item: string, i: number) => (
+                                                    <li key={i} className="flex items-start gap-2">
+                                                        <span className="text-emerald-500 mt-0.5">•</span>
+                                                        {item}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                        <div className="bg-black/20 p-4 rounded-lg">
+                                            <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest mb-2">Oportunidades de Mejora</p>
+                                            <ul className="text-xs text-slate-400 space-y-1">
+                                                {submission.feedback?.mejoras?.map((item: string, i: number) => (
+                                                    <li key={i} className="flex items-start gap-2">
+                                                        <span className="text-amber-500 mt-0.5">•</span>
+                                                        {item}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="mt-4 flex justify-end">
+                                    <button
+                                        onClick={() => setSubmission(null)}
+                                        className="text-xs text-slate-400 hover:text-white underline transition-colors"
+                                    >
+                                        Intentar subir de nuevo
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
