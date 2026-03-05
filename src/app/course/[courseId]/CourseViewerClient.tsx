@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, PlayCircle, FileText, Download, MessageSquare, Send, User, Menu, X, BookOpen } from "lucide-react";
+import { ChevronLeft, PlayCircle, FileText, Download, MessageSquare, Send, User, Menu, X, BookOpen, ChevronDown, ChevronRight } from "lucide-react";
 import { createPost } from "@/actions/forum";
 import DayDelivery from "@/components/DayDelivery";
 
@@ -199,58 +199,78 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
                         </button>
                     </div>
 
-                    <div className="glass-effect rounded-none lg:rounded-2xl overflow-hidden shadow-lg border-0 lg:border border-[var(--color-glass-border)] h-full lg:h-auto flex flex-col">
-                        {/* Week Selector Tabs */}
-                        <div className="flex overflow-x-auto custom-scrollbar border-b border-[var(--color-glass-border)] bg-black/20">
-                            {course.weeks?.map((week: any, idx: number) => (
-                                <button
-                                    key={week.id}
-                                    onClick={() => {
-                                        setActiveWeek(week);
-                                        setActiveDay(week.days?.[0] || initialDay);
-                                        // On mobile, keep sidebar open to select day, or close?
-                                        // Let's keep it open so they see the days changed
-                                    }}
-                                    className={`flex-shrink-0 px-4 py-3 text-sm font-semibold transition-colors ${activeWeek.id === week.id
-                                        ? "active-tab text-[var(--color-primary)] border-b-2 border-[var(--color-primary)]"
-                                        : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
-                                        }`}
-                                >
-                                    {`Semana ${idx + 1}`}
-                                </button>
-                            ))}
+                    <div className="glass-effect rounded-none lg:rounded-2xl overflow-hidden shadow-lg border-0 lg:border border-[var(--color-glass-border)] h-full lg:h-auto flex flex-col bg-slate-900/40">
+                        <div className="p-4 border-b border-[var(--color-glass-border)] bg-black/20">
+                            <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Contenido del Curso</h3>
                         </div>
 
-                        {/* Days List */}
-                        <div className="flex flex-col p-2 gap-1 overflow-y-auto custom-scrollbar flex-grow">
-                            {activeWeek.days?.map((day: any, idx: number) => {
-                                const isActive = activeDay.id === day.id;
+                        <div className="flex flex-col overflow-y-auto custom-scrollbar flex-grow max-h-[calc(100vh-250px)] lg:max-h-[600px]">
+                            {course.weeks?.map((week: any, wIdx: number) => {
+                                const isCurrentWeek = activeWeek.id === week.id;
                                 return (
-                                    <button
-                                        key={day.id}
-                                        onClick={() => {
-                                            setActiveDay(day);
-                                            // Close sidebar on mobile after selecting a day
-                                            if (window.innerWidth < 1024) setIsSidebarOpen(false);
-                                        }}
-                                        className={`flex items-start text-left gap-3 p-3 rounded-xl transition-all ${isActive
-                                            ? "bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 text-white"
-                                            : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
-                                            }`}
-                                    >
-                                        <div className={`mt-0.5 ${isActive ? "text-[var(--color-primary)]" : "text-slate-500"}`}>
-                                            <PlayCircle size={18} fill={isActive ? "currentColor" : "none"} />
-                                        </div>
-                                        <div>
-                                            <span className="font-semibold block leading-tight text-sm mb-1">
-                                                Día {idx + 1}
-                                            </span>
-                                            <span className="text-xs line-clamp-2 leading-snug">
-                                                {day.title}
-                                            </span>
-                                        </div>
-                                    </button>
-                                )
+                                    <div key={week.id} className="border-b border-slate-800/50 last:border-b-0">
+                                        {/* Week Header / Toggle */}
+                                        <button
+                                            onClick={() => {
+                                                setActiveWeek(week);
+                                                // If switching to a week that's not current, pick its first day
+                                                if (!isCurrentWeek) {
+                                                    setActiveDay(week.days?.[0] || initialDay);
+                                                }
+                                            }}
+                                            className={`w-full flex items-center justify-between p-4 text-left transition-all hover:bg-white/5 ${isCurrentWeek ? "bg-[var(--color-primary)]/5" : ""
+                                                }`}
+                                        >
+                                            <div className="flex flex-col gap-0.5">
+                                                <span className={`text-[10px] font-bold uppercase tracking-wider ${isCurrentWeek ? "text-[var(--color-primary)]" : "text-slate-500"
+                                                    }`}>
+                                                    Semana {wIdx + 1}
+                                                </span>
+                                                <span className={`font-bold text-sm leading-tight ${isCurrentWeek ? "text-white" : "text-slate-300"
+                                                    }`}>
+                                                    {week.title}
+                                                </span>
+                                            </div>
+                                            <div className={`${isCurrentWeek ? "text-[var(--color-primary)]" : "text-slate-600"}`}>
+                                                {isCurrentWeek ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                                            </div>
+                                        </button>
+
+                                        {/* Days List (Collapsible) */}
+                                        {isCurrentWeek && (
+                                            <div className="bg-black/20 p-2 space-y-1 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                {week.days?.map((day: any, dIdx: number) => {
+                                                    const isActive = activeDay.id === day.id;
+                                                    return (
+                                                        <button
+                                                            key={day.id}
+                                                            onClick={() => {
+                                                                setActiveDay(day);
+                                                                if (window.innerWidth < 1024) setIsSidebarOpen(false);
+                                                            }}
+                                                            className={`w-full flex items-start text-left gap-3 p-3 rounded-xl transition-all ${isActive
+                                                                ? "bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 text-white shadow-inner"
+                                                                : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                                                                }`}
+                                                        >
+                                                            <div className={`mt-0.5 ${isActive ? "text-[var(--color-primary)] shadow-glow-sm" : "text-slate-600"}`}>
+                                                                <PlayCircle size={16} fill={isActive ? "currentColor" : "none"} />
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-0.5">
+                                                                    Día {dIdx + 1}
+                                                                </span>
+                                                                <span className="text-sm font-medium line-clamp-2 leading-snug">
+                                                                    {day.title}
+                                                                </span>
+                                                            </div>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
                             })}
                         </div>
                     </div>
