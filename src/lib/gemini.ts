@@ -44,7 +44,7 @@ export async function gradeSubmission(fileName: string, content: string | Buffer
         }
 
         console.log(`AI Request for ${fileName} (${mimeType || 'text'})`);
-        const result = await model.generateContent({ contents: [{ role: 'user', parts }] });
+        const result = await model.generateContent(parts);
         const response = await result.response;
         let text = response.text();
 
