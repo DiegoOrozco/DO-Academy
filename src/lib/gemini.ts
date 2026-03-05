@@ -29,7 +29,7 @@ export async function gradeSubmission(fileName: string, content: string | Buffer
 
         const prompt = `Archivo a evaluar: ${fileName}\nPor favor, califica la entrega del estudiante.`;
 
-        const parts: any[] = [prompt];
+        const parts: any[] = [{ text: prompt }];
 
         if (mimeType === "application/pdf") {
             parts.push({
@@ -40,7 +40,7 @@ export async function gradeSubmission(fileName: string, content: string | Buffer
             });
         } else {
             // For code files, we send as text
-            parts.push(`CONTENIDO DEL ARCHIVO:\n${content.toString()}`);
+            parts.push({ text: `CONTENIDO DEL ARCHIVO:\n${content.toString()}` });
         }
 
         console.log(`AI Request for ${fileName} (${mimeType || 'text'})`);
