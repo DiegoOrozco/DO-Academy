@@ -2,7 +2,6 @@ import prisma from "@/lib/prisma";
 import Link from "next/link";
 import DeleteStudentButton from "./DeleteStudentButton";
 import ResetPasswordButton from "./ResetPasswordButton";
-import ManualVerifyButton from "./ManualVerifyButton";
 import EnrollmentManager from "./EnrollmentManager";
 import { Mail, CheckCircle2, Clock, User } from "lucide-react";
 
@@ -70,18 +69,7 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
             {student.name.charAt(0)}
           </div>
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-xl md:text-2xl font-bold text-white">{student.name}</h1>
-              {student.emailVerified ? (
-                <div className="flex items-center gap-1 text-[10px] text-green-400 font-bold bg-green-400/10 px-2 py-0.5 rounded-full uppercase tracking-widest border border-green-400/20">
-                  <CheckCircle2 size={10} /> Verificado
-                </div>
-              ) : (
-                <div className="flex items-center gap-1 text-[10px] text-amber-500 font-bold bg-amber-500/10 px-2 py-0.5 rounded-full uppercase tracking-widest border border-amber-500/20">
-                  <Clock size={10} /> Pendiente
-                </div>
-              )}
-            </div>
+            <h1 className="text-xl md:text-2xl font-bold text-white">{student.name}</h1>
             <p className="text-slate-400 text-xs md:text-sm flex items-center gap-1.5 pt-1">
               <Mail size={12} /> {student.email}
             </p>
@@ -89,7 +77,6 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
           <Link href="/admin/students" className="text-xs md:text-sm text-slate-400 hover:text-white bg-white/5 px-3 py-1.5 rounded-lg border border-white/5 transition-colors">Volver</Link>
-          <ManualVerifyButton userId={student.id} isVerified={student.emailVerified} />
           <ResetPasswordButton userId={student.id} />
           {student.role !== 'ADMIN' && (
             <DeleteStudentButton userId={student.id} />

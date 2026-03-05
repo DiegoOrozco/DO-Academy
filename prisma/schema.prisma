@@ -13,7 +13,7 @@ model User {
   name             String
   password         String       // Hashed
   role             String       @default("STUDENT") // STUDENT or ADMIN
-  emailVerified    Boolean      @default(false)
+  emailVerified    Boolean      @default(true)
   verificationToken String?      @unique
   resetToken       String?      @unique
   resetTokenExpiry DateTime?

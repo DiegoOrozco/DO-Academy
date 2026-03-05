@@ -7,8 +7,6 @@ import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 
 import bcrypt from "bcryptjs";
-import crypto from "crypto";
-import { sendVerificationEmail } from "@/lib/mail";
 
 
 export async function registerStudent(formData: FormData) {
@@ -26,28 +24,15 @@ export async function registerStudent(formData: FormData) {
         // Hash the password before saving
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Generate verification token
-        const verificationToken = crypto.randomBytes(32).toString("hex");
-
         const user = await prisma.user.create({
             data: {
                 name,
                 email,
                 password: hashedPassword,
                 role: "STUDENT",
-                verificationToken,
-                emailVerified: false,
+                emailVerified: true,
             }
         });
-
-        // Send verification email
-        try {
-            await sendVerificationEmail(email, verificationToken);
-            console.log("Verification email sent to", email);
-        } catch (emailError) {
-            console.error("Failed to send verification email:", emailError);
-            // We still proceed, admin can manual verify
-        }
 
 
         const cookieStore = await cookies();
@@ -87,11 +72,6 @@ export async function loginStudent(formData: FormData) {
             const isMatch = await bcrypt.compare(password, user.password);
 
             if (isMatch) {
-                // Check if email is verified
-                if (!user.emailVerified) {
-                    redirect("/login?error=unverified");
-                }
-
                 const cookieStore = await cookies();
                 cookieStore.set("student_id", user.id, {
                     httpOnly: true,

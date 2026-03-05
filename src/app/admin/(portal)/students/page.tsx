@@ -29,7 +29,6 @@ export default async function AdminStudentsPage() {
               <tr>
                 <th className="text-left font-semibold px-4 py-3">Nombre</th>
                 <th className="text-left font-semibold px-4 py-3">Email</th>
-                <th className="text-left font-semibold px-4 py-3">Estado</th>
                 <th className="text-left font-semibold px-4 py-3">Cursos</th>
                 <th className="text-left font-semibold px-4 py-3 text-center">Posts/Resp</th>
                 <th className="text-left font-semibold px-4 py-3 text-right">Detalle</th>
@@ -46,17 +45,6 @@ export default async function AdminStudentsPage() {
                   </td>
                   <td className="px-4 py-3 text-slate-300 whitespace-nowrap">
                     <span className="text-xs opacity-60 font-mono">{s.email}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    {s.emailVerified ? (
-                      <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full border border-green-400/20">
-                        <CheckCircle2 size={10} /> Verificado
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-                        <Clock size={10} /> Pendiente
-                      </span>
-                    )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex -space-x-2">
