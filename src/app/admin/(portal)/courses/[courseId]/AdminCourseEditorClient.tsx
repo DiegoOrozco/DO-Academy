@@ -28,7 +28,20 @@ import { CSS } from "@dnd-kit/utilities";
 
 // --- Sortable Wrapper Components ---
 
-function SortableItem({ id, children, className, handle = false }: { id: string, children: React.ReactNode, className?: string, handle?: boolean }) {
+// --- Sortable Wrapper Components ---
+import { createContext, useContext } from "react";
+
+const SortableItemContext = createContext<{
+    attributes: Record<string, any>;
+    listeners: Record<string, any> | undefined;
+    ref: (node: HTMLElement | null) => void;
+}>({
+    attributes: {},
+    listeners: undefined,
+    ref: () => { }
+});
+
+function SortableItem({ id, children, className }: { id: string, children: React.ReactNode, className?: string }) {
     const {
         attributes,
         listeners,
@@ -46,19 +59,19 @@ function SortableItem({ id, children, className, handle = false }: { id: string,
     };
 
     return (
-        <div ref={setNodeRef} style={style} className={className}>
-            {handle ? (
-                <div className="flex items-center gap-3 h-full">
-                    <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 hover:bg-white/5 rounded transition-colors group">
-                        <GripVertical size={20} className="text-slate-600 group-hover:text-slate-400" />
-                    </div>
-                    {children}
-                </div>
-            ) : (
-                <div {...attributes} {...listeners} className="h-full w-full">
-                    {children}
-                </div>
-            )}
+        <SortableItemContext.Provider value={{ attributes, listeners, ref: setNodeRef }}>
+            <div ref={setNodeRef} style={style} className={className}>
+                {children}
+            </div>
+        </SortableItemContext.Provider>
+    );
+}
+
+function DragHandle({ className, children }: { className?: string, children: React.ReactNode }) {
+    const { attributes, listeners } = useContext(SortableItemContext);
+    return (
+        <div {...attributes} {...listeners} className={`cursor-grab active:cursor-grabbing ${className || ""}`}>
+            {children}
         </div>
     );
 }
@@ -187,9 +200,6 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
             activationConstraint: {
                 distance: 5,
             },
-        }),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
         })
     );
 
@@ -421,7 +431,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                 >
                                     <div className="space-y-4">
                                         {course.weeks.map((week: any, wIndex: number) => (
-                                            <SortableItem key={week.id} id={week.id} className="glass-effect border border-[var(--color-glass-border)] rounded-2xl overflow-visible shadow-lg" handle={true}>
+                                            <SortableItem key={week.id} id={week.id} className="glass-effect border border-[var(--color-glass-border)] rounded-2xl overflow-visible shadow-lg flex flex-col w-full">
                                                 {/* Week Header */}
                                                 <div className="bg-slate-900/50 p-4 border-b border-[var(--color-glass-border)] flex items-center justify-between gap-4 w-full">
                                                     <div className="flex items-center gap-3 pr-4 border-r border-slate-800">
@@ -431,7 +441,9 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                         >
                                                             {expandedWeeks.includes(week.id) ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                                                         </button>
-                                                        <GripVertical className="text-slate-600 cursor-grab active:cursor-grabbing" size={18} />
+                                                        <DragHandle>
+                                                            <GripVertical className="text-slate-600 hover:text-slate-400 transition-colors" size={18} />
+                                                        </DragHandle>
                                                     </div>
                                                     <div className="flex items-center gap-3 flex-1">
                                                         <input
@@ -474,9 +486,9 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
 
                                                                     <div className="flex items-center gap-3 w-full pr-8">
                                                                         <div className="flex items-center gap-2">
-                                                                            <SortableItem id={`${day.id}-handle`} handle={false}>
-                                                                                <GripVertical className="text-slate-600 cursor-grab active:cursor-grabbing" size={16} />
-                                                                            </SortableItem>
+                                                                            <DragHandle>
+                                                                                <GripVertical className="text-slate-600 hover:text-slate-400 transition-colors" size={16} />
+                                                                            </DragHandle>
                                                                             <span className="text-xs font-bold text-slate-500 bg-slate-800 px-2 py-1 rounded">Día {dIndex + 1}</span>
                                                                         </div>
                                                                         <input
@@ -488,7 +500,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                         />
                                                                     </div>
 
-                                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                                                                    <div className="flex flex-col gap-4 mt-2">
                                                                         <div className="space-y-1">
                                                                             <label className="text-xs font-medium text-slate-400 flex items-center gap-1">
                                                                                 <Video size={12} /> ID de YouTube
@@ -541,7 +553,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                         </div>
                                                                     </div>
 
-                                                                    <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                                                                    <div className="pt-4 border-t border-slate-800 flex flex-col items-start gap-6">
                                                                         <label className="flex items-center gap-3 cursor-pointer group/toggle">
                                                                             <div className="relative inline-flex items-center">
                                                                                 <input
