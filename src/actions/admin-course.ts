@@ -59,7 +59,7 @@ export async function saveCourseData(courseId: string, data: any) {
 
         // Upsert Weeks and Days using Parallel Promises
         const weekPromises = data.weeks.map(async (week: any, wIndex: number) => {
-            const isNewWeek = week.id.startsWith("w");
+            const isNewWeek = week.id.startsWith("new-week");
             const finalWeekId = isNewWeek ? crypto.randomUUID() : week.id;
 
             const weekRecord = await prisma.week.upsert({
@@ -78,7 +78,7 @@ export async function saveCourseData(courseId: string, data: any) {
 
             // Handle Days for this week (Deletion already handled globally above)
             const dayPromises = week.days.map((day: any, dIndex: number) => {
-                const isNewDay = day.id.startsWith("d");
+                const isNewDay = day.id.startsWith("new-day");
                 const finalDayId = isNewDay ? crypto.randomUUID() : day.id;
 
                 return prisma.day.upsert({
