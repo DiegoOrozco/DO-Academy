@@ -65,7 +65,7 @@ export default function Footer({ user }: { user?: any }) {
 
                 <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
                     <p className="text-slate-500 text-xs font-medium flex items-center gap-1.5">
-                        © {new Date().getFullYear()} DO Academy. Hecho con <Heart size={12} className="text-red-500 fill-red-500" /> por Diego Orozco.
+                        © {new Date().getFullYear()} DO Academy.
                     </p>
                     <div className="flex gap-6 text-[10px] font-bold uppercase tracking-widest text-slate-600 italic">
                         <span>Aprende</span>

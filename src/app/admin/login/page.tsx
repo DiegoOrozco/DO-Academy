@@ -70,11 +70,6 @@ export default async function AdminLoginPage({
                             Iniciar Sesión Segura
                         </button>
                     </form>
-                    <div className="mt-4 text-center">
-                        <p className="text-xs text-slate-500">
-                            Contraseña de prueba: <strong>admin123</strong>
-                        </p>
-                    </div>
                 </div>
             </div>
         </div>

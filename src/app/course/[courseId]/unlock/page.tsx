@@ -99,11 +99,6 @@ export default async function UnlockCoursePage({
                             </button>
                         </form>
                     )}
-                    <div className="mt-4 text-center">
-                        <p className="text-xs text-slate-500">
-                            Contraseña de prueba: <strong>doacademy</strong>
-                        </p>
-                    </div>
                 </div>
             </div>
         </div>
