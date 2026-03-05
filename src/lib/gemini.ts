@@ -44,7 +44,32 @@ export async function gradeSubmission(fileName: string, content: string | Buffer
         }
 
         console.log(`AI Request for ${fileName} (${mimeType || 'text'})`);
-        const result = await model.generateContent(parts);
+
+        let result;
+        let retries = 0;
+        const maxRetries = 4; // Allow up to 4 retries for heavy traffic (Wait times: 2s, 4s, 8s, 16s = ~30s max wait)
+
+        while (retries <= maxRetries) {
+            try {
+                result = await model.generateContent(parts);
+                break; // Success, exit retry loop
+            } catch (apiError: any) {
+                const isRateLimit = apiError.message?.includes("429") || apiError.status === 429;
+
+                if (isRateLimit && retries < maxRetries) {
+                    retries++;
+                    const waitTime = Math.pow(2, retries) * 1000; // 2s, 4s, 8s, 16s
+                    console.warn(`[Anti-Crash] Quota exceeded. Retrying in ${waitTime / 1000}s (Attempt ${retries}/${maxRetries})...`);
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                } else {
+                    // Propagate other errors or if we run out of retries
+                    throw apiError;
+                }
+            }
+        }
+
+        if (!result) throw new Error("Generative API failed after max retries");
+
         const response = await result.response;
         let text = response.text();
 
