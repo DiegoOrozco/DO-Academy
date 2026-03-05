@@ -1,6 +1,10 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import DeleteStudentButton from "./DeleteStudentButton";
+import ResetPasswordButton from "./ResetPasswordButton";
+import ManualVerifyButton from "./ManualVerifyButton";
+import EnrollmentManager from "./EnrollmentManager";
+import { Mail, CheckCircle2, Clock, User } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +17,7 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
         include: {
           course: { select: { id: true, title: true, status: true } },
         },
+        orderBy: { createdAt: "desc" }
       },
       posts: {
         orderBy: { createdAt: "desc" },
@@ -60,12 +65,32 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-white">{student.name}</h1>
-          <p className="text-slate-400 text-xs md:text-sm">{student.email}</p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white text-xl font-black">
+            {student.name.charAt(0)}
+          </div>
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl md:text-2xl font-bold text-white">{student.name}</h1>
+              {student.emailVerified ? (
+                <div className="flex items-center gap-1 text-[10px] text-green-400 font-bold bg-green-400/10 px-2 py-0.5 rounded-full uppercase tracking-widest border border-green-400/20">
+                  <CheckCircle2 size={10} /> Verificado
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 text-[10px] text-amber-500 font-bold bg-amber-500/10 px-2 py-0.5 rounded-full uppercase tracking-widest border border-amber-500/20">
+                  <Clock size={10} /> Pendiente
+                </div>
+              )}
+            </div>
+            <p className="text-slate-400 text-xs md:text-sm flex items-center gap-1.5 pt-1">
+              <Mail size={12} /> {student.email}
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
           <Link href="/admin/students" className="text-xs md:text-sm text-slate-400 hover:text-white bg-white/5 px-3 py-1.5 rounded-lg border border-white/5 transition-colors">Volver</Link>
+          <ManualVerifyButton userId={student.id} isVerified={student.emailVerified} />
+          <ResetPasswordButton userId={student.id} />
           {student.role !== 'ADMIN' && (
             <DeleteStudentButton userId={student.id} />
           )}
@@ -74,20 +99,26 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
 
       {/* Inscripciones */}
       <div className="glass-effect rounded-2xl border border-[var(--color-glass-border)] p-4 md:p-5">
-        <h2 className="text-base md:text-lg font-semibold text-white mb-3">Cursos Inscritos</h2>
+        <h2 className="text-base md:text-lg font-semibold text-white mb-4">Gestión de Cursos</h2>
         {student.enrollments.length === 0 ? (
           <p className="text-slate-500 text-sm">Sin inscripciones.</p>
         ) : (
-          <ul className="list-disc pl-6 text-slate-300 text-sm md:text-base space-y-1">
+          <div className="space-y-4">
             {student.enrollments.map((e: any) => (
-              <li key={e.id}>
-                <Link href={`/admin/courses/${e.course.id}`} className="hover:underline text-white">
-                  {e.course.title}
-                </Link>
-                <span className="ml-2 text-[10px] md:text-xs text-slate-500 uppercase tracking-wider font-bold">({e.course.status})</span>
-              </li>
+              <div key={e.id} className="flex items-center justify-between p-3 bg-white/3 border border-white/5 rounded-xl hover:border-white/10 transition-all">
+                <div className="flex items-center gap-3">
+                  <div className={`w-2 h-2 rounded-full ${e.status === 'ACTIVE' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <div>
+                    <Link href={`/admin/courses/${e.course.id}`} className="hover:underline text-sm font-bold text-white">
+                      {e.course.title}
+                    </Link>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black">Inscrito el: {new Date(e.createdAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <EnrollmentManager enrollment={e} />
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </div>
 

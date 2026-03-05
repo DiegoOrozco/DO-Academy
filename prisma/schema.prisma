@@ -8,17 +8,21 @@ datasource db {
 }
 
 model User {
-  id          String       @id @default(cuid())
-  email       String       @unique
-  name        String
-  password    String       // In a real app, hashed
-  role        String       @default("STUDENT") // STUDENT or ADMIN
-  createdAt   DateTime     @default(now())
-  enrollments Enrollment[]
-  posts           Post[]
-  replies         Reply[]
-  videoProgresses VideoProgress[]
-  submissions     Submission[]
+  id               String       @id @default(cuid())
+  email            String       @unique
+  name             String
+  password         String       // Hashed
+  role             String       @default("STUDENT") // STUDENT or ADMIN
+  emailVerified    Boolean      @default(false)
+  verificationToken String?      @unique
+  resetToken       String?      @unique
+  resetTokenExpiry DateTime?
+  createdAt        DateTime     @default(now())
+  enrollments      Enrollment[]
+  posts            Post[]
+  replies          Reply[]
+  videoProgresses  VideoProgress[]
+  submissions      Submission[]
 }
 
 model Course {
@@ -37,6 +41,7 @@ model Enrollment {
   id        String   @id @default(cuid())
   userId    String
   courseId  String
+  status    String   @default("ACTIVE") // ACTIVE, INACTIVE
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
