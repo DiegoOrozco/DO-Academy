@@ -1,10 +1,67 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Save, Settings, List, Plus, Trash2, GripVertical, Video, Link2, Loader2, FileText, Upload } from "lucide-react";
+import { ArrowLeft, Save, Settings, List, Plus, Trash2, GripVertical, Video, Link2, Loader2, FileText, Upload, ChevronDown, ChevronRight } from "lucide-react";
 import { saveCourseData } from "@/actions/admin-course";
 import { useRouter } from "next/navigation";
+
+// DnD Kit Imports
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+    defaultDropAnimationSideEffects,
+} from "@dnd-kit/core";
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+    useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+// --- Sortable Wrapper Components ---
+
+function SortableItem({ id, children, className, handle = false }: { id: string, children: React.ReactNode, className?: string, handle?: boolean }) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 50 : undefined,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+        <div ref={setNodeRef} style={style} className={className}>
+            {handle ? (
+                <div className="flex items-center gap-3 h-full">
+                    <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 hover:bg-white/5 rounded transition-colors group">
+                        <GripVertical size={20} className="text-slate-600 group-hover:text-slate-400" />
+                    </div>
+                    {children}
+                </div>
+            ) : (
+                <div {...attributes} {...listeners} className="h-full w-full">
+                    {children}
+                </div>
+            )}
+        </div>
+    );
+}
 
 export default function AdminCourseEditorClient({ initialCourse }: { initialCourse: any }) {
     const router = useRouter();
@@ -115,6 +172,84 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
             console.error(error);
         } finally {
             setIsUploadingFile(null);
+        }
+    };
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 5,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (!over) return;
+
+        const activeId = active.id as string;
+        const overId = over.id as string;
+
+        if (activeId === overId) return;
+
+        // Determine if we are dragging a week or a day
+        const isActiveWeek = activeId.startsWith("w") || course.weeks.some((w: any) => w.id === activeId);
+        const isOverWeek = overId.startsWith("w") || course.weeks.some((w: any) => w.id === overId);
+
+        if (isActiveWeek) {
+            // Reordering weeks
+            const oldIndex = course.weeks.findIndex((w: any) => w.id === activeId);
+            const newIndex = course.weeks.findIndex((w: any) => w.id === overId);
+
+            if (oldIndex !== -1 && newIndex !== -1) {
+                setCourse({
+                    ...course,
+                    weeks: arrayMove(course.weeks, oldIndex, newIndex)
+                });
+            }
+        } else {
+            // Reordering days
+            let activeWeekId = "";
+            let activeDayIndex = -1;
+            let overWeekId = "";
+            let overDayIndex = -1;
+
+            course.weeks.forEach((w: any) => {
+                const dIdx = w.days.findIndex((d: any) => d.id === activeId);
+                if (dIdx !== -1) {
+                    activeWeekId = w.id;
+                    activeDayIndex = dIdx;
+                }
+
+                const oIdx = w.days.findIndex((d: any) => d.id === overId);
+                if (oIdx !== -1) {
+                    overWeekId = w.id;
+                    overDayIndex = oIdx;
+                }
+            });
+
+            // If we are dropping over a week directly (empty area of a week)
+            if (isOverWeek && !overWeekId) {
+                overWeekId = overId;
+                overDayIndex = course.weeks.find((w: any) => w.id === overId)?.days.length || 0;
+            }
+
+            if (activeWeekId && overWeekId) {
+                const newWeeks = [...course.weeks];
+                const activeWeekIdx = newWeeks.findIndex(w => w.id === activeWeekId);
+                const overWeekIdx = newWeeks.findIndex(w => w.id === overWeekId);
+
+                const [movedDay] = newWeeks[activeWeekIdx].days.splice(activeDayIndex, 1);
+                newWeeks[overWeekIdx].days.splice(overDayIndex === -1 ? newWeeks[overWeekIdx].days.length : overDayIndex, 0, movedDay);
+
+                setCourse({
+                    ...course,
+                    weeks: newWeeks
+                });
+            }
         }
     };
 
@@ -268,206 +403,224 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                 </button>
                             </div>
 
-                            <div className="space-y-4">
-                                {course.weeks.map((week: any, wIndex: number) => (
-                                    <div key={week.id} className="glass-effect border border-[var(--color-glass-border)] rounded-2xl overflow-hidden shadow-lg">
-
-                                        {/* Week Header */}
-                                        <div className="bg-slate-900/50 p-4 border-b border-[var(--color-glass-border)] flex items-center justify-between gap-4">
-                                            <div className="flex items-center gap-3 flex-1">
-                                                <GripVertical className="text-slate-600 cursor-grab" size={20} />
-                                                <input
-                                                    type="text"
-                                                    value={week.title}
-                                                    onChange={(e) => handleUpdateWeek(week.id, e.target.value)}
-                                                    className="bg-transparent border-none text-white font-bold text-lg focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] rounded px-2 w-full max-w-sm transition-all"
-                                                    placeholder="Ej. Semana 1: Introducción"
-                                                />
-                                            </div>
-                                            <button
-                                                onClick={() => handleDeleteWeek(week.id)}
-                                                className="text-slate-500 hover:text-red-400 transition-colors p-2 rounded-lg hover:bg-red-500/10"
-                                                title="Eliminar Semana"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-
-                                        {/* Days List */}
-                                        <div className="p-4 space-y-4">
-                                            {week.days.map((day: any, dIndex: number) => (
-                                                <div key={day.id} className="bg-black/30 border border-slate-700/50 rounded-xl p-4 flex flex-col gap-4 relative group">
-
-                                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button
-                                                            onClick={() => handleDeleteDay(week.id, day.id)}
-                                                            className="text-slate-500 hover:text-red-400 transition-colors"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </div>
-
-                                                    <div className="flex items-center gap-3 w-full pr-8">
-                                                        <span className="text-xs font-bold text-slate-500 bg-slate-800 px-2 py-1 rounded">Día {dIndex + 1}</span>
+                            <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={handleDragEnd}
+                            >
+                                <SortableContext
+                                    items={course.weeks.map((w: any) => w.id)}
+                                    strategy={verticalListSortingStrategy}
+                                >
+                                    <div className="space-y-4">
+                                        {course.weeks.map((week: any, wIndex: number) => (
+                                            <SortableItem key={week.id} id={week.id} className="glass-effect border border-[var(--color-glass-border)] rounded-2xl overflow-visible shadow-lg" handle={true}>
+                                                {/* Week Header */}
+                                                <div className="bg-slate-900/50 p-4 border-b border-[var(--color-glass-border)] flex items-center justify-between gap-4 w-full">
+                                                    <div className="flex items-center gap-3 flex-1">
                                                         <input
                                                             type="text"
-                                                            value={day.title}
-                                                            onChange={(e) => handleUpdateDay(week.id, day.id, "title", e.target.value)}
-                                                            className="bg-transparent border-b border-transparent text-white font-semibold focus:outline-none focus:border-[var(--color-primary)] px-1 w-full transition-all"
-                                                            placeholder="Título de la lección"
+                                                            value={week.title}
+                                                            onChange={(e) => handleUpdateWeek(week.id, e.target.value)}
+                                                            className="bg-transparent border-none text-white font-bold text-lg focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] rounded px-2 w-full max-w-sm transition-all"
+                                                            placeholder="Ej. Semana 1: Introducción"
                                                         />
                                                     </div>
+                                                    <button
+                                                        onClick={() => handleDeleteWeek(week.id)}
+                                                        className="text-slate-500 hover:text-red-400 transition-colors p-2 rounded-lg hover:bg-red-500/10"
+                                                        title="Eliminar Semana"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
 
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                                                        <div className="space-y-1">
-                                                            <label className="text-xs font-medium text-slate-400 flex items-center gap-1">
-                                                                <Video size={12} /> ID de YouTube
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                value={day.videoId || ""}
-                                                                onChange={(e) => handleUpdateDay(week.id, day.id, "videoId", e.target.value)}
-                                                                className="w-full bg-[rgba(0,0,0,0.5)] border border-slate-700/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[var(--color-primary)] transition-all"
-                                                                placeholder="Ej. dQw4w9WgXcQ"
-                                                            />
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <div className="flex items-center justify-between">
-                                                                <label className="text-xs font-medium text-slate-400 flex items-center gap-1">
-                                                                    <Link2 size={12} /> Material Adicional (Ej. GitHub, PDF)
-                                                                </label>
-                                                                <div className="flex items-center gap-2">
-                                                                    <input
-                                                                        type="file"
-                                                                        id={`upload-material-${day.id}`}
-                                                                        className="hidden"
-                                                                        accept=".pdf,.doc,.docx,.zip,.rar"
-                                                                        onChange={(e) => {
-                                                                            const f = e.target.files?.[0];
-                                                                            if (f) handleFileUpload(week.id, day.id, f, "materialUrl");
-                                                                        }}
-                                                                    />
+                                                {/* Days List */}
+                                                <div className="p-4 space-y-4">
+                                                    <SortableContext
+                                                        items={week.days.map((d: any) => d.id)}
+                                                        strategy={verticalListSortingStrategy}
+                                                    >
+                                                        {week.days.map((day: any, dIndex: number) => (
+                                                            <SortableItem key={day.id} id={day.id} className="bg-black/30 border border-slate-700/50 rounded-xl p-4 flex flex-col gap-4 relative group">
+
+                                                                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                                                                     <button
-                                                                        disabled={isUploadingFile === `${day.id}-materialUrl`}
-                                                                        onClick={() => document.getElementById(`upload-material-${day.id}`)?.click()}
-                                                                        className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--color-primary)] hover:text-white transition-colors uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20"
+                                                                        onClick={() => handleDeleteDay(week.id, day.id)}
+                                                                        className="text-slate-500 hover:text-red-400 transition-colors"
                                                                     >
-                                                                        {isUploadingFile === `${day.id}-materialUrl` ? (
-                                                                            <Loader2 size={12} className="animate-spin" />
-                                                                        ) : (
-                                                                            <Upload size={12} />
-                                                                        )}
-                                                                        {isUploadingFile === `${day.id}-materialUrl` ? "Subiendo..." : "Subir Archivo"}
+                                                                        <Trash2 size={16} />
                                                                     </button>
                                                                 </div>
-                                                            </div>
-                                                            <input
-                                                                type="text"
-                                                                value={day.materialUrl || ""}
-                                                                onChange={(e) => handleUpdateDay(week.id, day.id, "materialUrl", e.target.value)}
-                                                                className="w-full bg-[rgba(0,0,0,0.5)] border border-slate-700/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[var(--color-primary)] transition-all"
-                                                                placeholder="https://github.com/... o subir archivo"
-                                                            />
-                                                        </div>
-                                                    </div>
 
-                                                    <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                                                        <label className="flex items-center gap-3 cursor-pointer group/toggle">
-                                                            <div className="relative inline-flex items-center">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    className="sr-only peer"
-                                                                    checked={!!day.isDeliveryDay}
-                                                                    onChange={(e) => handleUpdateDay(week.id, day.id, "isDeliveryDay", e.target.checked)}
-                                                                />
-                                                                <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-primary)]"></div>
-                                                            </div>
-                                                            <span className="text-xs font-bold text-white uppercase tracking-widest group-hover/toggle:text-[var(--color-primary)] transition-colors">Es día de entrega</span>
-                                                        </label>
-
-                                                        {day.isDeliveryDay && (
-                                                            <div className="flex-1 w-full animate-in fade-in slide-in-from-left-2 duration-300">
-                                                                <div className="flex items-center justify-between mb-1">
+                                                                <div className="flex items-center gap-3 w-full pr-8">
                                                                     <div className="flex items-center gap-2">
-                                                                        <FileText size={12} className="text-blue-400" />
-                                                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Enunciado (PDF/Doc)</label>
+                                                                        <SortableItem id={`${day.id}-handle`} handle={false}>
+                                                                            <GripVertical className="text-slate-600 cursor-grab active:cursor-grabbing" size={16} />
+                                                                        </SortableItem>
+                                                                        <span className="text-xs font-bold text-slate-500 bg-slate-800 px-2 py-1 rounded">Día {dIndex + 1}</span>
                                                                     </div>
-                                                                    <div className="flex items-center gap-2">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={day.title}
+                                                                        onChange={(e) => handleUpdateDay(week.id, day.id, "title", e.target.value)}
+                                                                        className="bg-transparent border-b border-transparent text-white font-semibold focus:outline-none focus:border-[var(--color-primary)] px-1 w-full transition-all"
+                                                                        placeholder="Título de la lección"
+                                                                    />
+                                                                </div>
+
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                                                                    <div className="space-y-1">
+                                                                        <label className="text-xs font-medium text-slate-400 flex items-center gap-1">
+                                                                            <Video size={12} /> ID de YouTube
+                                                                        </label>
                                                                         <input
-                                                                            type="file"
-                                                                            id={`upload-${day.id}`}
-                                                                            className="hidden"
-                                                                            accept=".pdf,.doc,.docx"
-                                                                            onChange={(e) => {
-                                                                                const f = e.target.files?.[0];
-                                                                                if (f) handleFileUpload(week.id, day.id, f, "assignmentUrl");
-                                                                            }}
+                                                                            type="text"
+                                                                            value={day.videoId || ""}
+                                                                            onChange={(e) => handleUpdateDay(week.id, day.id, "videoId", e.target.value)}
+                                                                            className="w-full bg-[rgba(0,0,0,0.5)] border border-slate-700/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[var(--color-primary)] transition-all"
+                                                                            placeholder="Ej. dQw4w9WgXcQ"
                                                                         />
-                                                                        <button
-                                                                            disabled={isUploadingFile === `${day.id}-assignmentUrl`}
-                                                                            onClick={() => document.getElementById(`upload-${day.id}`)?.click()}
-                                                                            className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--color-primary)] hover:text-white transition-colors uppercase tracking-widest bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20"
-                                                                        >
-                                                                            {isUploadingFile === `${day.id}-assignmentUrl` ? (
-                                                                                <Loader2 size={12} className="animate-spin" />
-                                                                            ) : (
-                                                                                <Upload size={12} />
-                                                                            )}
-                                                                            {isUploadingFile === `${day.id}-assignmentUrl` ? "Subiendo..." : "Subir PDF"}
-                                                                        </button>
+                                                                    </div>
+                                                                    <div className="space-y-1">
+                                                                        <div className="flex items-center justify-between">
+                                                                            <label className="text-xs font-medium text-slate-400 flex items-center gap-1">
+                                                                                <Link2 size={12} /> Material Adicional (Ej. GitHub, PDF)
+                                                                            </label>
+                                                                            <div className="flex items-center gap-2">
+                                                                                <input
+                                                                                    type="file"
+                                                                                    id={`upload-material-${day.id}`}
+                                                                                    className="hidden"
+                                                                                    accept=".pdf,.doc,.docx,.zip,.rar"
+                                                                                    onChange={(e) => {
+                                                                                        const f = e.target.files?.[0];
+                                                                                        if (f) handleFileUpload(week.id, day.id, f, "materialUrl");
+                                                                                    }}
+                                                                                />
+                                                                                <button
+                                                                                    disabled={isUploadingFile === `${day.id}-materialUrl`}
+                                                                                    onClick={() => document.getElementById(`upload-material-${day.id}`)?.click()}
+                                                                                    className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--color-primary)] hover:text-white transition-colors uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20"
+                                                                                >
+                                                                                    {isUploadingFile === `${day.id}-materialUrl` ? (
+                                                                                        <Loader2 size={12} className="animate-spin" />
+                                                                                    ) : (
+                                                                                        <Upload size={12} />
+                                                                                    )}
+                                                                                    {isUploadingFile === `${day.id}-materialUrl` ? "Subiendo..." : "Subir Archivo"}
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                        <input
+                                                                            type="text"
+                                                                            value={day.materialUrl || ""}
+                                                                            onChange={(e) => handleUpdateDay(week.id, day.id, "materialUrl", e.target.value)}
+                                                                            className="w-full bg-[rgba(0,0,0,0.5)] border border-slate-700/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[var(--color-primary)] transition-all"
+                                                                            placeholder="https://github.com/... o subir archivo"
+                                                                        />
                                                                     </div>
                                                                 </div>
-                                                                <input
-                                                                    type="text"
-                                                                    value={day.assignmentUrl || ""}
-                                                                    onChange={(e) => handleUpdateDay(week.id, day.id, "assignmentUrl", e.target.value)}
-                                                                    className="w-full bg-[rgba(0,100,255,0.05)] border border-blue-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600 mb-4"
-                                                                    placeholder="Subir archivo o pegar enlace externo..."
-                                                                />
 
-                                                                <div className="space-y-2">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <Settings size={12} className="text-orange-400" />
-                                                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nivel de Exigencia (IA)</label>
-                                                                    </div>
-                                                                    <select
-                                                                        value={day.gradingSeverity || 1}
-                                                                        onChange={(e) => handleUpdateDay(week.id, day.id, "gradingSeverity", parseInt(e.target.value))}
-                                                                        className="w-full bg-[rgba(255,150,0,0.05)] border border-orange-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition-all"
-                                                                    >
-                                                                        <option value={1}>Nivel 1: Introductorio (Enfoque en lógica)</option>
-                                                                        <option value={2}>Nivel 2: Estándar (Reviso nomenclatura básica)</option>
-                                                                        <option value={3}>Nivel 3: Avanzado (Exijo consistencia de estilo)</option>
-                                                                        <option value={4}>Nivel 4: Profesional (PEP8 / SQL Normalizado)</option>
-                                                                        <option value={5}>Nivel 5: Élite (Cero redundancia y detección IA)</option>
-                                                                    </select>
+                                                                <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                                                                    <label className="flex items-center gap-3 cursor-pointer group/toggle">
+                                                                        <div className="relative inline-flex items-center">
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                className="sr-only peer"
+                                                                                checked={!!day.isDeliveryDay}
+                                                                                onChange={(e) => handleUpdateDay(week.id, day.id, "isDeliveryDay", e.target.checked)}
+                                                                            />
+                                                                            <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-primary)]"></div>
+                                                                        </div>
+                                                                        <span className="text-xs font-bold text-white uppercase tracking-widest group-hover/toggle:text-[var(--color-primary)] transition-colors">Es día de entrega</span>
+                                                                    </label>
+
+                                                                    {day.isDeliveryDay && (
+                                                                        <div className="flex-1 w-full animate-in fade-in slide-in-from-left-2 duration-300">
+                                                                            <div className="flex items-center justify-between mb-1">
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <FileText size={12} className="text-blue-400" />
+                                                                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Enunciado (PDF/Doc)</label>
+                                                                                </div>
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <input
+                                                                                        type="file"
+                                                                                        id={`upload-${day.id}`}
+                                                                                        className="hidden"
+                                                                                        accept=".pdf,.doc,.docx"
+                                                                                        onChange={(e) => {
+                                                                                            const f = e.target.files?.[0];
+                                                                                            if (f) handleFileUpload(week.id, day.id, f, "assignmentUrl");
+                                                                                        }}
+                                                                                    />
+                                                                                    <button
+                                                                                        disabled={isUploadingFile === `${day.id}-assignmentUrl`}
+                                                                                        onClick={() => document.getElementById(`upload-${day.id}`)?.click()}
+                                                                                        className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--color-primary)] hover:text-white transition-colors uppercase tracking-widest bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20"
+                                                                                    >
+                                                                                        {isUploadingFile === `${day.id}-assignmentUrl` ? (
+                                                                                            <Loader2 size={12} className="animate-spin" />
+                                                                                        ) : (
+                                                                                            <Upload size={12} />
+                                                                                        )}
+                                                                                        {isUploadingFile === `${day.id}-assignmentUrl` ? "Subiendo..." : "Subir PDF"}
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                            <input
+                                                                                type="text"
+                                                                                value={day.assignmentUrl || ""}
+                                                                                onChange={(e) => handleUpdateDay(week.id, day.id, "assignmentUrl", e.target.value)}
+                                                                                className="w-full bg-[rgba(0,100,255,0.05)] border border-blue-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600 mb-4"
+                                                                                placeholder="Subir archivo o pegar enlace externo..."
+                                                                            />
+
+                                                                            <div className="space-y-2">
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <Settings size={12} className="text-orange-400" />
+                                                                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nivel de Exigencia (IA)</label>
+                                                                                </div>
+                                                                                <select
+                                                                                    value={day.gradingSeverity || 1}
+                                                                                    onChange={(e) => handleUpdateDay(week.id, day.id, "gradingSeverity", parseInt(e.target.value))}
+                                                                                    className="w-full bg-[rgba(255,150,0,0.05)] border border-orange-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition-all"
+                                                                                >
+                                                                                    <option value={1}>Nivel 1: Introductorio (Enfoque en lógica)</option>
+                                                                                    <option value={2}>Nivel 2: Estándar (Reviso nomenclatura básica)</option>
+                                                                                    <option value={3}>Nivel 3: Avanzado (Exijo consistencia de estilo)</option>
+                                                                                    <option value={4}>Nivel 4: Profesional (PEP8 / SQL Normalizado)</option>
+                                                                                    <option value={5}>Nivel 5: Élite (Cero redundancia y detección IA)</option>
+                                                                                </select>
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                                            </SortableItem>
+                                                        ))}
+                                                    </SortableContext>
+
+                                                    {/* Add Day Button */}
+                                                    <button
+                                                        onClick={() => handleAddDay(week.id)}
+                                                        className="w-full py-3 border border-dashed border-slate-600 rounded-xl text-slate-400 text-sm font-medium hover:text-white hover:border-[var(--color-primary)] hover:bg-[var(--color-primary)]/5 transition-all flex items-center justify-center gap-2"
+                                                    >
+                                                        <Plus size={16} /> Agregar nuevo día
+                                                    </button>
                                                 </div>
-                                            ))}
+                                            </SortableItem>
+                                        ))}
 
-                                            {/* Add Day Button */}
-                                            <button
-                                                onClick={() => handleAddDay(week.id)}
-                                                className="w-full py-3 border border-dashed border-slate-600 rounded-xl text-slate-400 text-sm font-medium hover:text-white hover:border-[var(--color-primary)] hover:bg-[var(--color-primary)]/5 transition-all flex items-center justify-center gap-2"
-                                            >
-                                                <Plus size={16} /> Agregar nuevo día
-                                            </button>
-                                        </div>
-
+                                        {course.weeks.length === 0 && (
+                                            <div className="p-10 border border-dashed border-slate-700 rounded-2xl flex flex-col items-center justify-center text-center">
+                                                <List className="w-12 h-12 text-slate-600 mb-4" />
+                                                <h3 className="text-lg font-bold text-slate-300 mb-2">Currículo Vacío</h3>
+                                                <p className="text-slate-500 max-w-sm mb-6">Comienza construyendo tu temario agregando una nueva semana.</p>
+                                            </div>
+                                        )}
                                     </div>
-                                ))}
-
-                                {course.weeks.length === 0 && (
-                                    <div className="p-10 border border-dashed border-slate-700 rounded-2xl flex flex-col items-center justify-center text-center">
-                                        <List className="w-12 h-12 text-slate-600 mb-4" />
-                                        <h3 className="text-lg font-bold text-slate-300 mb-2">Currículo Vacío</h3>
-                                        <p className="text-slate-500 max-w-sm mb-6">Comienza construyendo tu temario agregando una nueva semana.</p>
-                                    </div>
-                                )}
-                            </div>
+                                </SortableContext>
+                            </DndContext>
                         </div>
                     )}
 

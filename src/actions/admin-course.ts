@@ -18,7 +18,7 @@ export async function saveCourseData(courseId: string, data: any) {
         });
 
         // 2. We'll handle Weeks and Days manually to preserve IDs if possible
-        // Get all existing weeks for this course to calculate what to delete
+        // Get all existing weeks and days for this course to calculate what to delete
         const existingWeeks = await prisma.week.findMany({
             where: { courseId },
             select: { id: true }
@@ -27,14 +27,36 @@ export async function saveCourseData(courseId: string, data: any) {
         const incomingWeekIds = data.weeks.map((w: any) => w.id);
         const weeksToDelete = existingWeeks.filter((w: any) => !incomingWeekIds.includes(w.id)).map((w: any) => w.id);
 
-        // Delete removed weeks (Days will cascade if schema has onDelete: Cascade, if not we ignore for MVP)
+        // Delete removed weeks (Days will cascade if schema has onDelete: Cascade)
         if (weeksToDelete.length > 0) {
             await prisma.week.deleteMany({
                 where: { id: { in: weeksToDelete } }
             });
         }
 
-        // Upsert Weeks and Days
+        // --- NEW: Global Day Deletion Protection ---
+        // To allow moving days between weeks without deleting them, 
+        // we find all days that are NOT in ANY of the incoming weeks.
+        const allExistingDays = await prisma.day.findMany({
+            where: { week: { courseId } },
+            select: { id: true }
+        });
+
+        const allIncomingDayIds: string[] = [];
+        data.weeks.forEach((w: any) => {
+            w.days.forEach((d: any) => allIncomingDayIds.push(d.id));
+        });
+
+        const daysToDeleteGlobal = allExistingDays
+            .filter((d: any) => !allIncomingDayIds.includes(d.id))
+            .map((d: any) => d.id);
+
+        if (daysToDeleteGlobal.length > 0) {
+            await prisma.day.deleteMany({
+                where: { id: { in: daysToDeleteGlobal } }
+            });
+        }
+
         // Upsert Weeks and Days using Parallel Promises
         const weekPromises = data.weeks.map(async (week: any, wIndex: number) => {
             const isNewWeek = week.id.startsWith("w");
@@ -54,21 +76,7 @@ export async function saveCourseData(courseId: string, data: any) {
                 }
             });
 
-            // Handle Days for this week
-            const existingDays = await prisma.day.findMany({
-                where: { weekId: weekRecord.id },
-                select: { id: true }
-            });
-
-            const incomingDayIds = week.days.map((d: any) => d.id);
-            const daysToDelete = existingDays.filter((d: any) => !incomingDayIds.includes(d.id)).map((d: any) => d.id);
-
-            if (daysToDelete.length > 0) {
-                await prisma.day.deleteMany({
-                    where: { id: { in: daysToDelete } }
-                });
-            }
-
+            // Handle Days for this week (Deletion already handled globally above)
             const dayPromises = week.days.map((day: any, dIndex: number) => {
                 const isNewDay = day.id.startsWith("d");
                 const finalDayId = isNewDay ? crypto.randomUUID() : day.id;
@@ -82,7 +90,8 @@ export async function saveCourseData(courseId: string, data: any) {
                         isDeliveryDay: !!day.isDeliveryDay,
                         assignmentUrl: day.assignmentUrl || null,
                         gradingSeverity: day.gradingSeverity || 1,
-                        order: dIndex
+                        order: dIndex,
+                        weekId: weekRecord.id // This handles moving the day to a different week!
                     },
                     create: {
                         id: finalDayId,
