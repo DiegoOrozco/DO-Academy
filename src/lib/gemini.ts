@@ -20,7 +20,7 @@ SIEMPRE debes responder en este formato JSON exacto, sin texto adicional:
 export async function gradeSubmission(fileName: string, content: string | Buffer, mimeType?: string) {
     try {
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash",
+            model: "gemini-2.5-flash",
             systemInstruction: SYSTEM_PROMPT,
             generationConfig: {
                 responseMimeType: "application/json"

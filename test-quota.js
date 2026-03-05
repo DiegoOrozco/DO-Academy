@@ -3,17 +3,20 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || "AIzaSyAXy
 
 async function run() {
   const models = [
-    "gemini-1.5-pro",
-    "gemini-pro",
-    "gemini-1.5-pro-latest"
+    "gemini-2.5-flash",
+    "gemini-flash-latest",
+    "gemini-2.5-flash-lite", 
+    "gemini-3.1-flash-preview",
+    "gemini-2.0-flash-lite-001"
   ];
 
   for (const modelId of models) {
     try {
+      console.log(`Testing ${modelId}...`);
       const model = genAI.getGenerativeModel({ model: modelId });
-      const result = await model.generateContent("Hola");
-      console.log(`Success with ${modelId}:`, result.response.text());
-      return; // Exit on first success
+      const result = await model.generateContent("Responde solo 'OK'");
+      console.log(`Success with ${modelId}:`, result.response.text().trim());
+      return;
     } catch (e) {
       console.error(`Failed with ${modelId}:`, e.message);
     }
