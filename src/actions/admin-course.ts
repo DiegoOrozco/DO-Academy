@@ -81,6 +81,7 @@ export async function saveCourseData(courseId: string, data: any) {
                         materialUrl: day.materialUrl || null,
                         isDeliveryDay: !!day.isDeliveryDay,
                         assignmentUrl: day.assignmentUrl || null,
+                        gradingSeverity: day.gradingSeverity || 1,
                         order: dIndex
                     },
                     create: {
@@ -90,6 +91,7 @@ export async function saveCourseData(courseId: string, data: any) {
                         materialUrl: day.materialUrl || null,
                         isDeliveryDay: !!day.isDeliveryDay,
                         assignmentUrl: day.assignmentUrl || null,
+                        gradingSeverity: day.gradingSeverity || 1,
                         order: dIndex,
                         weekId: weekRecord.id
                     }

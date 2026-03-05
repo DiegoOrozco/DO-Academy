@@ -17,17 +17,27 @@ SIEMPRE debes responder en este formato JSON exacto, sin texto adicional:
 }
 `;
 
-export async function gradeSubmission(fileName: string, content: string | Buffer, mimeType?: string) {
+export async function gradeSubmission(fileName: string, content: string | Buffer, mimeType?: string, severity: number = 1) {
     try {
+        const severityPrompts: Record<number, string> = {
+            1: "NIVEL 1 (Introductorio): Enfócate puramente en que la lógica funcione. Sé muy alentador y motivador. Ignora errores menores de estilo o nombres de variables.",
+            2: "NIVEL 2 (Estándar): Revisa la lógica y empieza a sugerir mejores nombres de variables si son muy genéricos (ej. 'a', 'val').",
+            3: "NIVEL 3 (Avanzado): Exige CONSISTENCIA. No permitas mezcla de snake_case y camelCase en el mismo archivo. El estilo debe ser uniforme.",
+            4: "NIVEL 4 (Profesional): Exige estándares industriales (PEP8 para Python, Normalización para SQL). Penaliza fuertemente el código repetido y la falta de modularización.",
+            5: "NIVEL 5 (Élite): Máxima exigencia. Evalúa eficiencia algorítmica, redundancia mínima y detecta si el código parece generado por IA (patrones demasiado perfectos o comentarios genéricos de GPT). Sé extremadamente crítico."
+        };
+
+        const currentSeverityPrompt = severityPrompts[severity as keyof typeof severityPrompts] || severityPrompts[1];
+
         const model = genAI.getGenerativeModel({
             model: "gemini-2.5-flash",
-            systemInstruction: SYSTEM_PROMPT,
+            systemInstruction: SYSTEM_PROMPT + "\nCRITERIO DE EVALUACIÓN ACTUAL:\n" + currentSeverityPrompt,
             generationConfig: {
                 responseMimeType: "application/json"
             }
         });
 
-        const prompt = `Archivo a evaluar: ${fileName}\nPor favor, califica la entrega del estudiante.`;
+        const prompt = `Archivo a evaluar: ${fileName}\nPor favor, califica la entrega del estudiante basándote en el nivel de exigencia indicado.`;
 
         const parts: any[] = [{ text: prompt }];
 

@@ -61,6 +61,7 @@ model Day {
   materialUrl String?
   isDeliveryDay Boolean   @default(false)
   assignmentUrl String?
+  gradingSeverity Int      @default(1) // 1 to 5
   weekId      String
   week      Week       @relation(fields: [weekId], references: [id], onDelete: Cascade)
   resources Resource[]

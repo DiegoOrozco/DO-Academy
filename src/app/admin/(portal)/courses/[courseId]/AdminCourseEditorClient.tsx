@@ -395,9 +395,27 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                     type="text"
                                                                     value={day.assignmentUrl || ""}
                                                                     onChange={(e) => handleUpdateDay(week.id, day.id, "assignmentUrl", e.target.value)}
-                                                                    className="w-full bg-[rgba(0,100,255,0.05)] border border-blue-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600"
+                                                                    className="w-full bg-[rgba(0,100,255,0.05)] border border-blue-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600 mb-4"
                                                                     placeholder="Subir archivo o pegar enlace externo..."
                                                                 />
+
+                                                                <div className="space-y-2">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <Settings size={12} className="text-orange-400" />
+                                                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nivel de Exigencia (IA)</label>
+                                                                    </div>
+                                                                    <select
+                                                                        value={day.gradingSeverity || 1}
+                                                                        onChange={(e) => handleUpdateDay(week.id, day.id, "gradingSeverity", parseInt(e.target.value))}
+                                                                        className="w-full bg-[rgba(255,150,0,0.05)] border border-orange-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition-all"
+                                                                    >
+                                                                        <option value={1}>Nivel 1: Introductorio (Enfoque en lógica)</option>
+                                                                        <option value={2}>Nivel 2: Estándar (Reviso nomenclatura básica)</option>
+                                                                        <option value={3}>Nivel 3: Avanzado (Exijo consistencia de estilo)</option>
+                                                                        <option value={4}>Nivel 4: Profesional (PEP8 / SQL Normalizado)</option>
+                                                                        <option value={5}>Nivel 5: Élite (Cero redundancia y detección IA)</option>
+                                                                    </select>
+                                                                </div>
                                                             </div>
                                                         )}
                                                     </div>
