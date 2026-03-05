@@ -48,8 +48,11 @@ export default function Navbar({ user }: NavbarProps) {
 
     const navLinks = [
         { name: "Inicio", href: "/", icon: <Home size={18} /> },
-        { name: "Sobre Mí", href: "/about", icon: <Info size={18} /> },
     ];
+
+    if (!user) {
+        navLinks.push({ name: "Sobre Mí", href: "/about", icon: <Info size={18} /> });
+    }
 
     if (user?.role === "STUDENT") {
         navLinks.splice(1, 0, { name: "Mis Cursos", href: "/#my-courses", icon: <BookOpen size={18} /> });
