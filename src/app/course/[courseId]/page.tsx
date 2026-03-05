@@ -14,7 +14,7 @@ export default async function CourseViewerPage({ params }: { params: Promise<{ c
     }
 
     const isAdmin = student.role === "ADMIN";
-    const hasAccess = isAdmin || student.enrollments.some((e: any) => e.courseId === courseId);
+    const hasAccess = isAdmin || student.enrollments.some((e: any) => e.courseId === courseId && e.status === "ACTIVE");
 
     if (!hasAccess) {
         redirect(`/course/${courseId}/unlock`);

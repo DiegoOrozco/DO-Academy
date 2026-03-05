@@ -12,7 +12,7 @@ export async function getStudent() {
             where: { id: studentId },
             include: {
                 enrollments: {
-                    select: { courseId: true }
+                    select: { courseId: true, status: true }
                 }
             }
         });
