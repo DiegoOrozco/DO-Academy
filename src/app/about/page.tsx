@@ -100,7 +100,7 @@ export default async function AboutPage() {
                         </div>
                     </div>
 
-                    <div className="glass-effect rounded-3xl p-8 border border-white/10 flex flex-col justify-between group overflow-hidden relative">
+                    <div className="glass-effect rounded-3xl p-8 border border-white/10 flex flex-col justify-between group overflow-hidden relative h-fit self-start sticky top-32">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-3xl -mr-16 -mt-16 group-hover:bg-blue-500/20 transition-all"></div>
 
                         <div>
