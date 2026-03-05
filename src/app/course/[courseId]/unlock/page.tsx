@@ -22,10 +22,13 @@ export default async function UnlockCoursePage({
     }
 
     const isAdmin = student.role === "ADMIN";
-    const hasAccess = isAdmin || student.enrollments.some((e: any) => e.courseId === courseId);
+    const hasAccess = isAdmin || student.enrollments.some((e: any) => e.courseId === courseId && e.status === "ACTIVE");
+
     if (hasAccess) {
         redirect(`/course/${courseId}`);
     }
+
+    const isInactive = student.enrollments.some((e: any) => e.courseId === courseId && e.status === "INACTIVE");
 
     // Bind server action
     const unlockAction = unlockCourse.bind(null, courseId);
@@ -55,8 +58,12 @@ export default async function UnlockCoursePage({
                     </p>
                 </div>
 
-                {/* Lock Card */}
                 <div className="glass-effect rounded-2xl p-8 shadow-2xl border border-[var(--color-glass-border)]">
+                    {isInactive && (
+                        <div className="mb-6 bg-amber-500/20 text-amber-500 text-sm p-4 rounded-xl border border-amber-500/30 text-center font-bold">
+                            ⚠️ Tu acceso a este curso ha sido desactivado. Por favor, contacta con el administrador.
+                        </div>
+                    )}
                     {error === "incorrect" && (
                         <div className="mb-4 bg-red-500/20 text-red-500 text-sm p-3 rounded-lg border border-red-500/30 text-center font-medium">
                             Contraseña incorrecta. Inténtalo de nuevo.
@@ -68,28 +75,30 @@ export default async function UnlockCoursePage({
                         </div>
                     )}
 
-                    <form action={unlockAction} className="space-y-5">
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-slate-300">
-                                Contraseña del Curso
-                            </label>
-                            <input
-                                type="password"
-                                name="password"
-                                required
-                                className="w-full bg-[rgba(0,0,0,0.3)] border border-[var(--color-glass-border)] rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
-                                placeholder="••••••••"
-                            />
-                        </div>
+                    {!isInactive && (
+                        <form action={unlockAction} className="space-y-5">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-slate-300">
+                                    Contraseña del Curso
+                                </label>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    required
+                                    className="w-full bg-[rgba(0,0,0,0.3)] border border-[var(--color-glass-border)] rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
+                                    placeholder="••••••••"
+                                />
+                            </div>
 
-                        <button
-                            type="submit"
-                            className="w-full bg-[var(--color-primary)] hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 glow-accent mt-4 flex items-center justify-center gap-2 font-bold"
-                        >
-                            <Lock size={18} />
-                            Desbloquear con Contraseña
-                        </button>
-                    </form>
+                            <button
+                                type="submit"
+                                className="w-full bg-[var(--color-primary)] hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 glow-accent mt-4 flex items-center justify-center gap-2 font-bold"
+                            >
+                                <Lock size={18} />
+                                Desbloquear con Contraseña
+                            </button>
+                        </form>
+                    )}
                     <div className="mt-4 text-center">
                         <p className="text-xs text-slate-500">
                             Contraseña de prueba: <strong>doacademy</strong>
