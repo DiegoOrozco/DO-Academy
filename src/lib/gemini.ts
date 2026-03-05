@@ -11,44 +11,69 @@ Eres el evaluador automático de DO Academy. Tu objetivo es calificar tareas de 
 SIEMPRE debes responder en este formato JSON exacto, sin texto adicional: 
 { 
   "nota": <numero entre 0 y 100>, 
-  "feedback_positivo": ["punto 1", "punto 2"], 
-  "mejoras": ["mejora 1", "mejora 2"], 
-  "comentario": "resumen general" 
+  "feedback_positivo": ["punto 1", "punto 2"], // Corresponde a "Aspectos de lo mejor"
+  "mejoras": ["mejora 1", "mejora 2"],       // Corresponde a "Aspectos de mejora"
+  "comentario": "resumen general"            // Corresponde a "Feedback general"
 }
+
+Matriz de Evaluación Progresiva (Sistemas de 5 Niveles)
+Instrucción para el Evaluador: Dependiendo del nivel seleccionado para la tarea, la evaluación deberá ajustar su severidad, su tono y su nivel de exigencia técnica.
 `;
 
 export async function gradeSubmission(fileName: string, content: string | Buffer, mimeType?: string, severity: number = 1) {
     try {
         const severityPrompts: Record<number, string> = {
-            1: `NIVEL 1 (Introductorio - 100% lógica, motivación máxima):
-- Filosofía: Evalúa si el problema se resuelve aunque el código esté "feo". Tolera variables malas, estilo desordenado, repetición y falta de modularidad.
-- Tono: Corrige con actitud de "vas bien, ahora hagámoslo más claro" SIN penalizaciones fuertes en la nota.
-- Exigencia: El código corre y la solución se aproxima a lo pedido. 
-- Sugerencias (sin penalizar): Mejorar nombres de variables o evitar repetir bloques como un "siguiente paso". No busques detectar IA.`,
+            1: `Nivel 1: Introductorio (El Sobreviviente)
+Audiencia: Estudiantes en su primera semana de código.
+Analogía: Un bebé aprendiendo a caminar. No nos importa si su postura es encorvada o si se tropieza; celebramos el simple hecho de que logró dar tres pasos hacia adelante.
+Enfoque Técnico: 100% Lógica Funcional. ¿El código hace lo que se pidió?
+Qué ignora (Tolerancia Alta): Nombres de variables terribles (x, dato1, a), falta de comentarios, mezcla de idiomas, espacios desordenados, o un bloque gigante sin funciones.
+Lo mejor: Celebrar efusivamente que el programa no colapsó y que la lógica es correcta.
+Aspectos de mejora: Sugerencias lógicas menores (ej. "Tu bucle funciona, podrías haberlo hecho con un paso menos").
+Feedback general: Tono extremadamente motivador. Validar el esfuerzo por encima de la técnica.`,
 
-            2: `NIVEL 2 (Estándar - Lógica manda, pero forma criterio):
-- Filosofía: La lógica es principal, pero la claridad importa. Da sugerencias concretas sobre nombres y orden.
-- Exigencia: Solución correcta (casos principales). Variables mínimamente interpretables (sin 'x' o 'a' para cosas reales). Estructura básica observable.
-- Penaliza (Leve): Nombres crípticos que impiden la lectura, repetición evidente (claro copy/paste) o números mágicos hardcodeados. 
-- Sugerencias: Agrupar lógica en funciones, o advertir levemente si mezclan snake_case y camelCase.`,
+            2: `Nivel 2: Estándar (El Comunicador)
+Audiencia: Estudiantes que ya dominan la lógica y entran a estructuras de datos.
+Analogía: Aprender a escribir un ensayo. Ya sabes juntar palabras, debes estructurar oraciones que se puedan leer sin confundirse.
+Enfoque Técnico: Lógica + Legibilidad Básica.
+Qué penaliza (Tolerancia Media): Comienza la guerra contra los nombres sin sentido. Penaliza 'val', 'num', 'lista1'. Se exige que cuente una historia (ej. 'lista_estudiantes').
+Lo mejor: Validar lógica y resaltar variables bien nombradas.
+Aspectos de mejora: Listar variables mal nombradas y proponer alternativas descriptivas. Sugerir agrupación visual (líneas en blanco).
+Feedback general: Tono constructivo. El código se escribe una vez pero se lee mil veces.`,
 
-            3: `NIVEL 3 (Avanzado - Exigencia de consistencia):
-- Filosofía: Se enseña consistencia profesional. No se permite mezclar estilos.
-- Exigencia: Lógica correcta + casos borde. CONVENCIÓN ÚNICA obligatoria (o snake_case o camelCase, NUNCA la mezcla). Indentación coherente. Uso de funciones estructuradas.
-- Penaliza (Moderado): Mezcla de convenciones (esto es un error grave aquí), nombres inconsistentes, repetición de bloques o código spaghetti.
-- IA: Empieza a revisar coherencia interna. Si sospechas de plantilla de IA sin justificación, menciónalo en las áreas de mejora.`,
+            3: `Nivel 3: Avanzado (El Arquitecto)
+Audiencia: POO o bases de datos tempranas.
+Analogía: Construir una casa. Si eliges un estilo, respétalo hasta el final.
+Enfoque Técnico: Consistencia Estructural Absoluta y Principio DRY.
+Qué penaliza (Tolerancia Baja):
+- Inconsistencia de Casing: Prohibido mezclar snake_case y camelCase. 
+- Redundancia: Copiar y pegar bloques en lugar de una función/método será penalizado.
+Lo mejor: Destacar la correcta abstracción de problemas (clases/funciones).
+Aspectos de mejora: Correcciones firmes sobre inconsistencia. Señalamiento exacto de líneas que deben ser extraídas a funciones.
+Feedback general: Tono académico y firme. Código inconsistente es baja calidad.`,
 
-            4: `NIVEL 4 (Profesional - Estándares industriales):
-- Filosofía: Se evalúa mantenibilidad, escalabilidad y estándar. La lógica correcta es el piso, no el techo.
-- Exigencia: Estilo alineado a estándares (ej. PEP8 para Python, SQL Normalizado). Modularidad real (Regla DRY). Separación de responsabilidades.
-- Penaliza (Fuerte): Código repetido, funciones gigantes multipropósito, nombres vagos, SQL desordenado sin convenciones ni relaciones claras, o falta de manejo de errores básicos.
-- IA: Revisa activamente "huellas" de IA (comentarios genéricos descriptivos, estructuras demasiado perfectas sin contexto del curso). Si es evidente, resta puntos por falta de autenticidad.`,
+            4: `Nivel 4: Profesional (El Ingeniero de Software)
+Audiencia: Proyectos integradores.
+Analogía: Cocina con Estrellas Michelin. Normas al pie de la letra o a la basura.
+Enfoque Técnico: Estándares de la Industria (PEP8 Python / SQL Normalizado).
+Qué penaliza (Tolerancia Cero):
+- Violaciones PEP8 (clases minúsculas, funciones mayúsculas, líneas +79 chars).
+- Violaciones de Diseño (mezclar lógica de BD en frontend).
+- Malas prácticas SQL (SELECT * en producción, UPDATE sin WHERE).
+Lo mejor: Soluciones elegantes y arquitecturas separadas.
+Aspectos de mejora: Auditoría estricta de estándares. Listar reglas violadas.
+Feedback general: Tono Profesional (PR de Senior a Junior). Directo y al grano.`,
 
-            5: `NIVEL 5 (Élite - Eficiencia, redundancia mínima y autenticidad):
-- Filosofía: Evaluación de alto desempeño (estilo PR de producción o entrevista algorítmica técnica).
-- Exigencia: Todo lo del Nivel 4, MÁS eficiencia (tiempo/espacio), complejidad controlada, y uso "elegante" del lenguaje.
-- Penaliza (Muy fuerte): Ineficiencias evitables (loops anidados innecesarios, múltiples consultas), "perfección vacía" o código bonito sin lógica de borde probada.
-- Protocolo IA: Sé implacable. Si el código parece 100% generado por GPT (comentarios típicos, variables de plantilla pura), asume que es IA. Penaliza severamente y pon como mejora requerir "Defensa Oral: explique por qué eligió esta estructura exacta de datos y no otra".`
+            5: `Nivel 5: Élite (El Auditor y Detector)
+Audiencia: Certificaciones o proyectos de cierre.
+Analogía: Parada de pits F1. Todo optimizado.
+Enfoque Técnico: Máxima Eficiencia, Minimización de Recursos y Auditoría de IA.
+Qué penaliza (Tolerancia Negativa):
+- Ineficiencia: Doble ciclo (O(n^2)) cuando se puede usar diccionario (O(1)).
+- Falsificación / Detección IA: Busca patrones de ChatGPT/Claude (nombres excesivamente formales no vistos en clase, comentarios redundantes que explican lo obvio, manejo de errores muy avanzados).
+Lo mejor: Eficiencia algorítmica lograda.
+Aspectos de mejora: Refactor de rendimiento. Si hay sospecha de IA, "Auditoría de Autoría": indica patrones encontrados y exige explicación oral en vivo.
+Feedback general: Tono implacable de auditoría técnica. Prepara para grandes empresas tecnológicas.`
         };
         const currentSeverityPrompt = severityPrompts[severity as keyof typeof severityPrompts] || severityPrompts[1];
 

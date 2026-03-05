@@ -95,10 +95,10 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
 
     const [isUploadingFile, setIsUploadingFile] = useState<string | null>(null);
 
-    const handleUploadAssignment = async (weekId: string, dayId: string, file: File) => {
-        setIsUploadingFile(dayId);
+    const handleFileUpload = async (weekId: string, dayId: string, file: File, field: string) => {
+        setIsUploadingFile(`${dayId}-${field}`);
         try {
-            const response = await fetch(`/api/admin/upload-assignment?filename=${file.name}`, {
+            const response = await fetch(`/api/admin/upload-file?filename=${file.name}`, {
                 method: "POST",
                 body: file,
             });
@@ -109,7 +109,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
             }
 
             const blob = await response.json();
-            handleUpdateDay(weekId, dayId, "assignmentUrl", blob.url);
+            handleUpdateDay(weekId, dayId, field, blob.url);
         } catch (error: any) {
             alert("Error: " + error.message);
             console.error(error);
@@ -332,15 +332,41 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                             />
                                                         </div>
                                                         <div className="space-y-1">
-                                                            <label className="text-xs font-medium text-slate-400 flex items-center gap-1">
-                                                                <Link2 size={12} /> Enlace de Material (Ej. GitHub)
-                                                            </label>
+                                                            <div className="flex items-center justify-between">
+                                                                <label className="text-xs font-medium text-slate-400 flex items-center gap-1">
+                                                                    <Link2 size={12} /> Material Adicional (Ej. GitHub, PDF)
+                                                                </label>
+                                                                <div className="flex items-center gap-2">
+                                                                    <input
+                                                                        type="file"
+                                                                        id={`upload-material-${day.id}`}
+                                                                        className="hidden"
+                                                                        accept=".pdf,.doc,.docx,.zip,.rar"
+                                                                        onChange={(e) => {
+                                                                            const f = e.target.files?.[0];
+                                                                            if (f) handleFileUpload(week.id, day.id, f, "materialUrl");
+                                                                        }}
+                                                                    />
+                                                                    <button
+                                                                        disabled={isUploadingFile === `${day.id}-materialUrl`}
+                                                                        onClick={() => document.getElementById(`upload-material-${day.id}`)?.click()}
+                                                                        className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--color-primary)] hover:text-white transition-colors uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20"
+                                                                    >
+                                                                        {isUploadingFile === `${day.id}-materialUrl` ? (
+                                                                            <Loader2 size={12} className="animate-spin" />
+                                                                        ) : (
+                                                                            <Upload size={12} />
+                                                                        )}
+                                                                        {isUploadingFile === `${day.id}-materialUrl` ? "Subiendo..." : "Subir Archivo"}
+                                                                    </button>
+                                                                </div>
+                                                            </div>
                                                             <input
                                                                 type="text"
                                                                 value={day.materialUrl || ""}
                                                                 onChange={(e) => handleUpdateDay(week.id, day.id, "materialUrl", e.target.value)}
                                                                 className="w-full bg-[rgba(0,0,0,0.5)] border border-slate-700/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[var(--color-primary)] transition-all"
-                                                                placeholder="https://github.com/..."
+                                                                placeholder="https://github.com/... o subir archivo"
                                                             />
                                                         </div>
                                                     </div>
@@ -374,20 +400,20 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                             accept=".pdf,.doc,.docx"
                                                                             onChange={(e) => {
                                                                                 const f = e.target.files?.[0];
-                                                                                if (f) handleUploadAssignment(week.id, day.id, f);
+                                                                                if (f) handleFileUpload(week.id, day.id, f, "assignmentUrl");
                                                                             }}
                                                                         />
                                                                         <button
-                                                                            disabled={!!isUploadingFile}
+                                                                            disabled={isUploadingFile === `${day.id}-assignmentUrl`}
                                                                             onClick={() => document.getElementById(`upload-${day.id}`)?.click()}
                                                                             className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--color-primary)] hover:text-white transition-colors uppercase tracking-widest bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20"
                                                                         >
-                                                                            {isUploadingFile === day.id ? (
+                                                                            {isUploadingFile === `${day.id}-assignmentUrl` ? (
                                                                                 <Loader2 size={12} className="animate-spin" />
                                                                             ) : (
                                                                                 <Upload size={12} />
                                                                             )}
-                                                                            {isUploadingFile === day.id ? "Subiendo..." : "Subir PDF"}
+                                                                            {isUploadingFile === `${day.id}-assignmentUrl` ? "Subiendo..." : "Subir PDF"}
                                                                         </button>
                                                                     </div>
                                                                 </div>
