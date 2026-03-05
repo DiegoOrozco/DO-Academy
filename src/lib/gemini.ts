@@ -1,25 +1,35 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || "");
+const apiKey = process.env.GOOGLE_AI_API_KEY;
+if (!apiKey) {
+    console.error("CRITICAL: GOOGLE_AI_API_KEY is missing in environment variables.");
+}
+const genAI = new GoogleGenerativeAI(apiKey || "");
 
 const SYSTEM_PROMPT = `
 Eres el evaluador automático de DO Academy. Tu objetivo es calificar tareas de Python y SQL.
-- Revisa lógica de negocio, normalización de BD y buenas prácticas (PEP8).
-- No permitas valores derivados en tablas si pueden ser calculados.
-- Devuelve la respuesta estrictamente en este formato JSON: 
-{ "nota": num, "feedback_positivo": ["punto 1", "punto 2"], "mejoras": ["mejora 1", "mejora 2"], "comentario": "resumen general" }
+SIEMPRE debes responder en este formato JSON exacto, sin texto adicional: 
+{ 
+  "nota": <numero entre 0 y 100>, 
+  "feedback_positivo": ["punto 1", "punto 2"], 
+  "mejoras": ["mejora 1", "mejora 2"], 
+  "comentario": "resumen general" 
+}
 `;
 
 export async function gradeSubmission(fileName: string, content: string | Buffer, mimeType?: string) {
     try {
         const model = genAI.getGenerativeModel({
             model: "gemini-1.5-flash",
-            generationConfig: { responseMimeType: "application/json" }
+            systemInstruction: SYSTEM_PROMPT,
+            generationConfig: {
+                responseMimeType: "application/json"
+            }
         });
 
-        const prompt = `Archivo: ${fileName}\nPor favor, evalúa esta entrega según los criterios de DO Academy.`;
+        const prompt = `Archivo a evaluar: ${fileName}\nPor favor, califica la entrega del estudiante.`;
 
-        const parts: any[] = [SYSTEM_PROMPT, prompt];
+        const parts: any[] = [prompt];
 
         if (mimeType === "application/pdf") {
             parts.push({
@@ -29,14 +39,16 @@ export async function gradeSubmission(fileName: string, content: string | Buffer
                 }
             });
         } else {
-            parts.push(`Contenido a evaluar:\n${content.toString()}`);
+            // For code files, we send as text
+            parts.push(`CONTENIDO DEL ARCHIVO:\n${content.toString()}`);
         }
 
-        const result = await model.generateContent(parts);
+        console.log(`AI Request for ${fileName} (${mimeType || 'text'})`);
+        const result = await model.generateContent({ contents: [{ role: 'user', parts }] });
         const response = await result.response;
         let text = response.text();
 
-        console.log("Gemini Raw Response:", text);
+        console.log("Raw Response from AI:", text);
 
         // Robust JSON extraction
         try {

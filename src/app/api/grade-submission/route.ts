@@ -56,15 +56,21 @@ export async function POST(req: NextRequest) {
             });
 
             return NextResponse.json(updatedSubmission);
-        } catch (gradingError) {
-            console.error("Grading error:", gradingError);
+        } catch (gradingError: any) {
+            console.error("CRITICAL: Grading failed for", fileName, gradingError);
+            console.error("Error Stack:", gradingError.stack);
 
             await prisma.submission.update({
                 where: { id: submission.id },
-                data: { status: "FAILED" }
+                data: {
+                    status: "FAILED",
+                    feedback: { error: gradingError.message || "Unknown grading error" }
+                }
             });
 
-            return NextResponse.json({ error: "Grading failed" }, { status: 500 });
+            return NextResponse.json({
+                error: `Grading failed: ${gradingError.message || 'Check logs'}`
+            }, { status: 500 });
         }
 
     } catch (error) {
