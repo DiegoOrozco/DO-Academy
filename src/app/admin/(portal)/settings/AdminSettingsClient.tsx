@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { updateSiteConfig } from "@/actions/admin-settings";
-import { Save, User, Home, Share2, Award, Mail, MessageCircle, X } from "lucide-react";
+import { Save, User, Home, Share2, Award, Mail, MessageCircle, X, Github, Linkedin, Twitter, Instagram, Link as LinkIcon, Info } from "lucide-react";
 
 export default function AdminSettingsClient({ initialConfigs }: { initialConfigs: any }) {
     const [configs, setConfigs] = useState(initialConfigs);
@@ -202,19 +202,19 @@ export default function AdminSettingsClient({ initialConfigs }: { initialConfigs
                     </div>
 
                     <div className="space-y-4">
-                        <label className="text-sm font-bold text-slate-400 uppercase tracking-widest">Biografía (Párrafos)</label>
-                        {about.bioParagraphs?.map((p: string, i: number) => (
-                            <textarea
-                                key={i}
-                                value={p}
-                                onChange={(e) => {
-                                    const next = [...about.bioParagraphs];
-                                    next[i] = e.target.value;
-                                    updateAbout({ bioParagraphs: next });
-                                }}
-                                className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-[var(--color-primary)] transition-all min-h-[100px]"
-                            />
-                        ))}
+                        <div className="flex items-center justify-between">
+                            <label className="text-sm font-bold text-slate-400 uppercase tracking-widest">Biografía (Markdown)</label>
+                            <div className="flex items-center gap-2 text-[10px] text-slate-500 font-bold bg-white/5 px-2 py-1 rounded">
+                                <Info size={12} />
+                                Soporta **negrita**, *cursiva*, # títulos y - listas
+                            </div>
+                        </div>
+                        <textarea
+                            value={about.bio || (about.bioParagraphs || []).join("\n\n")}
+                            onChange={(e) => updateAbout({ bio: e.target.value })}
+                            placeholder="Escribe tu biografía aquí usando Markdown..."
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-[var(--color-primary)] transition-all min-h-[300px] font-mono text-sm leading-relaxed"
+                        />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -252,7 +252,64 @@ export default function AdminSettingsClient({ initialConfigs }: { initialConfigs
 
                         <div className="space-y-4">
                             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <Share2 size={16} /> Métodos de Contacto
+                                <Share2 size={16} /> Redes Sociales
+                            </h3>
+                            <div className="space-y-3">
+                                {(about.socialLinks || []).map((link: any, i: number) => (
+                                    <div key={i} className="flex gap-2 items-end">
+                                        <div className="flex-1 space-y-2">
+                                            <select
+                                                value={link.platform}
+                                                onChange={(e) => {
+                                                    const next = [...about.socialLinks];
+                                                    next[i] = { ...link, platform: e.target.value };
+                                                    updateAbout({ socialLinks: next });
+                                                }}
+                                                className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-[10px] text-slate-400 uppercase font-black"
+                                            >
+                                                <option value="GitHub">GitHub</option>
+                                                <option value="LinkedIn">LinkedIn</option>
+                                                <option value="Twitter">Twitter (X)</option>
+                                                <option value="Instagram">Instagram</option>
+                                                <option value="Web">Sitio Web / Link</option>
+                                            </select>
+                                            <input
+                                                value={link.url}
+                                                placeholder="URL (https://...)"
+                                                onChange={(e) => {
+                                                    const next = [...about.socialLinks];
+                                                    next[i] = { ...link, url: e.target.value };
+                                                    updateAbout({ socialLinks: next });
+                                                }}
+                                                className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                const next = about.socialLinks.filter((_: any, idx: number) => idx !== i);
+                                                updateAbout({ socialLinks: next });
+                                            }}
+                                            className="p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                ))}
+                                <button
+                                    onClick={() => {
+                                        const next = [...(about.socialLinks || []), { platform: "GitHub", url: "" }];
+                                        updateAbout({ socialLinks: next });
+                                    }}
+                                    className="w-full py-2 border border-dashed border-white/10 rounded-lg text-slate-500 hover:text-white hover:border-white/20 transition-all text-xs font-bold"
+                                >
+                                    + Añadir Red Social
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <Mail size={16} /> Métodos de Directos (Bio)
                             </h3>
                             <div className="space-y-3">
                                 {about.contacts?.map((c: any, i: number) => (

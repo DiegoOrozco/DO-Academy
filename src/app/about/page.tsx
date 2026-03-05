@@ -9,6 +9,9 @@ import {
     MessageCircle,
     ArrowRight
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
 import SocialLink from "@/components/SocialLink";
 import { getStudent } from "@/lib/student-auth";
 
@@ -84,10 +87,16 @@ export default async function AboutPage() {
                             <div className="w-1.5 h-6 bg-[var(--color-primary)] rounded-full"></div>
                             Mi Historia
                         </h2>
-                        <div className="space-y-4 text-lg text-slate-400 leading-relaxed font-medium">
-                            {aboutConfig.bioParagraphs?.map((p: string, i: number) => (
-                                <p key={i}>{p}</p>
-                            ))}
+                        <div className="space-y-4 text-lg text-slate-400 leading-relaxed font-medium markdown-content">
+                            {aboutConfig.bio ? (
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {aboutConfig.bio}
+                                </ReactMarkdown>
+                            ) : (
+                                aboutConfig.bioParagraphs?.map((p: string, i: number) => (
+                                    <p key={i}>{p}</p>
+                                ))
+                            )}
                         </div>
                     </div>
 
