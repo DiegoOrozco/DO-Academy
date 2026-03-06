@@ -70,6 +70,7 @@ model Day {
   materialUrl   String?
   isDeliveryDay Boolean   @default(false)
   assignmentType String   @default("LAB") // QUIZ, LAB, FORUM, PROJECT
+  forumTopics   String?   // Topics for forum assignments
   dueDate       DateTime? // For deadlines
   assignmentUrl String?
   gradingSeverity Int     @default(1) // 1 to 5

@@ -21,18 +21,21 @@ export async function createPost(dayId: string, userId: string, content: string,
     }
 }
 
-export async function createReply(postId: string, content: string) {
+export async function createReply(postId: string, content: string, userId?: string) {
     try {
-        // Teacher reply using hardcoded admin user for now or find admin
-        const adminUser = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
+        let actualUserId = userId;
 
-        if (!adminUser) return { success: false, error: "No Admin User found" };
+        if (!actualUserId) {
+            const adminUser = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
+            if (!adminUser) return { success: false, error: "No Admin User found" };
+            actualUserId = adminUser.id;
+        }
 
         const reply = await prisma.reply.create({
             data: {
                 content,
                 postId,
-                userId: adminUser.id
+                userId: actualUserId
             },
             include: {
                 post: {

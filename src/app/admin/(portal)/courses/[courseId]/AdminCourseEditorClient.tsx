@@ -661,6 +661,18 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                                     </div>
                                                                                 </div>
 
+                                                                                {day.assignmentType === "FORUM" && (
+                                                                                    <div className="space-y-2">
+                                                                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Temas del Foro (Un tema por línea)</label>
+                                                                                        <textarea
+                                                                                            value={day.forumTopics || ""}
+                                                                                            onChange={(e) => handleUpdateDay(week.id, day.id, "forumTopics", e.target.value)}
+                                                                                            placeholder={"Tema 1: ¿Qué opinas de X?\nTema 2: ¿Cómo resolverías Y?"}
+                                                                                            className="w-full h-24 bg-[rgba(255,255,255,0.05)] border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 transition-all resize-y"
+                                                                                        />
+                                                                                    </div>
+                                                                                )}
+
                                                                                 {day.assignmentType !== "FORUM" && (
                                                                                     <div>
                                                                                         <div className="flex items-center justify-between mb-1">
