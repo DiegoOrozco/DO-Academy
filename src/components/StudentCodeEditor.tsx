@@ -2,13 +2,14 @@
 
 import { useState, useRef, useEffect } from "react";
 import Editor from "@monaco-editor/react";
-import { Play, Send, CheckCircle, XCircle, AlertCircle, Maximize2, Minimize2, Copy, Trash2, Cpu, Code, Lock, Loader2 } from "lucide-react";
+import { Play, Send, CheckCircle, XCircle, AlertCircle, Maximize2, Minimize2, Copy, Trash2, Cpu, Code, Lock, Loader2, FileText } from "lucide-react";
 import { submitCodingExercise } from "@/actions/submissions";
 import Script from "next/script";
 
 interface StudentCodeEditorProps {
     initialCode?: string;
-    expectedOutput?: string;
+    exerciseDescription?: string;
+    testCases?: Array<{ input: string; output: string }>;
     similarityThreshold?: number;
     enablePlagiarism?: boolean;
     onSuccess?: (grade: number) => void;
@@ -24,7 +25,8 @@ declare global {
 
 export default function StudentCodeEditor({
     initialCode = "# Escribe aquí tu solución...",
-    expectedOutput,
+    exerciseDescription,
+    testCases = [],
     similarityThreshold = 0.9,
     enablePlagiarism = false,
     onSuccess,
@@ -33,6 +35,7 @@ export default function StudentCodeEditor({
 }: StudentCodeEditorProps) {
     const [code, setCode] = useState(initialCode);
     const [output, setOutput] = useState("");
+    const [outputsArray, setOutputsArray] = useState<string[]>([]);
     const [isExecuting, setIsExecuting] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [result, setResult] = useState<{ status: 'success' | 'error' | 'pending' | null, score: number | null }>({ status: null, score: null });
@@ -116,33 +119,67 @@ export default function StudentCodeEditor({
         }
 
         setIsExecuting(true);
-        setOutput(""); // Clean output
+        setOutput("");
+        setResult({ status: null, score: null });
+        setOutputsArray([]);
 
         try {
-            // Redirigir stdout
-            let capturedOutput = "";
-            pyodideRef.current.setStdout({
-                batched: (text: string) => {
-                    capturedOutput += text + "\n";
-                    setOutput(prev => prev + text + "\n");
+            const casesToRun = testCases?.length ? testCases : [{ input: "", output: "" }];
+            let allOutput = "";
+            let generatedOutputs: string[] = [];
+
+            for (let i = 0; i < casesToRun.length; i++) {
+                const tc = casesToRun[i];
+                allOutput += `\n--- CASO DE PRUEBA ${i + 1} ---\n`;
+                if (tc.input) {
+                    allOutput += `[Input]\n${tc.input}\n`;
                 }
-            });
 
-            await pyodideRef.current.runPythonAsync(code);
+                let capturedOutput = "";
+                let inputLines = tc.input ? tc.input.split('\n') : [];
 
-            if (!capturedOutput) {
-                setOutput("> Código ejecutado sin salida.");
+                pyodideRef.current.setStdout({
+                    batched: (text: string) => {
+                        capturedOutput += text + "\n";
+                    }
+                });
+
+                pyodideRef.current.setStdin({
+                    stdin: () => {
+                        if (inputLines.length > 0) {
+                            return inputLines.shift() || "";
+                        }
+                        return "";
+                    }
+                });
+
+                try {
+                    // Injecting a clear scope for each run could be complex, 
+                    // relying on Pyodide runPythonAsync in the main namespace.
+                    await pyodideRef.current.runPythonAsync(code);
+
+                    const finalOutput = capturedOutput || "(Sin salida visual)";
+                    allOutput += `[Output]\n${finalOutput}\n`;
+                    generatedOutputs.push(capturedOutput.trim());
+                } catch (err: any) {
+                    allOutput += `[Error]\n${err.message}\n`;
+                    generatedOutputs.push(""); // Push empty on error to keep array length
+                }
             }
+
+            setOutput(allOutput);
+            setOutputsArray(generatedOutputs);
+
         } catch (err: any) {
-            setOutput(`> Error: ${err.message}`);
+            setOutput(`> Error General: ${err.message}`);
         } finally {
             setIsExecuting(false);
         }
     };
 
     const handleSubmit = async () => {
-        if (!output && !isExecuting) {
-            alert("Primero ejecuta el código para verificar la salida.");
+        if (outputsArray.length === 0 && !isExecuting) {
+            alert("Primero ejecuta el código para correr los casos de prueba.");
             return;
         }
 
@@ -150,12 +187,11 @@ export default function StudentCodeEditor({
         setResult({ status: 'pending', score: null });
 
         try {
-            const cleanOutput = output.replace(/> /g, "").trim();
             const res = await submitCodingExercise({
                 userId,
                 dayId,
                 code,
-                output: cleanOutput
+                outputs: outputsArray
             });
 
             if (res.success && res.submission) {
@@ -228,34 +264,46 @@ export default function StudentCodeEditor({
 
             <div className="flex-1 flex flex-col md:flex-row min-h-0">
                 {/* Editor Area */}
-                <div className="flex-1 min-h-[400px] relative border-r border-slate-700/30">
-                    <Editor
-                        height="100%"
-                        defaultLanguage="python"
-                        theme="vs-dark"
-                        value={code}
-                        onChange={(val) => setCode(val || "")}
-                        onMount={handleEditorDidMount}
-                        options={{
-                            fontSize: 14,
-                            minimap: { enabled: false },
-                            scrollBeyondLastLine: false,
-                            automaticLayout: true,
-                            padding: { top: 20 },
-                            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                            cursorBlinking: "expand",
-                            lineNumbersMinChars: 3,
-                            glyphMargin: false,
-                            folding: true,
-                            lineHeight: 24,
-                        }}
-                    />
-                    {enablePlagiarism && (
-                        <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full">
-                            <Lock size={12} className="text-amber-500" />
-                            <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">No Copy enabled</span>
+                <div className="flex-1 flex flex-col min-h-[400px] relative border-r border-slate-700/30 bg-[#0B0D11]">
+                    {exerciseDescription && (
+                        <div className="p-5 bg-[#14181E]/80 border-b border-slate-700/50">
+                            <h4 className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                <FileText size={12} /> Instrucciones del Ejercicio
+                            </h4>
+                            <div className="text-sm text-slate-300 leading-relaxed font-medium">
+                                {exerciseDescription.split('\n').map((line, i) => <p key={i} className="mb-1">{line}</p>)}
+                            </div>
                         </div>
                     )}
+                    <div className="flex-1 relative">
+                        <Editor
+                            height="100%"
+                            defaultLanguage="python"
+                            theme="vs-dark"
+                            value={code}
+                            onChange={(val) => setCode(val || "")}
+                            onMount={handleEditorDidMount}
+                            options={{
+                                fontSize: 14,
+                                minimap: { enabled: false },
+                                scrollBeyondLastLine: false,
+                                automaticLayout: true,
+                                padding: { top: 20 },
+                                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                                cursorBlinking: "expand",
+                                lineNumbersMinChars: 3,
+                                glyphMargin: false,
+                                folding: true,
+                                lineHeight: 24,
+                            }}
+                        />
+                        {enablePlagiarism && (
+                            <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full">
+                                <Lock size={12} className="text-amber-500" />
+                                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">No Copy enabled</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Console Area */}

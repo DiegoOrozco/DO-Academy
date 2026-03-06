@@ -76,11 +76,14 @@ model Day {
   gradingSeverity Int     @default(1) // 1 to 5
   
   // Coding Exercise Fields
-  isCodingExercise  Boolean   @default(false)
-  expectedOutput    String?   @db.Text
-  similarityThreshold Float   @default(0.9)
-  enablePlagiarism  Boolean   @default(false)
-  codeTemplate      String?   @db.Text
+  isCodingExercise    Boolean   @default(false)
+  exerciseDescription String?   @db.Text
+  testCases           Json?     // Array of { input: string, output: string }
+  expectedOutput      String?   @db.Text // Keeping for backward compatibility temporarily
+  similarityThreshold Float     @default(0.9)
+  enablePlagiarism    Boolean   @default(false)
+  codeTemplate        String?   @db.Text
+
 
   weekId        String
   week          Week      @relation(fields: [weekId], references: [id], onDelete: Cascade)

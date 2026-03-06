@@ -119,7 +119,8 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                             dayId={day.id}
                             userId={studentId}
                             initialCode={day.codeTemplate || ""}
-                            expectedOutput={day.expectedOutput || ""}
+                            exerciseDescription={day.exerciseDescription || ""}
+                            testCases={day.testCases || []}
                             similarityThreshold={day.similarityThreshold || 0.9}
                             enablePlagiarism={day.enablePlagiarism}
                             onSuccess={async (grade) => {

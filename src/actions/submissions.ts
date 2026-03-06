@@ -8,19 +8,19 @@ export async function submitCodingExercise({
     userId,
     dayId,
     code,
-    output,
+    outputs,
 }: {
     userId: string;
     dayId: string;
     code: string;
-    output: string;
+    outputs: string[];
 }) {
     try {
-        // 1. Get Day details (expected output, threshold, etc.)
         const day = await prisma.day.findUnique({
             where: { id: dayId },
             select: {
                 expectedOutput: true,
+                testCases: true,
                 similarityThreshold: true,
                 enablePlagiarism: true,
             },
@@ -31,26 +31,41 @@ export async function submitCodingExercise({
         let grade = 0;
         let feedbackText = "";
 
-        if (day.expectedOutput) {
-            const cleanExpected = day.expectedOutput.trim().toLowerCase();
-            const cleanActual = output.trim().toLowerCase();
+        const testCases: any[] = Array.isArray(day.testCases) && day.testCases.length > 0
+            ? day.testCases
+            : [{ output: day.expectedOutput || "" }];
 
-            const similarity = stringSimilarity.compareTwoStrings(cleanExpected, cleanActual);
-            const threshold = day.similarityThreshold || 0.9;
+        let totalSimilarity = 0;
+        let details = [];
 
-            grade = Math.round(similarity * 100);
+        for (let i = 0; i < testCases.length; i++) {
+            const tc = testCases[i];
+            const cleanExpected = (tc.output || "").trim().toLowerCase();
+            const cleanActual = (outputs[i] || "").trim().toLowerCase();
 
-            if (similarity >= threshold) {
-                feedbackText = `¡Excelente! Tu salida coincide en un ${grade}% con lo esperado.`;
+            let sim = 0;
+            if (!cleanExpected && !cleanActual) {
+                sim = 1; // Both empty
+            } else if (!cleanExpected || !cleanActual) {
+                sim = 0; // One is empty
             } else {
-                feedbackText = `Tu salida tiene un ${grade}% de similitud. Se requiere al menos un ${Math.round(threshold * 100)}% para aprobar.`;
+                sim = stringSimilarity.compareTwoStrings(cleanExpected, cleanActual);
             }
-        } else {
-            grade = 100;
-            feedbackText = "Entregado correctamente.";
+
+            totalSimilarity += sim;
+            details.push({ caso: i + 1, similitud: Math.round(sim * 100) });
         }
 
-        // 3. Save Submission
+        const avgSimilarity = totalSimilarity / Math.max(testCases.length, 1);
+        grade = Math.round(avgSimilarity * 100);
+        const threshold = day.similarityThreshold || 0.9;
+
+        if (avgSimilarity >= threshold) {
+            feedbackText = `¡Excelente! Tu código superó las pruebas con un promedio de ${grade}% de precisión.\nCasos: ` + details.map(d => `C${d.caso}(${d.similitud}%)`).join(", ");
+        } else {
+            feedbackText = `Tu precisión promedio fue de ${grade}%. Se requiere al menos un ${Math.round(threshold * 100)}% para aprobar.\nCasos: ` + details.map(d => `C${d.caso}(${d.similitud}%)`).join(", ");
+        }
+
         const submission = await prisma.submission.upsert({
             where: {
                 userId_dayId: { userId, dayId },
@@ -59,7 +74,7 @@ export async function submitCodingExercise({
                 content: code,
                 status: "GRADED",
                 grade: grade,
-                feedback: { text: feedbackText } as any, // Cast to any because Prisma Json type can be tricky
+                feedback: { text: feedbackText } as any,
                 fileName: "solution.py",
             },
             create: {
