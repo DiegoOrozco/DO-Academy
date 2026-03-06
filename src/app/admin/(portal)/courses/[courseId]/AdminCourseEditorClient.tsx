@@ -586,7 +586,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                                         type="file"
                                                                                         id={`upload-material-${day.id}`}
                                                                                         className="hidden"
-                                                                                        accept=".pdf,.doc,.docx,.zip,.rar"
+                                                                                        accept=".pdf,.doc,.docx,.zip,.rar,.md"
                                                                                         onChange={(e) => {
                                                                                             const f = e.target.files?.[0];
                                                                                             if (f) handleFileUpload(week.id, day.id, f, "materialUrl");
