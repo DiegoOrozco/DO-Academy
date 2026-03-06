@@ -51,8 +51,8 @@ export default function AdminQAInboxClient({ initialQuestions }: { initialQuesti
     return (
         <div className="flex flex-col gap-6 lg:h-[calc(100vh-80px)]">
             <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Q&A Inbox</h1>
-                <p className="text-sm md:text-base text-slate-400">Responde las dudas de tus estudiantes desde este panel centralizado.</p>
+                <h1 className="text-2xl md:text-3xl font-bold text-[var(--text-primary)] mb-2">Q&A Inbox</h1>
+                <p className="text-sm md:text-base text-[var(--text-secondary)]">Responde las dudas de tus estudiantes desde este panel centralizado.</p>
             </div>
 
             {/* Tabs */}
@@ -61,7 +61,7 @@ export default function AdminQAInboxClient({ initialQuestions }: { initialQuesti
                     onClick={() => setActiveTab("pending")}
                     className={`px-6 py-4 text-sm font-semibold transition-all duration-300 ${activeTab === "pending"
                         ? "border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]"
-                        : "text-slate-400 hover:text-slate-200"
+                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                         }`}
                 >
                     Pendientes de revisión
@@ -75,7 +75,7 @@ export default function AdminQAInboxClient({ initialQuestions }: { initialQuesti
                     onClick={() => setActiveTab("resolved")}
                     className={`px-6 py-4 text-sm font-semibold transition-all duration-300 ${activeTab === "resolved"
                         ? "border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]"
-                        : "text-slate-400 hover:text-slate-200"
+                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                         }`}
                 >
                     Resueltas
@@ -85,19 +85,19 @@ export default function AdminQAInboxClient({ initialQuestions }: { initialQuesti
             {/* Inbox Feed */}
             <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-4 pb-10">
                 {filteredQuestions.length === 0 ? (
-                    <div className="glass-effect rounded-2xl p-10 flex flex-col items-center justify-center text-center border border-[var(--color-glass-border)] h-64">
+                    <div className="glass-effect rounded-2xl p-10 flex flex-col items-center justify-center text-center border border-[var(--border-color)] h-64 bg-[var(--card-bg)]">
                         <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-4">
                             <CheckCircle size={32} />
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-2">¡Todo al día!</h3>
-                        <p className="text-slate-400">Excelente trabajo, no hay dudas pendientes por responder.</p>
+                        <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">¡Todo al día!</h3>
+                        <p className="text-[var(--text-secondary)]">Excelente trabajo, no hay dudas pendientes por responder.</p>
                     </div>
                 ) : (
                     filteredQuestions.map((q) => (
-                        <div key={q.id} className="glass-effect rounded-2xl border border-[var(--color-glass-border)] overflow-hidden flex flex-col group transition-all hover:bg-white/5">
+                        <div key={q.id} className="glass-effect rounded-2xl border border-[var(--border-color)] overflow-hidden flex flex-col group transition-all hover:border-[var(--color-primary)]/30 bg-[var(--card-bg)]">
 
                             {/* Question Header */}
-                            <div className="p-5 border-b border-white/5 bg-black/20 flex flex-col sm:flex-row justify-between gap-4 sm:items-center">
+                            <div className="p-5 border-b border-[var(--border-color)] bg-black/5 flex flex-col sm:flex-row justify-between gap-4 sm:items-center">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 font-bold text-sm flex-shrink-0">
                                         {q.studentName.charAt(0)}

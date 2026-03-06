@@ -39,7 +39,7 @@ export default async function DashboardPage() {
                         <Sparkles size={14} />
                         Plataforma Premium
                     </div>
-                    <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tighter text-white mb-6 leading-[1.1]">
+                    <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tighter text-[var(--text-primary)] mb-6 leading-[1.1]">
                         {homeConfig.heroTitle?.split("DO Academy")[0]}
                         <span className="text-[var(--color-primary)]">
                             {homeConfig.heroTitle?.includes("DO Academy") ? "DO Academy" : ""}
@@ -47,12 +47,12 @@ export default async function DashboardPage() {
                         {homeConfig.heroTitle?.split("DO Academy")[1]}
                     </h1>
                     {student ? (
-                        <p className="text-lg md:text-xl text-slate-400 font-medium leading-relaxed mb-8">
-                            Hola, <span className="text-white font-bold">{student.name}</span>. 👋 Tienes <span className="text-white font-bold">{myCourses.length}</span> cursos activos.
+                        <p className="text-lg md:text-xl text-[var(--text-secondary)] font-medium leading-relaxed mb-8">
+                            Hola, <span className="text-[var(--text-primary)] font-bold">{student.name}</span>. 👋 Tienes <span className="text-[var(--text-primary)] font-bold">{myCourses.length}</span> cursos activos.
                         </p>
                     ) : (
                         <div className="space-y-6">
-                            <p className="text-lg md:text-xl text-slate-400 font-medium leading-relaxed max-w-2xl">
+                            <p className="text-lg md:text-xl text-[var(--text-secondary)] font-medium leading-relaxed max-w-2xl">
                                 {homeConfig.heroSubtitle}
                             </p>
                             <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-4">
@@ -79,7 +79,7 @@ export default async function DashboardPage() {
                     {student && myCourses.length > 0 && (
                         <section id="my-courses" className="space-y-8 scroll-mt-24">
                             <div className="flex items-center justify-between">
-                                <h2 className="text-2xl font-black text-white flex items-center gap-3">
+                                <h2 className="text-2xl font-black text-[var(--text-primary)] flex items-center gap-3">
                                     <div className="w-1.5 h-6 bg-[var(--color-primary)] rounded-full"></div>
                                     Mis Cursos
                                 </h2>
@@ -89,7 +89,7 @@ export default async function DashboardPage() {
                                     <Link
                                         key={course.id}
                                         href={`/course/${course.id}`}
-                                        className="group glass-effect rounded-3xl border border-white/10 overflow-hidden hover:border-[var(--color-primary)]/50 transition-all duration-500 flex flex-col h-full"
+                                        className="group glass-effect rounded-3xl border border-[var(--border-color)] overflow-hidden hover:border-[var(--color-primary)]/50 transition-all duration-500 flex flex-col h-full bg-[var(--card-bg)]"
                                     >
                                         <div className="relative h-48 overflow-hidden">
                                             <img
@@ -105,14 +105,14 @@ export default async function DashboardPage() {
                                             </div>
                                         </div>
                                         <div className="p-6 flex flex-col flex-1">
-                                            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-[var(--color-primary)] transition-colors line-clamp-2">
+                                            <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2 group-hover:text-[var(--color-primary)] transition-colors line-clamp-2">
                                                 {course.title}
                                             </h3>
-                                            <p className="text-slate-400 text-sm mb-6 line-clamp-2 font-medium">
+                                            <p className="text-[var(--text-secondary)] text-sm mb-6 line-clamp-2 font-medium">
                                                 {course.description}
                                             </p>
-                                            <div className="mt-auto flex items-center justify-between pt-6 border-t border-white/5">
-                                                <div className="flex items-center gap-2 text-slate-500 text-xs font-bold uppercase tracking-widest">
+                                            <div className="mt-auto flex items-center justify-between pt-6 border-t border-[var(--border-color)]">
+                                                <div className="flex items-center gap-2 text-[var(--text-secondary)] text-xs font-bold uppercase tracking-widest">
                                                     <PlayCircle size={14} className="text-[var(--color-primary)]" />
                                                     {course.lessonsCount || 0} Lecciones
                                                 </div>
@@ -140,7 +140,7 @@ export default async function DashboardPage() {
                             {availableCourses.map((course: any) => (
                                 <div
                                     key={course.id}
-                                    className="group glass-effect rounded-3xl border border-white/10 overflow-hidden hover:border-white/20 transition-all duration-500 flex flex-col h-full relative"
+                                    className="group glass-effect rounded-3xl border border-[var(--border-color)] overflow-hidden hover:border-[var(--border-color)] transition-all duration-500 flex flex-col h-full bg-[var(--card-bg)] relative"
                                 >
                                     <div className="relative h-48 overflow-hidden">
                                         <img
@@ -154,14 +154,14 @@ export default async function DashboardPage() {
                                         </div>
                                     </div>
                                     <div className="p-6 flex flex-col flex-1 opacity-70">
-                                        <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">
+                                        <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2 line-clamp-2">
                                             {course.title}
                                         </h3>
-                                        <p className="text-slate-400 text-sm mb-6 line-clamp-2 font-medium">
+                                        <p className="text-[var(--text-secondary)] text-sm mb-6 line-clamp-2 font-medium">
                                             {course.description}
                                         </p>
-                                        <div className="mt-auto flex items-center justify-between pt-6 border-t border-white/5">
-                                            <div className="flex items-center gap-2 text-slate-500 text-xs font-bold uppercase tracking-widest">
+                                        <div className="mt-auto flex items-center justify-between pt-6 border-t border-[var(--border-color)]">
+                                            <div className="flex items-center gap-2 text-[var(--text-secondary)] text-xs font-bold uppercase tracking-widest">
                                                 <BookOpen size={14} />
                                                 Cerrado
                                             </div>

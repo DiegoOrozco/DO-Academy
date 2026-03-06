@@ -22,6 +22,12 @@ html {
   --text-muted: #94a3b8;
   /* slate-400 */
   --nav-bg: rgba(10, 10, 26, 0.8);
+  --header-bg: rgba(10, 10, 26, 0.8);
+  --sidebar-bg: #0a0a1a;
+  --card-bg: rgba(255, 255, 255, 0.03);
+  --border-color: rgba(255, 255, 255, 0.1);
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
 }
 
 .light {
@@ -33,6 +39,14 @@ html {
   --text-muted: #64748b;
   /* slate-500 */
   --nav-bg: rgba(255, 255, 255, 0.8);
+  --header-bg: rgba(255, 255, 255, 0.8);
+  --sidebar-bg: #ffffff;
+  --card-bg: #ffffff;
+  --border-color: rgba(0, 0, 0, 0.08);
+  --text-primary: #0f172a;
+  /* slate-900 */
+  --text-secondary: #475569;
+  /* slate-600 */
 }
 
 body {

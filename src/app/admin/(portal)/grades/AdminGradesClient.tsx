@@ -40,8 +40,8 @@ export default function AdminGradesClient({
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-black text-white tracking-tight">Libro de Calificaciones</h1>
-                    <p className="text-slate-400 mt-1">Supervisa y descarga el reporte de notas finales ponderadas.</p>
+                    <h1 className="text-3xl font-black text-[var(--text-primary)] tracking-tight">Libro de Calificaciones</h1>
+                    <p className="text-[var(--text-secondary)] mt-1">Supervisa y descarga el reporte de notas finales ponderadas.</p>
                 </div>
 
                 <button
@@ -53,30 +53,30 @@ export default function AdminGradesClient({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="glass-effect p-6 rounded-2xl border border-white/5 flex flex-col gap-1">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Estudiantes Activos</span>
-                    <span className="text-3xl font-black text-white">{totalStudents}</span>
+                <div className="glass-effect p-6 rounded-2xl border border-[var(--border-color)] flex flex-col gap-1 bg-[var(--card-bg)]">
+                    <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Estudiantes Activos</span>
+                    <span className="text-3xl font-black text-[var(--text-primary)]">{totalStudents}</span>
                 </div>
-                <div className="glass-effect p-6 rounded-2xl border border-white/5 flex flex-col gap-1">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Promedio Global</span>
-                    <span className="text-3xl font-black text-white">{avgScore.toFixed(1)}</span>
+                <div className="glass-effect p-6 rounded-2xl border border-[var(--border-color)] flex flex-col gap-1 bg-[var(--card-bg)]">
+                    <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Promedio Global</span>
+                    <span className="text-3xl font-black text-[var(--text-primary)]">{avgScore.toFixed(1)}</span>
                 </div>
-                <div className="glass-effect p-6 rounded-2xl border border-white/5 flex flex-col gap-1">
+                <div className="glass-effect p-6 rounded-2xl border border-[var(--border-color)] flex flex-col gap-1 bg-[var(--card-bg)]">
                     <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Tasa de Aprobación</span>
-                    <span className="text-3xl font-black text-white">{passRate.toFixed(0)}%</span>
+                    <span className="text-3xl font-black text-[var(--text-primary)]">{passRate.toFixed(0)}%</span>
                 </div>
             </div>
 
-            <div className="glass-effect rounded-3xl border border-white/5 overflow-hidden">
-                <div className="p-6 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/[0.02]">
+            <div className="glass-effect rounded-3xl border border-[var(--border-color)] overflow-hidden bg-[var(--card-bg)]">
+                <div className="p-6 border-b border-[var(--border-color)] flex flex-col md:flex-row md:items-center justify-between gap-4 bg-black/5">
                     <div className="relative flex-grow max-w-md">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" size={18} />
                         <input
                             type="text"
                             placeholder="Buscar por estudiante o curso..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-slate-900/50 border border-white/10 rounded-xl py-2.5 pl-11 pr-4 text-sm text-white focus:outline-none focus:border-[var(--color-primary)] transition-all"
+                            className="w-full bg-[var(--background)] border border-[var(--border-color)] rounded-xl py-2.5 pl-11 pr-4 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--color-primary)] transition-all"
                         />
                     </div>
                 </div>
@@ -84,15 +84,15 @@ export default function AdminGradesClient({
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-white/[0.01]">
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Estudiante</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Curso</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Desglose (Q/L/F/P)</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Nota Final</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Detalle</th>
+                            <tr className="bg-black/5">
+                                <th className="px-6 py-4 text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Estudiante</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Curso</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest text-center">Desglose (Q/L/F/P)</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest text-center">Nota Final</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest text-right">Detalle</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5">
+                        <tbody className="divide-y divide-[var(--border-color)]">
                             {filteredData.map((row, idx) => {
                                 const rowKey = `${row.studentId}-${row.courseId}-${idx}`;
                                 const isExpanded = expandedRows.includes(rowKey);

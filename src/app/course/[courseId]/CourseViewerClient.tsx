@@ -138,18 +138,18 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
     return (
         <div className="min-h-screen bg-[var(--background)] flex flex-col">
             {/* Top Navbar */}
-            <header className="sticky top-0 z-50 w-full border-b border-[var(--color-glass-border)] bg-[var(--color-background-dark)]/80 backdrop-blur-md px-4 sm:px-6 py-4">
+            <header className="sticky top-0 z-50 w-full border-b border-[var(--border-color)] bg-[var(--header-bg)] backdrop-blur-md px-4 sm:px-6 py-4">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
                         <Link
                             href="/"
-                            className="text-slate-400 hover:text-white transition-colors flex items-center gap-2 flex-shrink-0"
+                            className="text-[var(--text-secondary)] hover:text-[var(--color-primary)] transition-colors flex items-center gap-2 flex-shrink-0"
                         >
                             <ChevronLeft size={20} />
                             <span className="hidden xs:block">Catálogo</span>
                         </Link>
-                        <div className="h-6 w-px bg-slate-700 mx-1 sm:mx-2 flex-shrink-0"></div>
-                        <h1 className="text-sm sm:text-lg md:text-xl font-bold text-white truncate">{course.title}</h1>
+                        <div className="h-6 w-px bg-[var(--border-color)] mx-1 sm:mx-2 flex-shrink-0"></div>
+                        <h1 className="text-sm sm:text-lg md:text-xl font-bold text-[var(--text-primary)] truncate">{course.title}</h1>
                     </div>
 
                     {/* Mobile Toggle Button */}
@@ -174,25 +174,25 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
                 )}
 
                 {/* Left Sidebar (Navigation) - Becomes a Drawer on Mobile */}
-                <div className={`fixed inset-y-0 left-0 w-[280px] sm:w-80 bg-[var(--color-background-dark)] z-[70] lg:relative lg:z-10 lg:w-80 flex-shrink-0 flex flex-col gap-4 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${isSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
+                <div className={`fixed inset-y-0 left-0 w-[280px] sm:w-80 bg-[var(--sidebar-bg)] z-[70] lg:relative lg:z-10 lg:w-80 flex-shrink-0 flex flex-col gap-4 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${isSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
                     }`}>
-                    <div className="lg:hidden p-4 border-b border-[var(--color-glass-border)] flex items-center justify-between">
-                        <span className="font-bold text-white uppercase tracking-widest text-xs">Contenido del Curso</span>
-                        <button onClick={() => setIsSidebarOpen(false)} className="text-slate-400 hover:text-white">
+                    <div className="lg:hidden p-4 border-b border-[var(--border-color)] flex items-center justify-between">
+                        <span className="font-bold text-[var(--text-primary)] uppercase tracking-widest text-xs">Contenido del Curso</span>
+                        <button onClick={() => setIsSidebarOpen(false)} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
                             <X size={20} />
                         </button>
                     </div>
 
-                    <div className="glass-effect rounded-none lg:rounded-2xl overflow-hidden shadow-lg border-0 lg:border border-[var(--color-glass-border)] h-full lg:h-auto flex flex-col bg-slate-900/40">
-                        <div className="p-4 border-b border-[var(--color-glass-border)] bg-black/20">
-                            <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Contenido del Curso</h3>
+                    <div className="glass-effect rounded-none lg:rounded-2xl overflow-hidden shadow-lg border-0 lg:border border-[var(--border-color)] h-full lg:h-auto flex flex-col bg-[var(--card-bg)]">
+                        <div className="p-4 border-b border-[var(--border-color)] bg-black/5">
+                            <h3 className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-[0.2em]">Contenido del Curso</h3>
                         </div>
 
                         <div className="flex flex-col overflow-y-auto custom-scrollbar flex-grow max-h-[calc(100vh-250px)] lg:max-h-[600px]">
                             {course.weeks?.map((week: any, wIdx: number) => {
                                 const isCurrentWeek = activeWeek.id === week.id;
                                 return (
-                                    <div key={week.id} className="border-b border-slate-800/50 last:border-b-0">
+                                    <div key={week.id} className="border-b border-[var(--border-color)] last:border-b-0">
                                         {/* Week Header / Toggle */}
                                         <button
                                             onClick={() => {
@@ -206,16 +206,16 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
                                                 }`}
                                         >
                                             <div className="flex flex-col gap-0.5">
-                                                <span className={`text-[10px] font-bold uppercase tracking-wider ${isCurrentWeek ? "text-[var(--color-primary)]" : "text-slate-500"
+                                                <span className={`text-[10px] font-bold uppercase tracking-wider ${isCurrentWeek ? "text-[var(--color-primary)]" : "text-[var(--text-secondary)]"
                                                     }`}>
                                                     Semana {wIdx + 1}
                                                 </span>
-                                                <span className={`font-bold text-sm leading-tight ${isCurrentWeek ? "text-white" : "text-slate-300"
+                                                <span className={`font-bold text-sm leading-tight ${isCurrentWeek ? "text-[var(--color-primary)]" : "text-[var(--text-primary)]"
                                                     }`}>
                                                     {week.title}
                                                 </span>
                                             </div>
-                                            <div className={`${isCurrentWeek ? "text-[var(--color-primary)]" : "text-slate-600"}`}>
+                                            <div className={`${isCurrentWeek ? "text-[var(--color-primary)]" : "text-[var(--text-secondary)]"}`}>
                                                 {isCurrentWeek ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                                             </div>
                                         </button>
@@ -233,15 +233,15 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
                                                                 if (window.innerWidth < 1024) setIsSidebarOpen(false);
                                                             }}
                                                             className={`w-full flex items-start text-left gap-3 p-3 rounded-xl transition-all ${isActive
-                                                                ? "bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 text-white shadow-inner"
-                                                                : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                                                                ? "bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 text-[var(--text-primary)] shadow-sm"
+                                                                : "text-[var(--text-secondary)] hover:bg-[var(--color-primary)]/5 hover:text-[var(--text-primary)]"
                                                                 }`}
                                                         >
-                                                            <div className={`mt-0.5 ${isActive ? "text-[var(--color-primary)] shadow-glow-sm" : "text-slate-600"}`}>
+                                                            <div className={`mt-0.5 ${isActive ? "text-[var(--color-primary)]" : "text-[var(--text-secondary)]"}`}>
                                                                 <PlayCircle size={16} fill={isActive ? "currentColor" : "none"} />
                                                             </div>
                                                             <div className="flex flex-col">
-                                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-0.5">
+                                                                <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wide mb-0.5">
                                                                     Día {dIdx + 1}
                                                                 </span>
                                                                 <span className="text-sm font-medium line-clamp-2 leading-snug">
@@ -269,14 +269,14 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
                             <p className="text-[var(--color-secondary)] font-bold text-[10px] md:text-sm tracking-[0.2em] uppercase">
                                 {activeWeek.title}
                             </p>
-                            <span className="hidden sm:block text-slate-700">•</span>
-                            <p className="text-slate-400 text-[10px] md:text-sm font-semibold">Día {activeWeek.days?.indexOf(activeDay) + 1}</p>
+                            <span className="hidden sm:block text-[var(--border-color)]">•</span>
+                            <p className="text-[var(--text-secondary)] text-[10px] md:text-sm font-semibold">Día {activeWeek.days?.indexOf(activeDay) + 1}</p>
                         </div>
-                        <h2 className="text-2xl md:text-3xl lg:text-4xl font-black text-white leading-tight">{activeDay.title}</h2>
+                        <h2 className="text-2xl md:text-3xl lg:text-4xl font-black text-[var(--text-primary)] leading-tight">{activeDay.title}</h2>
                     </div>
 
                     {/* Video Player Embed */}
-                    <div className="w-full aspect-video rounded-2xl overflow-hidden glass-effect border border-[var(--color-glass-border)] shadow-2xl relative bg-black/40">
+                    <div className="w-full aspect-video rounded-2xl overflow-hidden glass-effect border border-[var(--border-color)] shadow-2xl relative bg-black/5">
                         {!isMounted ? (
                             <div className="absolute top-0 left-0 w-full h-full bg-black/20 animate-pulse" />
                         ) : activeDay.videoId ? (

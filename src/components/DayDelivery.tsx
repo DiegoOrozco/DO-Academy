@@ -94,7 +94,7 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
         <div className="flex flex-col gap-6 mt-8 p-6 glass-effect rounded-2xl border border-[var(--color-glass-border)]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    <h3 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
                         <FileText size={20} className="text-[var(--color-primary)]" />
                         Entrega solución
                     </h3>
@@ -214,7 +214,7 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                                         {submission.status === "FAILED" ? <AlertCircle size={24} /> : <CheckCircle2 size={24} />}
                                     </div>
                                     <div>
-                                        <h4 className={`font-bold ${submission.status === "FAILED" ? "text-red-400" : "text-white"}`}>
+                                        <h4 className={`font-bold ${submission.status === "FAILED" ? "text-red-400" : "text-[var(--text-primary)]"}`}>
                                             {submission.status === "FAILED" ? "Error en la Calificación" : "¡Tarea Calificada!"}
                                         </h4>
                                         <p className="text-xs text-slate-400">
@@ -226,8 +226,8 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                                 </div>
                                 {submission.status === "GRADED" && (
                                     <div className="text-center">
-                                        <span className="text-2xl font-black text-white">{submission.grade || "0"}</span>
-                                        <span className="text-xs text-slate-500 block uppercase font-bold tracking-tighter">Nota Final</span>
+                                        <span className="text-2xl font-black text-[var(--text-primary)]">{submission.grade || "0"}</span>
+                                        <span className="text-xs text-[var(--text-secondary)] block uppercase font-bold tracking-tighter">Nota Final</span>
                                     </div>
                                 )}
                             </div>

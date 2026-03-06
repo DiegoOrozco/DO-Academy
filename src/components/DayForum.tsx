@@ -188,21 +188,21 @@ export default function DayForum({ day, studentId, courseId, userRole, onPostCre
     // Render a single post with its replies (recursive-ready)
     const renderPost = (post: any, isNested = false) => (
         <div key={post.id} className={`${isNested ? "ml-4 sm:ml-8 border-l-2 border-slate-700/50 pl-4" : ""} flex flex-col gap-2`}>
-            <div className="bg-black/30 p-4 rounded-xl border border-white/5 flex flex-col gap-2 hover:border-white/10 transition-colors">
+            <div className="bg-[var(--card-bg)] p-4 rounded-xl border border-[var(--border-color)] flex flex-col gap-2 hover:border-[var(--color-primary)]/20 transition-colors shadow-sm">
                 <div className="flex items-center gap-3">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0 ${post.user?.role === "ADMIN" ? "bg-purple-600" : "bg-[var(--color-primary)]"}`}>
                         <User size={14} />
                     </div>
                     <div className="flex flex-col">
-                        <span className="font-bold text-slate-200 text-sm flex items-center gap-2">
+                        <span className="font-bold text-[var(--text-primary)] text-sm flex items-center gap-2">
                             {post.user?.name || "Estudiante"}
                             {post.user?.role === "ADMIN" && <span className="text-[9px] bg-purple-500/20 text-purple-400 px-1.5 py-[1px] rounded uppercase tracking-wider">Profesor</span>}
                         </span>
-                        <span className="text-[10px] text-slate-500">{formatDate(post.createdAt)}</span>
+                        <span className="text-[10px] text-[var(--text-muted)]">{formatDate(post.createdAt)}</span>
                     </div>
                 </div>
 
-                <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap pl-11">
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap pl-11">
                     {isNested ? post.content : getPostContent(post.content)}
                 </p>
 
@@ -235,7 +235,7 @@ export default function DayForum({ day, studentId, courseId, userRole, onPostCre
                             value={replyText}
                             onChange={(e) => setReplyText(e.target.value)}
                             placeholder="Escribe tu respuesta..."
-                            className="flex-grow bg-[rgba(0,0,0,0.5)] border border-slate-700/50 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-[var(--color-primary)] min-h-[50px] resize-y"
+                            className="flex-grow bg-[var(--background)] border border-[var(--border-color)] rounded-lg p-3 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--color-primary)] min-h-[50px] resize-y"
                             required
                         />
                         <button
@@ -252,20 +252,20 @@ export default function DayForum({ day, studentId, courseId, userRole, onPostCre
             {/* Replies */}
             {(post.replies || []).map((reply: any) => (
                 <div key={reply.id} className="ml-4 sm:ml-8 border-l-2 border-[var(--color-primary)]/20 pl-4">
-                    <div className="bg-black/20 p-3 rounded-xl border border-white/5 flex flex-col gap-2 hover:border-white/10 transition-colors">
+                    <div className="bg-[var(--card-bg)] p-3 rounded-xl border border-[var(--border-color)] flex flex-col gap-2 hover:border-[var(--color-primary)]/20 transition-colors shadow-sm">
                         <div className="flex items-center gap-2">
                             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0 ${reply.user?.role === "ADMIN" ? "bg-purple-600 text-white" : "bg-slate-700 text-slate-300"}`}>
                                 <User size={12} />
                             </div>
                             <div className="flex flex-col">
-                                <span className="font-semibold text-slate-200 text-xs flex items-center gap-2">
+                                <span className="font-semibold text-[var(--text-primary)] text-xs flex items-center gap-2">
                                     {reply.user?.name || "Estudiante"}
                                     {reply.user?.role === "ADMIN" && <span className="text-[8px] bg-purple-500/20 text-purple-400 px-1 py-[1px] rounded uppercase">Profesor</span>}
                                 </span>
-                                <span className="text-[10px] text-slate-500">{formatDate(reply.createdAt)}</span>
+                                <span className="text-[10px] text-[var(--text-muted)]">{formatDate(reply.createdAt)}</span>
                             </div>
                         </div>
-                        <p className="text-sm text-slate-400 leading-relaxed whitespace-pre-wrap pl-9">{reply.content}</p>
+                        <p className="text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap pl-9">{reply.content}</p>
 
                         {/* Reply to reply */}
                         <div className="flex justify-end gap-3">
