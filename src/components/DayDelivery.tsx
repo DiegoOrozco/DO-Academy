@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Upload, FileText, CheckCircle2, AlertCircle, Loader2, Download } from "lucide-react";
+import { Upload, FileText, CheckCircle2, AlertCircle, Loader2, Download, Code } from "lucide-react";
+import StudentCodeEditor from "./StudentCodeEditor";
+import { submitCodingExercise } from "@/actions/submissions";
 
 interface DayDeliveryProps {
     day: any;
@@ -16,14 +18,12 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
     const [error, setError] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
 
-    // Update state if props change (when student switches days)
     useEffect(() => {
         setSubmission(initialSubmission);
         setFile(null);
         setError(null);
     }, [day.id, initialSubmission]);
 
-    // Visibility Logic: Based on Admin configuration for this specific day
     const isDeliveryDay = !!day.isDeliveryDay;
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,10 +92,12 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                 <div>
                     <h3 className="text-xl font-bold text-white flex items-center gap-2">
                         <FileText size={20} className="text-[var(--color-primary)]" />
-                        Zona de Entrega
+                        {day.isCodingExercise ? "Laboratorio Proyectable" : "Zona de Entrega"}
                     </h3>
                     <p className="text-sm text-slate-400 mt-1">
-                        Descarga el enunciado y sube tu solución para ser calificada por el Profesor Virtual.
+                        {day.isCodingExercise
+                            ? "Escribe tu solución en el editor, prueba el código y envía cuando estés listo."
+                            : "Descarga el enunciado y sube tu solución para ser calificada por el Profesor Virtual."}
                     </p>
                 </div>
 
@@ -112,11 +114,23 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
 
             {isDeliveryDay ? (
                 <div className="space-y-4">
-                    {!submission ? (
+                    {day.isCodingExercise && !submission ? (
+                        <StudentCodeEditor
+                            dayId={day.id}
+                            userId={studentId}
+                            initialCode={day.codeTemplate || ""}
+                            expectedOutput={day.expectedOutput || ""}
+                            similarityThreshold={day.similarityThreshold || 0.9}
+                            enablePlagiarism={day.enablePlagiarism}
+                            onSuccess={async (grade) => {
+                                window.location.reload();
+                            }}
+                        />
+                    ) : !submission ? (
                         <div className="flex flex-col gap-4">
                             <div
                                 className={`relative border-2 border-dashed rounded-xl p-8 transition-all flex flex-col items-center justify-center text-center cursor-pointer ${isDragging ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 scale-[1.01]" :
-                                        file ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5" : "border-slate-700 hover:border-slate-500 bg-black/20"
+                                    file ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5" : "border-slate-700 hover:border-slate-500 bg-black/20"
                                     }`}
                                 onClick={() => document.getElementById("file-upload")?.click()}
                                 onDrop={handleDrop}
@@ -203,34 +217,36 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                                     <div>
                                         <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Comentario del Profesor</p>
                                         <p className="text-slate-300 text-sm leading-relaxed italic border-l-2 border-emerald-500/30 pl-4">
-                                            "{submission.feedback?.comentario || "Sin comentarios."}"
+                                            "{day.isCodingExercise ? submission.feedback?.text : submission.feedback?.comentario || "Sin comentarios."}"
                                         </p>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="bg-black/20 p-4 rounded-lg">
-                                            <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-2">Puntos Positivos</p>
-                                            <ul className="text-xs text-slate-400 space-y-1">
-                                                {submission.feedback?.feedback_positivo?.map((item: string, i: number) => (
-                                                    <li key={i} className="flex items-start gap-2">
-                                                        <span className="text-emerald-500 mt-0.5">•</span>
-                                                        {item}
-                                                    </li>
-                                                ))}
-                                            </ul>
+                                    {!day.isCodingExercise && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="bg-black/20 p-4 rounded-lg">
+                                                <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-2">Puntos Positivos</p>
+                                                <ul className="text-xs text-slate-400 space-y-1">
+                                                    {submission.feedback?.feedback_positivo?.map((item: string, i: number) => (
+                                                        <li key={i} className="flex items-start gap-2">
+                                                            <span className="text-emerald-500 mt-0.5">•</span>
+                                                            {item}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                            <div className="bg-black/20 p-4 rounded-lg">
+                                                <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest mb-2">Oportunidades de Mejora</p>
+                                                <ul className="text-xs text-slate-400 space-y-1">
+                                                    {submission.feedback?.mejoras?.map((item: string, i: number) => (
+                                                        <li key={i} className="flex items-start gap-2">
+                                                            <span className="text-amber-500 mt-0.5">•</span>
+                                                            {item}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
                                         </div>
-                                        <div className="bg-black/20 p-4 rounded-lg">
-                                            <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest mb-2">Oportunidades de Mejora</p>
-                                            <ul className="text-xs text-slate-400 space-y-1">
-                                                {submission.feedback?.mejoras?.map((item: string, i: number) => (
-                                                    <li key={i} className="flex items-start gap-2">
-                                                        <span className="text-amber-500 mt-0.5">•</span>
-                                                        {item}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="mt-4 flex justify-end">

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Save, Settings, List, Plus, Trash2, GripVertical, Video, Link2, Loader2, FileText, Upload, ChevronDown, ChevronRight, Tags, Calendar } from "lucide-react";
+import { ArrowLeft, Save, Settings, List, Plus, Trash2, GripVertical, Video, Link2, Loader2, FileText, Upload, ChevronDown, ChevronRight, Tags, Calendar, Code, Lock } from "lucide-react";
 import { saveCourseData } from "@/actions/admin-course";
 import { useRouter } from "next/navigation";
 
@@ -735,6 +735,80 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                                         </div>
                                                                                     </div>
                                                                                 )}
+
+                                                                                {/* Coding Exercise Settings */}
+                                                                                <div className="pt-4 border-t border-slate-800 space-y-4">
+                                                                                    <label className="flex items-center gap-3 cursor-pointer group/toggle">
+                                                                                        <div className="relative inline-flex items-center">
+                                                                                            <input
+                                                                                                type="checkbox"
+                                                                                                className="sr-only peer"
+                                                                                                checked={!!day.isCodingExercise}
+                                                                                                onChange={(e) => handleUpdateDay(week.id, day.id, "isCodingExercise", e.target.checked)}
+                                                                                            />
+                                                                                            <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                                                                                        </div>
+                                                                                        <div className="flex items-center gap-2">
+                                                                                            <Code size={14} className="text-emerald-400" />
+                                                                                            <span className="text-xs font-bold text-white uppercase tracking-widest group-hover/toggle:text-emerald-400 transition-colors">Activar Ejercicio de Programación</span>
+                                                                                        </div>
+                                                                                    </label>
+
+                                                                                    {day.isCodingExercise && (
+                                                                                        <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300 pl-6 border-l border-emerald-500/20">
+                                                                                            <div className="space-y-1">
+                                                                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Salida Esperada (Expected Output)</label>
+                                                                                                <textarea
+                                                                                                    value={day.expectedOutput || ""}
+                                                                                                    onChange={(e) => handleUpdateDay(week.id, day.id, "expectedOutput", e.target.value)}
+                                                                                                    placeholder="Lo que el programa debe imprimir..."
+                                                                                                    className="w-full h-20 bg-black/40 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 transition-all resize-y"
+                                                                                                />
+                                                                                                <p className="text-[10px] text-slate-500 italic">El sistema comparará la salida del alumno con este texto.</p>
+                                                                                            </div>
+
+                                                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                                                                <div className="space-y-1">
+                                                                                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Umbral de Similitud ({Math.round((day.similarityThreshold || 0.9) * 100)}%)</label>
+                                                                                                    <input
+                                                                                                        type="range"
+                                                                                                        min="0"
+                                                                                                        max="1"
+                                                                                                        step="0.05"
+                                                                                                        value={day.similarityThreshold || 0.9}
+                                                                                                        onChange={(e) => handleUpdateDay(week.id, day.id, "similarityThreshold", parseFloat(e.target.value))}
+                                                                                                        className="w-full accent-emerald-500"
+                                                                                                    />
+                                                                                                </div>
+                                                                                                <div className="flex items-center gap-3 cursor-pointer group/toggle mt-4">
+                                                                                                    <div className="relative inline-flex items-center">
+                                                                                                        <input
+                                                                                                            type="checkbox"
+                                                                                                            className="sr-only peer"
+                                                                                                            checked={!!day.enablePlagiarism}
+                                                                                                            onChange={(e) => handleUpdateDay(week.id, day.id, "enablePlagiarism", e.target.checked)}
+                                                                                                        />
+                                                                                                        <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+                                                                                                    </div>
+                                                                                                    <div className="flex items-center gap-2">
+                                                                                                        <Lock size={12} className="text-amber-500" />
+                                                                                                        <span className="text-[10px] font-bold text-white uppercase tracking-widest">Bloquear Copiar/Pegar y Detección de Plagio</span>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </div>
+
+                                                                                            <div className="space-y-1">
+                                                                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Código Inicial (Template)</label>
+                                                                                                <textarea
+                                                                                                    value={day.codeTemplate || ""}
+                                                                                                    onChange={(e) => handleUpdateDay(week.id, day.id, "codeTemplate", e.target.value)}
+                                                                                                    placeholder="def mi_funcion():\n    # Escribe aquí tu código..."
+                                                                                                    className="w-full h-32 bg-black/40 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-blue-300 font-mono focus:outline-none focus:border-blue-500 transition-all resize-y"
+                                                                                                />
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
                                                                             </div>
                                                                         )}
                                                                     </div>

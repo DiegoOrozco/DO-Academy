@@ -74,9 +74,18 @@ model Day {
   dueDate       DateTime? // For deadlines
   assignmentUrl String?
   gradingSeverity Int     @default(1) // 1 to 5
+  
+  // Coding Exercise Fields
+  isCodingExercise  Boolean   @default(false)
+  expectedOutput    String?   @db.Text
+  similarityThreshold Float   @default(0.9)
+  enablePlagiarism  Boolean   @default(false)
+  codeTemplate      String?   @db.Text
+
   weekId        String
   week          Week      @relation(fields: [weekId], references: [id], onDelete: Cascade)
   resources Resource[]
+
   posts     Post[]
   videoProgresses VideoProgress[]
   submissions     Submission[]
@@ -145,6 +154,7 @@ model Submission {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   day  Day  @relation(fields: [dayId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, dayId])
   @@index([userId])
   @@index([dayId])
 }

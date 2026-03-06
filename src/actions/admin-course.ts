@@ -97,6 +97,11 @@ export async function saveCourseData(courseId: string, data: any) {
                         dueDate: day.dueDate ? new Date(day.dueDate) : null,
                         assignmentUrl: day.assignmentUrl || null,
                         gradingSeverity: day.gradingSeverity || 1,
+                        isCodingExercise: !!day.isCodingExercise,
+                        expectedOutput: day.expectedOutput || null,
+                        similarityThreshold: parseFloat(day.similarityThreshold) || 0.9,
+                        enablePlagiarism: !!day.enablePlagiarism,
+                        codeTemplate: day.codeTemplate || null,
                         order: dIndex,
                         weekId: weekRecord.id // This handles moving the day to a different week!
                     },
@@ -111,6 +116,11 @@ export async function saveCourseData(courseId: string, data: any) {
                         dueDate: day.dueDate ? new Date(day.dueDate) : null,
                         assignmentUrl: day.assignmentUrl || null,
                         gradingSeverity: day.gradingSeverity || 1,
+                        isCodingExercise: !!day.isCodingExercise,
+                        expectedOutput: day.expectedOutput || null,
+                        similarityThreshold: parseFloat(day.similarityThreshold) || 0.9,
+                        enablePlagiarism: !!day.enablePlagiarism,
+                        codeTemplate: day.codeTemplate || null,
                         order: dIndex,
                         weekId: weekRecord.id
                     }
