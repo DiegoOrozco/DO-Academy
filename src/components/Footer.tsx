@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Github, Linkedin, Twitter, Instagram, Sparkles, Heart } from "lucide-react";
+import { Github, Linkedin, Twitter, Instagram, Sparkles, Heart, Mail } from "lucide-react";
 
 export default function Footer({ user, aboutConfig }: { user?: any, aboutConfig?: any }) {
     const pathname = usePathname();
@@ -37,6 +37,7 @@ export default function Footer({ user, aboutConfig }: { user?: any, aboutConfig?
                                 if (link.platform === "LinkedIn") Icon = Linkedin;
                                 if (link.platform === "Twitter") Icon = Twitter;
                                 if (link.platform === "Instagram") Icon = Instagram;
+                                if (link.platform === "Email") Icon = Mail;
 
                                 return <SocialIcon key={i} href={link.url} icon={<Icon size={18} />} />;
                             })}

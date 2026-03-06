@@ -1,26 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ShieldAlert, Users, Code, ArrowRight, AlertTriangle, CheckCircle } from "lucide-react";
-import { detectPlagiarism } from "@/actions/plagiarism";
 
-export default function PlagiarismReportClient({ dayId, dayTitle }: { dayId: string, dayTitle: string }) {
-    const [reports, setReports] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        async function fetchReports() {
-            const res = await detectPlagiarism(dayId);
-            if (res.success) {
-                setReports(res.similarities || []);
-            } else {
-                setError(res.error || "Error al cargar reporte");
-            }
-            setIsLoading(false);
-        }
-        fetchReports();
-    }, [dayId]);
+export default function PlagiarismReportClient({
+    dayId,
+    dayTitle,
+    initialReports = [],
+    initialError = null
+}: {
+    dayId: string,
+    dayTitle: string,
+    initialReports?: any[],
+    initialError?: string | null
+}) {
+    const [reports] = useState<any[]>(initialReports);
+    const [error] = useState<string | null>(initialError);
+    const [isLoading] = useState(false);
 
     if (isLoading) return <div className="p-10 text-center animate-pulse text-slate-500 uppercase tracking-widest font-bold">Analizando similitudes...</div>;
 

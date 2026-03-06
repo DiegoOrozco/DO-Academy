@@ -1,6 +1,8 @@
+"use server";
+
 import { cookies } from "next/headers";
-import { verifySession } from "./session";
-import prisma from "./prisma";
+import { verifySession } from "@/lib/session";
+import prisma from "@/lib/prisma";
 
 /**
  * Guard to ensure a user is an admin

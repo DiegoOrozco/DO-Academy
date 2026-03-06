@@ -78,6 +78,7 @@ export default async function AboutPage() {
                                 if (link.platform === "LinkedIn") Icon = Linkedin;
                                 if (link.platform === "Twitter") Icon = Twitter;
                                 if (link.platform === "Instagram") Icon = Instagram;
+                                if (link.platform === "Email") Icon = Mail;
 
                                 return <SocialLink key={i} href={link.url} icon={<Icon size={20} />} label={link.platform} />;
                             })}

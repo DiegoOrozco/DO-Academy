@@ -76,7 +76,7 @@ export default function DayForum({ day, studentId, courseId, userRole, onPostCre
         setIsPosting(true);
         try {
             const finalContent = selectedTopic ? `[Tema: ${selectedTopic}]\n\n${newPost}` : newPost;
-            const res = await createPost(day.id, studentId, finalContent, courseId);
+            const res = await createPost(day.id, finalContent, courseId);
             if (res.success) {
                 setNewPost("");
                 setSelectedTopic("");
@@ -98,7 +98,7 @@ export default function DayForum({ day, studentId, courseId, userRole, onPostCre
 
         setIsReplying(true);
         try {
-            const res = await createReply(postId, replyText, studentId);
+            const res = await createReply(postId, replyText);
             if (res.success) {
                 setReplyText("");
                 setReplyingTo(null);

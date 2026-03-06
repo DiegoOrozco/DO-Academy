@@ -30,7 +30,7 @@ export default function VideoQA({ day, studentId, courseId, userRole, onPostCrea
 
         setIsPosting(true);
         try {
-            const res = await createPost(day.id, studentId, newQuestion, courseId);
+            const res = await createPost(day.id, newQuestion, courseId);
             if (res.success) {
                 setNewQuestion("");
                 onPostCreated();
@@ -51,7 +51,7 @@ export default function VideoQA({ day, studentId, courseId, userRole, onPostCrea
 
         setIsReplying(true);
         try {
-            const res = await createReply(postId, replyText, studentId);
+            const res = await createReply(postId, replyText);
             if (res.success) {
                 setReplyText("");
                 setReplyingTo(null);
