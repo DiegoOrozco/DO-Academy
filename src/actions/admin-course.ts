@@ -13,7 +13,11 @@ export async function saveCourseData(courseId: string, data: any) {
                 description: data.description,
                 status: data.status,
                 password: data.password,
-                thumbnail: data.thumbnail
+                thumbnail: data.thumbnail,
+                weightQuiz: parseInt(data.weightQuiz) || 20,
+                weightLab: parseInt(data.weightLab) || 30,
+                weightForum: parseInt(data.weightForum) || 10,
+                weightProject: parseInt(data.weightProject) || 40,
             }
         });
 
@@ -88,6 +92,8 @@ export async function saveCourseData(courseId: string, data: any) {
                         videoId: day.videoId || null,
                         materialUrl: day.materialUrl || null,
                         isDeliveryDay: !!day.isDeliveryDay,
+                        assignmentType: day.assignmentType || "LAB",
+                        dueDate: day.dueDate ? new Date(day.dueDate) : null,
                         assignmentUrl: day.assignmentUrl || null,
                         gradingSeverity: day.gradingSeverity || 1,
                         order: dIndex,
@@ -99,6 +105,8 @@ export async function saveCourseData(courseId: string, data: any) {
                         videoId: day.videoId || null,
                         materialUrl: day.materialUrl || null,
                         isDeliveryDay: !!day.isDeliveryDay,
+                        assignmentType: day.assignmentType || "LAB",
+                        dueDate: day.dueDate ? new Date(day.dueDate) : null,
                         assignmentUrl: day.assignmentUrl || null,
                         gradingSeverity: day.gradingSeverity || 1,
                         order: dIndex,

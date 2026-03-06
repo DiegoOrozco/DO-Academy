@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Save, Settings, List, Plus, Trash2, GripVertical, Video, Link2, Loader2, FileText, Upload, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft, Save, Settings, List, Plus, Trash2, GripVertical, Video, Link2, Loader2, FileText, Upload, ChevronDown, ChevronRight, Tags, Calendar } from "lucide-react";
 import { saveCourseData } from "@/actions/admin-course";
 import { useRouter } from "next/navigation";
 
@@ -90,10 +90,20 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
 
     // Initial state setup mapping Prisma format to Component format if necessary
     const [course, setCourse] = useState(() => ({
-        ...initialCourse,
+        id: initialCourse.id,
+        title: initialCourse.title,
+        description: initialCourse.description || "",
+        status: initialCourse.status || "published",
+        password: initialCourse.password || "doacademy",
         thumbnail: initialCourse.thumbnail || "",
-        password: initialCourse.password || "",
-        weeks: initialCourse.weeks ? [...initialCourse.weeks] : []
+        weightQuiz: initialCourse.weightQuiz || 20,
+        weightLab: initialCourse.weightLab || 30,
+        weightForum: initialCourse.weightForum || 10,
+        weightProject: initialCourse.weightProject || 40,
+        weeks: initialCourse.weeks?.length > 0 ? initialCourse.weeks.map((w: any) => ({
+            ...w,
+            days: w.days?.length > 0 ? w.days.map((d: any) => ({ ...d })) : []
+        })) : []
     }));
 
     // --- Curriculum State Handlers ---
@@ -400,6 +410,56 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                     className="w-full bg-[rgba(0,0,0,0.3)] border border-slate-700/50 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[var(--color-primary)] transition-all"
                                 />
                             </div>
+
+                            <div className="pt-6 border-t border-slate-800">
+                                <h3 className="text-lg font-bold text-white mb-4">Porcentajes de Evaluación</h3>
+                                <p className="text-sm text-slate-400 mb-6">Configura el peso de cada rubro. El total debe sumar 100%.</p>
+
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-300 mb-2">Quices (%)</label>
+                                        <input
+                                            type="number"
+                                            value={course.weightQuiz}
+                                            onChange={(e) => setCourse({ ...course, weightQuiz: parseInt(e.target.value) || 0 })}
+                                            className="w-full bg-[rgba(0,0,0,0.3)] border border-slate-700/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 transition-all"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-300 mb-2">Laboratorios (%)</label>
+                                        <input
+                                            type="number"
+                                            value={course.weightLab}
+                                            onChange={(e) => setCourse({ ...course, weightLab: parseInt(e.target.value) || 0 })}
+                                            className="w-full bg-[rgba(0,0,0,0.3)] border border-slate-700/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 transition-all"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-300 mb-2">Foros (%)</label>
+                                        <input
+                                            type="number"
+                                            value={course.weightForum}
+                                            onChange={(e) => setCourse({ ...course, weightForum: parseInt(e.target.value) || 0 })}
+                                            className="w-full bg-[rgba(0,0,0,0.3)] border border-slate-700/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 transition-all"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-300 mb-2">Proyectos (%)</label>
+                                        <input
+                                            type="number"
+                                            value={course.weightProject}
+                                            onChange={(e) => setCourse({ ...course, weightProject: parseInt(e.target.value) || 0 })}
+                                            className="w-full bg-[rgba(0,0,0,0.3)] border border-slate-700/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 transition-all"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="mt-4 flex items-center gap-2 text-sm">
+                                    <span className="text-slate-400">Total:</span>
+                                    <span className={`font-bold ${(course.weightQuiz + course.weightLab + course.weightForum + course.weightProject) === 100 ? "text-emerald-400" : "text-red-400"}`}>
+                                        {course.weightQuiz + course.weightLab + course.weightForum + course.weightProject}%
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     )}
 
@@ -568,62 +628,98 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                         </label>
 
                                                                         {day.isDeliveryDay && (
-                                                                            <div className="flex-1 w-full animate-in fade-in slide-in-from-left-2 duration-300">
-                                                                                <div className="flex items-center justify-between mb-1">
-                                                                                    <div className="flex items-center gap-2">
-                                                                                        <FileText size={12} className="text-blue-400" />
-                                                                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Enunciado (PDF/Doc)</label>
-                                                                                    </div>
-                                                                                    <div className="flex items-center gap-2">
-                                                                                        <input
-                                                                                            type="file"
-                                                                                            id={`upload-${day.id}`}
-                                                                                            className="hidden"
-                                                                                            accept=".pdf,.doc,.docx"
-                                                                                            onChange={(e) => {
-                                                                                                const f = e.target.files?.[0];
-                                                                                                if (f) handleFileUpload(week.id, day.id, f, "assignmentUrl");
-                                                                                            }}
-                                                                                        />
-                                                                                        <button
-                                                                                            disabled={isUploadingFile === `${day.id}-assignmentUrl`}
-                                                                                            onClick={() => document.getElementById(`upload-${day.id}`)?.click()}
-                                                                                            className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--color-primary)] hover:text-white transition-colors uppercase tracking-widest bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20"
+                                                                            <div className="flex-1 w-full animate-in fade-in slide-in-from-left-2 duration-300 space-y-6">
+                                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                                                    <div className="space-y-2">
+                                                                                        <div className="flex items-center gap-2">
+                                                                                            <Tags size={12} className="text-purple-400" />
+                                                                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tipo de Asignación</label>
+                                                                                        </div>
+                                                                                        <select
+                                                                                            value={day.assignmentType || "LAB"}
+                                                                                            onChange={(e) => handleUpdateDay(week.id, day.id, "assignmentType", e.target.value)}
+                                                                                            className="w-full bg-[rgba(255,255,255,0.05)] border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 transition-all"
                                                                                         >
-                                                                                            {isUploadingFile === `${day.id}-assignmentUrl` ? (
-                                                                                                <Loader2 size={12} className="animate-spin" />
-                                                                                            ) : (
-                                                                                                <Upload size={12} />
-                                                                                            )}
-                                                                                            {isUploadingFile === `${day.id}-assignmentUrl` ? "Subiendo..." : "Subir PDF"}
-                                                                                        </button>
+                                                                                            <option value="QUIZ">Quiz / Prueba Corta</option>
+                                                                                            <option value="LAB">Laboratorio Práctico</option>
+                                                                                            <option value="FORUM">Foro de Discusión</option>
+                                                                                            <option value="PROJECT">Proyecto Final</option>
+                                                                                        </select>
                                                                                     </div>
-                                                                                </div>
-                                                                                <input
-                                                                                    type="text"
-                                                                                    value={day.assignmentUrl || ""}
-                                                                                    onChange={(e) => handleUpdateDay(week.id, day.id, "assignmentUrl", e.target.value)}
-                                                                                    className="w-full bg-[rgba(0,100,255,0.05)] border border-blue-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600 mb-4"
-                                                                                    placeholder="Subir archivo o pegar enlace externo..."
-                                                                                />
 
-                                                                                <div className="space-y-2">
-                                                                                    <div className="flex items-center gap-2">
-                                                                                        <Settings size={12} className="text-orange-400" />
-                                                                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nivel de Exigencia (IA)</label>
+                                                                                    <div className="space-y-2">
+                                                                                        <div className="flex items-center gap-2">
+                                                                                            <Calendar size={12} className="text-rose-400" />
+                                                                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Fecha Límite (Deadline)</label>
+                                                                                        </div>
+                                                                                        <input
+                                                                                            type="datetime-local"
+                                                                                            value={day.dueDate ? new Date(day.dueDate).toISOString().slice(0, 16) : ""}
+                                                                                            onChange={(e) => handleUpdateDay(week.id, day.id, "dueDate", e.target.value ? new Date(e.target.value).toISOString() : null)}
+                                                                                            className="w-full bg-[rgba(255,255,255,0.05)] border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-rose-500 transition-all"
+                                                                                        />
                                                                                     </div>
-                                                                                    <select
-                                                                                        value={day.gradingSeverity || 1}
-                                                                                        onChange={(e) => handleUpdateDay(week.id, day.id, "gradingSeverity", parseInt(e.target.value))}
-                                                                                        className="w-full bg-[rgba(255,150,0,0.05)] border border-orange-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition-all"
-                                                                                    >
-                                                                                        <option value={1}>Nivel 1: Introductorio (Enfoque en lógica)</option>
-                                                                                        <option value={2}>Nivel 2: Estándar (Reviso nomenclatura básica)</option>
-                                                                                        <option value={3}>Nivel 3: Avanzado (Exijo consistencia de estilo)</option>
-                                                                                        <option value={4}>Nivel 4: Profesional (PEP8 / SQL Normalizado)</option>
-                                                                                        <option value={5}>Nivel 5: Élite (Cero redundancia y detección IA)</option>
-                                                                                    </select>
                                                                                 </div>
+
+                                                                                {day.assignmentType !== "FORUM" && (
+                                                                                    <div>
+                                                                                        <div className="flex items-center justify-between mb-1">
+                                                                                            <div className="flex items-center gap-2">
+                                                                                                <FileText size={12} className="text-blue-400" />
+                                                                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Enunciado (PDF/Doc)</label>
+                                                                                            </div>
+                                                                                            <div className="flex items-center gap-2">
+                                                                                                <input
+                                                                                                    type="file"
+                                                                                                    id={`upload-${day.id}`}
+                                                                                                    className="hidden"
+                                                                                                    accept=".pdf,.doc,.docx"
+                                                                                                    onChange={(e) => {
+                                                                                                        const f = e.target.files?.[0];
+                                                                                                        if (f) handleFileUpload(week.id, day.id, f, "assignmentUrl");
+                                                                                                    }}
+                                                                                                />
+                                                                                                <button
+                                                                                                    disabled={isUploadingFile === `${day.id}-assignmentUrl`}
+                                                                                                    onClick={() => document.getElementById(`upload-${day.id}`)?.click()}
+                                                                                                    className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--color-primary)] hover:text-white transition-colors uppercase tracking-widest bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20"
+                                                                                                >
+                                                                                                    {isUploadingFile === `${day.id}-assignmentUrl` ? (
+                                                                                                        <Loader2 size={12} className="animate-spin" />
+                                                                                                    ) : (
+                                                                                                        <Upload size={12} />
+                                                                                                    )}
+                                                                                                    {isUploadingFile === `${day.id}-assignmentUrl` ? "Subiendo..." : "Subir PDF"}
+                                                                                                </button>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <input
+                                                                                            type="text"
+                                                                                            value={day.assignmentUrl || ""}
+                                                                                            onChange={(e) => handleUpdateDay(week.id, day.id, "assignmentUrl", e.target.value)}
+                                                                                            className="w-full bg-[rgba(0,100,255,0.05)] border border-blue-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600 mb-4"
+                                                                                            placeholder="Subir archivo o pegar enlace externo..."
+                                                                                        />
+
+                                                                                        <div className="space-y-2">
+                                                                                            <div className="flex items-center gap-2">
+                                                                                                <Settings size={12} className="text-orange-400" />
+                                                                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nivel de Exigencia (IA)</label>
+                                                                                            </div>
+                                                                                            <select
+                                                                                                value={day.gradingSeverity || 1}
+                                                                                                onChange={(e) => handleUpdateDay(week.id, day.id, "gradingSeverity", parseInt(e.target.value))}
+                                                                                                className="w-full bg-[rgba(255,150,0,0.05)] border border-orange-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition-all"
+                                                                                            >
+                                                                                                <option value={1}>Nivel 1: Introductorio (Enfoque en lógica)</option>
+                                                                                                <option value={2}>Nivel 2: Estándar (Reviso nomenclatura básica)</option>
+                                                                                                <option value={3}>Nivel 3: Avanzado (Exijo consistencia de estilo)</option>
+                                                                                                <option value={4}>Nivel 4: Profesional (PEP8 / SQL Normalizado)</option>
+                                                                                                <option value={5}>Nivel 5: Élite (Cero redundancia y detección IA)</option>
+                                                                                            </select>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                )}
                                                                             </div>
                                                                         )}
                                                                     </div>

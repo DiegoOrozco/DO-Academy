@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, PlayCircle, FileText, Download, MessageSquare, Send, User, Menu, X, BookOpen, ChevronDown, ChevronRight } from "lucide-react";
 import { createPost } from "@/actions/forum";
 import DayDelivery from "@/components/DayDelivery";
+import DayForum from "@/components/DayForum";
 
 export default function CourseViewerClient({ course, studentId }: { course: any, studentId: string }) {
     // If course has no weeks, safely fallback so UI doesn't crash
@@ -313,12 +314,25 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
                             </div>
                         )}
                     </div>
-                    {/* Delivery Section (AI Grading) */}
-                    <DayDelivery
-                        day={activeDayData}
-                        studentId={studentId}
-                        initialSubmission={activeDayData.submissions?.[0]}
-                    />
+                    {/* Delivery / Forum Section */}
+                    {activeDayData.assignmentType === "FORUM" ? (
+                        <DayForum
+                            day={activeDayData}
+                            studentId={studentId}
+                            courseId={course.id}
+                            onPostCreated={() => {
+                                // Since activeDayData is bound to server sync or local state,
+                                // we can just trigger a router refresh to fetch new posts
+                                window.location.reload();
+                            }}
+                        />
+                    ) : (
+                        <DayDelivery
+                            day={activeDayData}
+                            studentId={studentId}
+                            initialSubmission={activeDayData.submissions?.[0]}
+                        />
+                    )}
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Resources Column */}

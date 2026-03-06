@@ -32,9 +32,13 @@ model Course {
   thumbnail   String?
   status      String       @default("published")
   password    String       @default("doacademy")
-  createdAt   DateTime     @default(now())
-  enrollments Enrollment[]
-  weeks       Week[]
+  createdAt     DateTime     @default(now())
+  weightQuiz    Int          @default(20)
+  weightLab     Int          @default(30)
+  weightForum   Int          @default(10)
+  weightProject Int          @default(40)
+  enrollments   Enrollment[]
+  weeks         Week[]
 }
 
 model Enrollment {
@@ -62,13 +66,15 @@ model Day {
   id        String     @id @default(cuid())
   title     String
   order     Int
-  videoId     String?    // YouTube video ID
-  materialUrl String?
+  videoId       String?    // YouTube video ID
+  materialUrl   String?
   isDeliveryDay Boolean   @default(false)
+  assignmentType String   @default("LAB") // QUIZ, LAB, FORUM, PROJECT
+  dueDate       DateTime? // For deadlines
   assignmentUrl String?
-  gradingSeverity Int      @default(1) // 1 to 5
-  weekId      String
-  week      Week       @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  gradingSeverity Int     @default(1) // 1 to 5
+  weekId        String
+  week          Week      @relation(fields: [weekId], references: [id], onDelete: Cascade)
   resources Resource[]
   posts     Post[]
   videoProgresses VideoProgress[]
