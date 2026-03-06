@@ -45,7 +45,7 @@ export default async function PlagiarismIndexPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {daysWithPlagiarism.map((day) => (
+                {daysWithPlagiarism.map((day: any) => (
                     <Link
                         key={day.id}
                         href={`/admin/plagiarism/${day.id}`}
