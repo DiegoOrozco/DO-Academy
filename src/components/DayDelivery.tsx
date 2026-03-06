@@ -14,6 +14,7 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
     const [isUploading, setIsUploading] = useState(false);
     const [submission, setSubmission] = useState<any>(initialSubmission);
     const [error, setError] = useState<string | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
 
     // Update state if props change (when student switches days)
     useEffect(() => {
@@ -30,6 +31,29 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
             setFile(e.target.files[0]);
             setError(null);
         }
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        const droppedFile = e.dataTransfer.files?.[0];
+        if (droppedFile) {
+            setFile(droppedFile);
+            setError(null);
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
     };
 
     const handleSubmit = async () => {
@@ -91,9 +115,13 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                     {!submission ? (
                         <div className="flex flex-col gap-4">
                             <div
-                                className={`relative border-2 border-dashed rounded-xl p-8 transition-all flex flex-col items-center justify-center text-center cursor-pointer ${file ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5" : "border-slate-700 hover:border-slate-500 bg-black/20"
+                                className={`relative border-2 border-dashed rounded-xl p-8 transition-all flex flex-col items-center justify-center text-center cursor-pointer ${isDragging ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 scale-[1.01]" :
+                                        file ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5" : "border-slate-700 hover:border-slate-500 bg-black/20"
                                     }`}
                                 onClick={() => document.getElementById("file-upload")?.click()}
+                                onDrop={handleDrop}
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
                             >
                                 <input
                                     id="file-upload"
@@ -107,6 +135,11 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                                         <CheckCircle2 size={32} className="text-[var(--color-primary)] mb-2" />
                                         <p className="text-white font-medium">{file.name}</p>
                                         <p className="text-xs text-slate-500 mt-1">Haga clic para cambiar el archivo</p>
+                                    </>
+                                ) : isDragging ? (
+                                    <>
+                                        <Upload size={32} className="text-[var(--color-primary)] mb-2 animate-bounce" />
+                                        <p className="text-[var(--color-primary)] font-medium">¡Suelta el archivo aquí!</p>
                                     </>
                                 ) : (
                                     <>
