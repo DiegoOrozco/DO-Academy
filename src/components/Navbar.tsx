@@ -14,6 +14,7 @@ import {
     GraduationCap
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import ThemeToggle from "./ThemeToggle";
 
 import { logoutStudent, logoutAdmin } from "@/actions/auth";
 
@@ -64,7 +65,7 @@ export default function Navbar({ user }: NavbarProps) {
     return (
         <nav
             className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-                ? "py-3 bg-[rgba(10,10,26,0.8)] backdrop-blur-xl border-b border-[var(--color-glass-border)] shadow-2xl"
+                ? "py-3 bg-[var(--nav-bg)] backdrop-blur-xl border-b border-[var(--color-glass-border)] shadow-2xl"
                 : "py-6 bg-transparent"
                 }`}
         >
@@ -104,6 +105,7 @@ export default function Navbar({ user }: NavbarProps) {
 
                     {user ? (
                         <div className="flex items-center gap-4">
+                            <ThemeToggle />
                             <div className="flex flex-col items-end mr-2">
                                 <span className="text-xs font-bold text-white leading-none">{user.name}</span>
                                 <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mt-1">
@@ -128,6 +130,7 @@ export default function Navbar({ user }: NavbarProps) {
                         </div>
                     ) : (
                         <div className="flex items-center gap-4 font-bold">
+                            <ThemeToggle />
                             <Link href="/login" className="text-sm text-slate-400 hover:text-white transition-colors">
                                 Entrar
                             </Link>
@@ -141,13 +144,15 @@ export default function Navbar({ user }: NavbarProps) {
                     )}
                 </div>
 
-                {/* Mobile Menu Toggle */}
-                <button
-                    className="md:hidden p-2 text-slate-400 hover:text-white transition-colors"
-                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                >
-                    {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                </button>
+                <div className="md:hidden flex items-center gap-2">
+                    <ThemeToggle />
+                    <button
+                        className="p-2 text-slate-400 hover:text-white transition-colors"
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    >
+                        {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                    </button>
+                </div>
             </div>
 
             {/* Mobile Menu */}
