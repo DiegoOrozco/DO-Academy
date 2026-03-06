@@ -31,6 +31,8 @@ export async function POST(request: Request): Promise<NextResponse> {
         const blob = await put(filename, arrayBuffer, {
             access: "public",
             token: process.env.BLOB_READ_WRITE_TOKEN,
+            addRandomSuffix: false,
+            allowOverwrite: true,
         });
 
         console.log("Upload successful:", blob.url);
