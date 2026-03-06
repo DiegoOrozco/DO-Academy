@@ -67,3 +67,31 @@ export async function createReply(postId: string, content: string, userId?: stri
         return { success: false, error: error.message };
     }
 }
+
+export async function deletePost(postId: string) {
+    try {
+        await prisma.post.delete({
+            where: { id: postId }
+        });
+        revalidatePath("/");
+        revalidatePath("/admin/qa");
+        return { success: true };
+    } catch (error: any) {
+        console.error("Delete Post Error:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function deleteReply(replyId: string) {
+    try {
+        await prisma.reply.delete({
+            where: { id: replyId }
+        });
+        revalidatePath("/");
+        revalidatePath("/admin/qa");
+        return { success: true };
+    } catch (error: any) {
+        console.error("Delete Reply Error:", error);
+        return { success: false, error: error.message };
+    }
+}

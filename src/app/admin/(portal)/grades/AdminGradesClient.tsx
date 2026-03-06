@@ -168,7 +168,13 @@ export default function AdminGradesClient({
                                                                             </span>
                                                                         </div>
                                                                         <p className="text-sm font-medium text-white line-clamp-1" title={sub.title}>{sub.title}</p>
-                                                                        <p className="text-xs text-slate-400 mt-1 line-clamp-2" title={sub.feedback || "Sin feedback"}>{sub.feedback || "Sin feedback asociado a esta entrega."}</p>
+                                                                        <p className="text-xs text-slate-400 mt-1 line-clamp-2" title={
+                                                                            typeof sub.feedback === 'object' && sub.feedback?.text ? sub.feedback.text :
+                                                                                (typeof sub.feedback === 'string' ? sub.feedback : "Sin feedback")
+                                                                        }>
+                                                                            {typeof sub.feedback === 'object' && sub.feedback?.text ? sub.feedback.text :
+                                                                                (typeof sub.feedback === 'string' ? sub.feedback : "Sin feedback asociado a esta entrega.")}
+                                                                        </p>
                                                                     </div>
                                                                 ))}
                                                             </div>

@@ -59,5 +59,5 @@ export default async function CourseViewerPage({ params }: { params: Promise<{ c
 
     const safeCourse = JSON.parse(JSON.stringify(course));
 
-    return <CourseViewerClient course={safeCourse} studentId={studentId} />;
+    return <CourseViewerClient course={safeCourse} studentId={studentId} userRole={student.role} />;
 }

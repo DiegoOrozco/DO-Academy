@@ -8,7 +8,7 @@ import DayDelivery from "@/components/DayDelivery";
 import DayForum from "@/components/DayForum";
 import VideoQA from "@/components/VideoQA";
 
-export default function CourseViewerClient({ course, studentId }: { course: any, studentId: string }) {
+export default function CourseViewerClient({ course, studentId, userRole }: { course: any, studentId: string, userRole?: string }) {
     // If course has no weeks, safely fallback so UI doesn't crash
     const initialWeek = course.weeks?.[0] || { id: "0", title: "No content", days: [] };
     const initialDay = initialWeek.days?.[0] || { id: "0", title: "No content", videoId: "", materialUrl: "", posts: [], replies: [] };
@@ -303,6 +303,7 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
                             day={activeDayData}
                             studentId={studentId}
                             courseId={course.id}
+                            userRole={userRole}
                             onPostCreated={() => {
                                 window.location.reload();
                             }}
@@ -319,6 +320,7 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
                                 day={activeDayData}
                                 studentId={studentId}
                                 courseId={course.id}
+                                userRole={userRole}
                                 onPostCreated={() => {
                                     window.location.reload();
                                 }}

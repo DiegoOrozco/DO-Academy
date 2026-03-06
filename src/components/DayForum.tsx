@@ -1,18 +1,20 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { MessageSquare, Send, User, Clock, AlertCircle, CornerDownRight, ChevronDown, ChevronRight, Hash } from "lucide-react";
+import { MessageSquare, Send, User, CornerDownRight, HelpCircle, Trash2, Clock, AlertCircle, ChevronDown, ChevronRight, Hash } from "lucide-react";
 
-import { createPost, createReply } from "@/actions/forum";
+import { createPost, createReply, deletePost, deleteReply } from "@/actions/forum";
 
 interface DayForumProps {
     day: any;
     studentId: string;
     courseId: string;
+    userRole?: string;
     onPostCreated: () => void;
 }
 
-export default function DayForum({ day, studentId, courseId, onPostCreated }: DayForumProps) {
+export default function DayForum({ day, studentId, courseId, userRole, onPostCreated }: DayForumProps) {
+    const isAdmin = userRole === "ADMIN";
     const [newPost, setNewPost] = useState("");
     const [selectedTopic, setSelectedTopic] = useState("");
     const [isPosting, setIsPosting] = useState(false);
@@ -112,6 +114,36 @@ export default function DayForum({ day, studentId, courseId, onPostCreated }: Da
         }
     };
 
+    const handleDeletePost = async (postId: string) => {
+        if (!confirm("¿Estás seguro de que quieres eliminar este aporte y todas sus respuestas?")) return;
+        try {
+            const res = await deletePost(postId);
+            if (res.success) {
+                onPostCreated();
+            } else {
+                alert("Error al eliminar el aporte: " + res.error);
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Error de conexión");
+        }
+    };
+
+    const handleDeleteReply = async (replyId: string) => {
+        if (!confirm("¿Estás seguro de que quieres eliminar esta respuesta?")) return;
+        try {
+            const res = await deleteReply(replyId);
+            if (res.success) {
+                onPostCreated();
+            } else {
+                alert("Error al eliminar la respuesta: " + res.error);
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Error de conexión");
+        }
+    };
+
     const formatDate = (date: any) => {
         if (!date) return "...";
         try {
@@ -174,7 +206,7 @@ export default function DayForum({ day, studentId, courseId, onPostCreated }: Da
                     {isNested ? post.content : getPostContent(post.content)}
                 </p>
 
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-3">
                     <button
                         onClick={() => {
                             setReplyingTo(replyingTo === post.id ? null : post.id);
@@ -185,6 +217,15 @@ export default function DayForum({ day, studentId, courseId, onPostCreated }: Da
                         <CornerDownRight size={12} />
                         Responder
                     </button>
+                    {isAdmin && (
+                        <button
+                            onClick={() => handleDeletePost(post.id)}
+                            className="text-xs font-semibold text-rose-500/50 hover:text-rose-500 transition-colors flex items-center gap-1"
+                        >
+                            <Trash2 size={12} />
+                            Eliminar
+                        </button>
+                    )}
                 </div>
 
                 {/* Reply Input */}
@@ -227,7 +268,7 @@ export default function DayForum({ day, studentId, courseId, onPostCreated }: Da
                         <p className="text-sm text-slate-400 leading-relaxed whitespace-pre-wrap pl-9">{reply.content}</p>
 
                         {/* Reply to reply */}
-                        <div className="flex justify-end">
+                        <div className="flex justify-end gap-3">
                             <button
                                 onClick={() => {
                                     setReplyingTo(replyingTo === `reply-${reply.id}` ? null : `reply-${reply.id}`);
@@ -238,6 +279,15 @@ export default function DayForum({ day, studentId, courseId, onPostCreated }: Da
                                 <CornerDownRight size={10} />
                                 Responder
                             </button>
+                            {isAdmin && (
+                                <button
+                                    onClick={() => handleDeleteReply(reply.id)}
+                                    className="text-[10px] font-semibold text-rose-500/50 hover:text-rose-500 transition-colors flex items-center gap-1"
+                                >
+                                    <Trash2 size={10} />
+                                    Eliminar
+                                </button>
+                            )}
                         </div>
 
                         {replyingTo === `reply-${reply.id}` && (

@@ -1,18 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
-import { MessageSquare, Send, User, CornerDownRight, HelpCircle } from "lucide-react";
-
-import { createPost, createReply } from "@/actions/forum";
+import { createPost, createReply, deletePost, deleteReply } from "@/actions/forum";
+import { MessageSquare, Send, User, CornerDownRight, HelpCircle, Trash2 } from "lucide-react";
 
 interface VideoQAProps {
     day: any;
     studentId: string;
     courseId: string;
+    userRole?: string;
     onPostCreated: () => void;
 }
 
-export default function VideoQA({ day, studentId, courseId, onPostCreated }: VideoQAProps) {
+export default function VideoQA({ day, studentId, courseId, userRole, onPostCreated }: VideoQAProps) {
+    const isAdmin = userRole === "ADMIN";
     const [newQuestion, setNewQuestion] = useState("");
     const [isPosting, setIsPosting] = useState(false);
 
@@ -63,6 +64,28 @@ export default function VideoQA({ day, studentId, courseId, onPostCreated }: Vid
             alert("Error de conexión");
         } finally {
             setIsReplying(false);
+        }
+    };
+
+    const handleDeletePost = async (postId: string) => {
+        if (!confirm("¿Estás seguro de que quieres eliminar esta pregunta y todas sus respuestas?")) return;
+        try {
+            const res = await deletePost(postId);
+            if (res.success) onPostCreated();
+            else alert("Error: " + res.error);
+        } catch (error) {
+            alert("Error de conexión");
+        }
+    };
+
+    const handleDeleteReply = async (replyId: string) => {
+        if (!confirm("¿Estás seguro de que quieres eliminar esta respuesta?")) return;
+        try {
+            const res = await deleteReply(replyId);
+            if (res.success) onPostCreated();
+            else alert("Error: " + res.error);
+        } catch (error) {
+            alert("Error de conexión");
         }
     };
 
@@ -136,6 +159,15 @@ export default function VideoQA({ day, studentId, courseId, onPostCreated }: Vid
                                         <CornerDownRight size={10} />
                                         Responder
                                     </button>
+                                    {isAdmin && (
+                                        <button
+                                            onClick={() => handleDeletePost(post.id)}
+                                            className="text-[10px] font-semibold text-rose-500/50 hover:text-rose-500 transition-colors flex items-center gap-1"
+                                        >
+                                            <Trash2 size={10} />
+                                            Eliminar
+                                        </button>
+                                    )}
                                 </div>
 
                                 {replyingTo === post.id && (
@@ -186,6 +218,15 @@ export default function VideoQA({ day, studentId, courseId, onPostCreated }: Vid
                                                 <CornerDownRight size={10} />
                                                 Responder
                                             </button>
+                                            {isAdmin && (
+                                                <button
+                                                    onClick={() => handleDeleteReply(reply.id)}
+                                                    className="text-[10px] font-semibold text-rose-500/50 hover:text-rose-500 transition-colors flex items-center gap-1"
+                                                >
+                                                    <Trash2 size={10} />
+                                                    Eliminar
+                                                </button>
+                                            )}
                                         </div>
 
                                         {replyingTo === `r-${reply.id}` && (

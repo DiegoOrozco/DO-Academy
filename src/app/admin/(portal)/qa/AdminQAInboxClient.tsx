@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { MessageSquare, CheckCircle, CornerDownRight, Clock } from "lucide-react";
 
-import { createReply } from "@/actions/forum";
+import { Trash2 } from "lucide-react";
+import { createReply, deletePost } from "@/actions/forum";
 
 export default function AdminQAInboxClient({ initialQuestions }: { initialQuestions: any[] }) {
     const [activeTab, setActiveTab] = useState("pending");
@@ -34,6 +35,16 @@ export default function AdminQAInboxClient({ initialQuestions }: { initialQuesti
             });
         } else {
             alert("Error al enviar respuesta: " + res.error);
+        }
+    };
+
+    const handleDelete = async (postId: string) => {
+        if (!confirm("¿Estás seguro de que quieres eliminar esta pregunta?")) return;
+        const res = await deletePost(postId);
+        if (res.success) {
+            setQuestions(questions.filter(q => q.id !== postId));
+        } else {
+            alert("Error al eliminar: " + res.error);
         }
     };
 
@@ -103,6 +114,13 @@ export default function AdminQAInboxClient({ initialQuestions }: { initialQuesti
                                 <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
                                     <Clock size={14} />
                                     {q.time}
+                                    <button
+                                        onClick={() => handleDelete(q.id)}
+                                        className="ml-2 p-1.5 text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"
+                                        title="Eliminar pregunta"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
                                 </div>
                             </div>
 
