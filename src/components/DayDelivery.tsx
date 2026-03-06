@@ -28,6 +28,8 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
 
     const isDeliveryDay = !!day.isDeliveryDay;
 
+    if (!isDeliveryDay) return null;
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files?.[0]) {
             setFile(e.target.files[0]);
@@ -94,12 +96,12 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                 <div>
                     <h3 className="text-xl font-bold text-white flex items-center gap-2">
                         <FileText size={20} className="text-[var(--color-primary)]" />
-                        {day.isCodingExercise ? "Laboratorio Proyectable" : "Zona de Entrega"}
+                        Entrega solución
                     </h3>
                     <p className="text-sm text-slate-400 mt-1">
                         {day.isCodingExercise
                             ? "Escribe tu solución en el editor, prueba el código y envía cuando estés listo."
-                            : "Descarga el enunciado y sube tu solución para ser calificada por el Profesor Virtual."}
+                            : "Sube tu solución para ser calificada por el Profesor Virtual."}
                     </p>
                 </div>
 
