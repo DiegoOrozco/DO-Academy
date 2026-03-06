@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { Shield, ArrowLeft } from "lucide-react";
 import { loginAdmin } from "../../../actions/auth";
+import { verifySession } from "@/lib/session";
 
 export default async function AdminLoginPage({
     searchParams,
@@ -11,7 +12,7 @@ export default async function AdminLoginPage({
 }) {
     const { error } = await searchParams;
     const cookieStore = await cookies();
-    const isAdmin = cookieStore.get("admin_session")?.value === "valid";
+    const isAdmin = verifySession(cookieStore.get("admin_session")?.value) === "valid";
 
     if (isAdmin) {
         redirect("/admin");
