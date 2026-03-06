@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { Upload, FileText, CheckCircle2, AlertCircle, Loader2, Download, Code } from "lucide-react";
 import StudentCodeEditor from "./StudentCodeEditor";
 import { submitCodingExercise } from "@/actions/submissions";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface DayDeliveryProps {
     day: any;
@@ -101,25 +103,34 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                     </p>
                 </div>
 
-                <a
-                    href={day.assignmentUrl || "#"}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={`flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-xl border border-white/10 transition-all text-sm font-semibold group ${!day.assignmentUrl ? "opacity-50 cursor-not-allowed" : ""}`}
-                >
-                    <Download size={16} className="text-blue-400 group-hover:scale-110 transition-transform" />
-                    Descargar Enunciado
-                </a>
+                {!day.isCodingExercise && (
+                    <a
+                        href={day.assignmentUrl || "#"}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={`flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-xl border border-white/10 transition-all text-sm font-semibold group ${!day.assignmentUrl ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
+                        <Download size={16} className="text-blue-400 group-hover:scale-110 transition-transform" />
+                        Descargar Enunciado
+                    </a>
+                )}
             </div>
 
             {isDeliveryDay ? (
                 <div className="space-y-4">
+                    {day.isCodingExercise && day.exerciseDescription && (
+                        <div className="p-6 bg-[#14181E] border border-slate-700/50 rounded-2xl mb-4 text-[14px] text-slate-300 leading-relaxed font-medium [&>p]:mb-3 [&>h1]:text-xl [&>h1]:font-bold [&>h1]:mb-3 [&>h2]:text-lg [&>h2]:font-bold [&>h2]:mb-2 [&>h3]:text-base [&>h3]:font-bold [&>h3]:text-emerald-400 [&>h3]:mb-2 [&>ul]:list-disc [&>ul]:ml-5 [&>ul]:mb-3 [&>ol]:list-decimal [&>ol]:ml-5 [&>ol]:mb-3 [&>code]:bg-slate-800 [&>code]:text-emerald-300 [&>code]:px-1.5 [&>code]:py-0.5 [&>code]:rounded [&>pre]:bg-slate-900 [&>pre]:p-4 [&>pre]:rounded-lg [&>pre]:mb-4 [&>pre>code]:bg-transparent [&>pre>code]:text-blue-300 [&>pre>code]:p-0 [&>strong]:text-white [&>a]:text-blue-400 [&>a]:underline">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {day.exerciseDescription}
+                            </ReactMarkdown>
+                        </div>
+                    )}
+
                     {day.isCodingExercise && !submission ? (
                         <StudentCodeEditor
                             dayId={day.id}
                             userId={studentId}
                             initialCode={day.codeTemplate || ""}
-                            exerciseDescription={day.exerciseDescription || ""}
                             testCases={day.testCases || []}
                             similarityThreshold={day.similarityThreshold || 0.9}
                             enablePlagiarism={day.enablePlagiarism}

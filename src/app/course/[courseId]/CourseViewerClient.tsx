@@ -163,7 +163,7 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
                 </div>
             </header>
 
-            <main className="flex-grow max-w-7xl mx-auto w-full flex flex-col lg:flex-row gap-6 p-4 sm:p-6 lg:p-8 relative">
+            <main className="flex-grow max-w-[1600px] mx-auto w-full flex flex-col lg:flex-row gap-6 p-4 sm:p-6 lg:p-8 relative">
 
                 {/* Mobile Sidebar Overlay (Backdrop) */}
                 {isSidebarOpen && (

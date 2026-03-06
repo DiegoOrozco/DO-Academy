@@ -4,13 +4,10 @@ import { useState, useRef, useEffect } from "react";
 import Editor from "@monaco-editor/react";
 import { Play, Send, CheckCircle, XCircle, AlertCircle, Maximize2, Minimize2, Copy, Trash2, Cpu, Code, Lock, Loader2, FileText } from "lucide-react";
 import { submitCodingExercise } from "@/actions/submissions";
-import Script from "next/script";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 
 interface StudentCodeEditorProps {
     initialCode?: string;
-    exerciseDescription?: string;
+    exerciseDescription?: string; // Keep this for now, but its rendering will be removed.
     testCases?: Array<{ input: string; output: string }>;
     similarityThreshold?: number;
     enablePlagiarism?: boolean;
@@ -19,11 +16,75 @@ interface StudentCodeEditorProps {
     userId: string;
 }
 
-declare global {
-    interface Window {
-        loadPyodide: any;
-    }
+const pyodideWorkerCode = `
+importScripts("https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js");
+
+let pyodideReadyPromise;
+
+async function load() {
+  self.pyodide = await loadPyodide({
+      indexURL: "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/"
+  });
+  self.postMessage({ type: "loaded" });
 }
+pyodideReadyPromise = load();
+
+self.onmessage = async (event) => {
+  await pyodideReadyPromise;
+  const { id, code, testCases } = event.data;
+  
+  try {
+      let allOutput = "";
+      let generatedOutputs = [];
+
+      const casesToRun = (testCases && testCases.length) ? testCases : [{ input: "", output: "" }];
+
+      for (let i = 0; i < casesToRun.length; i++) {
+          const tc = casesToRun[i];
+          allOutput += \`\\n--- CASO DE PRUEBA \${i + 1} ---\\n\`;
+          if (tc.input) {
+              allOutput += \`[Input]\\n\${tc.input}\\n\`;
+          }
+
+          let capturedOutput = "";
+          let inputLines = tc.input ? tc.input.split('\\n') : [];
+
+          self.pyodide.setStdout({
+              batched: (text) => {
+                  capturedOutput += text + "\\n";
+              }
+          });
+
+          self.pyodide.setStdin({
+              stdin: () => {
+                  if (inputLines.length > 0) {
+                      return inputLines.shift() || "";
+                  }
+                  return "";
+              }
+          });
+
+          try {
+              // Creating a new dictionary for globals to reset state between runs
+              const globals = self.pyodide.globals.get('dict')();
+              await self.pyodide.runPythonAsync(code, { globals });
+              globals.destroy();
+              
+              const finalOutput = capturedOutput || "(Sin salida visual)";
+              allOutput += \`[Output]\\n\${finalOutput}\\n\`;
+              generatedOutputs.push(capturedOutput.trim());
+          } catch (err) {
+              allOutput += \`[Error]\\n\${err.message}\\n\`;
+              generatedOutputs.push(""); // Push empty on error to keep array length
+          }
+      }
+
+      self.postMessage({ type: "result", id, allOutput, generatedOutputs });
+  } catch (error) {
+      self.postMessage({ type: "error", id, error: error.message });
+  }
+};
+`;
 
 export default function StudentCodeEditor({
     initialCode = "# Escribe aquí tu solución...",
@@ -43,40 +104,34 @@ export default function StudentCodeEditor({
     const [result, setResult] = useState<{ status: 'success' | 'error' | 'pending' | null, score: number | null }>({ status: null, score: null });
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isPyodideLoading, setIsPyodideLoading] = useState(true);
-    const [pyodideError, setPyodideError] = useState<string | null>(null);
 
     const editorRef = useRef<any>(null);
-    const pyodideRef = useRef<any>(null);
+    const workerRef = useRef<Worker | null>(null);
+    const executionIdRef = useRef(0);
 
-    // Load Pyodide
+    // Initialize Web Worker
     useEffect(() => {
-        async function initPyodide() {
-            try {
-                if (!window.loadPyodide) return;
+        const blob = new Blob([pyodideWorkerCode], { type: "application/javascript" });
+        const worker = new Worker(URL.createObjectURL(blob));
+        workerRef.current = worker;
 
-                const pyodide = await window.loadPyodide({
-                    indexURL: "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/",
-                });
-
-                pyodideRef.current = pyodide;
-                // Pre-load standard libraries if needed
+        worker.onmessage = (e) => {
+            const { type, id, allOutput, generatedOutputs, error } = e.data;
+            if (type === "loaded") {
                 setIsPyodideLoading(false);
-            } catch (err: any) {
-                console.error("Pyodide error:", err);
-                setPyodideError("Error al cargar el motor de Python.");
-                setIsPyodideLoading(false);
+            } else if (type === "result" && id === executionIdRef.current) {
+                setOutput(allOutput);
+                setOutputsArray(generatedOutputs);
+                setIsExecuting(false);
+            } else if (type === "error" && id === executionIdRef.current) {
+                setOutput(`> Error General: ${error}`);
+                setIsExecuting(false);
             }
-        }
+        };
 
-        // Wait for Script component to load window.loadPyodide
-        const timer = setInterval(() => {
-            if (window.loadPyodide && !pyodideRef.current) {
-                initPyodide();
-                clearInterval(timer);
-            }
-        }, 500);
-
-        return () => clearInterval(timer);
+        return () => {
+            worker.terminate();
+        };
     }, []);
 
     // Anti-Plagiarism logic
@@ -114,8 +169,8 @@ export default function StudentCodeEditor({
         editorRef.current = editor;
     };
 
-    const handleExecute = async () => {
-        if (!pyodideRef.current) {
+    const handleExecute = () => {
+        if (!workerRef.current || isPyodideLoading) {
             setOutput("Espere a que el motor de Python se inicie...");
             return;
         }
@@ -125,61 +180,12 @@ export default function StudentCodeEditor({
         setResult({ status: null, score: null });
         setOutputsArray([]);
 
-        // Permite que React dibuje el estado "Ejecutando..." antes de bloquear el hilo principal con Pyodide
-        await new Promise(r => setTimeout(r, 50));
-
-        try {
-            const casesToRun = testCases?.length ? testCases : [{ input: "", output: "" }];
-            let allOutput = "";
-            let generatedOutputs: string[] = [];
-
-            for (let i = 0; i < casesToRun.length; i++) {
-                const tc = casesToRun[i];
-                allOutput += `\n--- CASO DE PRUEBA ${i + 1} ---\n`;
-                if (tc.input) {
-                    allOutput += `[Input]\n${tc.input}\n`;
-                }
-
-                let capturedOutput = "";
-                let inputLines = tc.input ? tc.input.split('\n') : [];
-
-                pyodideRef.current.setStdout({
-                    batched: (text: string) => {
-                        capturedOutput += text + "\n";
-                    }
-                });
-
-                pyodideRef.current.setStdin({
-                    stdin: () => {
-                        if (inputLines.length > 0) {
-                            return inputLines.shift() || "";
-                        }
-                        return "";
-                    }
-                });
-
-                try {
-                    // Injecting a clear scope for each run could be complex, 
-                    // relying on Pyodide runPythonAsync in the main namespace.
-                    await pyodideRef.current.runPythonAsync(code);
-
-                    const finalOutput = capturedOutput || "(Sin salida visual)";
-                    allOutput += `[Output]\n${finalOutput}\n`;
-                    generatedOutputs.push(capturedOutput.trim());
-                } catch (err: any) {
-                    allOutput += `[Error]\n${err.message}\n`;
-                    generatedOutputs.push(""); // Push empty on error to keep array length
-                }
-            }
-
-            setOutput(allOutput);
-            setOutputsArray(generatedOutputs);
-
-        } catch (err: any) {
-            setOutput(`> Error General: ${err.message}`);
-        } finally {
-            setIsExecuting(false);
-        }
+        executionIdRef.current += 1;
+        workerRef.current.postMessage({
+            id: executionIdRef.current,
+            code,
+            testCases
+        });
     };
 
     const handleSubmit = async () => {
@@ -214,11 +220,6 @@ export default function StudentCodeEditor({
 
     return (
         <div className={`flex flex-col h-full bg-[#0B0D11] border border-slate-700/30 rounded-2xl overflow-hidden shadow-2xl transition-all ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : 'relative min-h-[550px]'}`}>
-            <Script
-                src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"
-                strategy="afterInteractive"
-            />
-
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 bg-[#14181E] border-b border-slate-700/50">
                 <div className="flex items-center gap-4">
@@ -270,18 +271,6 @@ export default function StudentCodeEditor({
             <div className="flex-1 flex flex-col md:flex-row min-h-0">
                 {/* Editor Area */}
                 <div className="flex-1 flex flex-col min-h-[400px] relative border-r border-slate-700/30 bg-[#0B0D11]">
-                    {exerciseDescription && (
-                        <div className="p-5 bg-[#14181E]/80 border-b border-slate-700/50 max-h-52 overflow-y-auto custom-scrollbar flex-shrink-0 relative">
-                            <h4 className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-3 flex items-center gap-2 sticky top-0 bg-[#14181E]/95 py-2 z-10">
-                                <FileText size={12} /> Instrucciones del Ejercicio
-                            </h4>
-                            <div className="text-[13px] text-slate-300 leading-relaxed font-medium [&>p]:mb-3 [&>h1]:text-lg [&>h1]:font-bold [&>h1]:mb-2 [&>h2]:text-base [&>h2]:font-bold [&>h2]:mb-2 [&>h3]:text-sm [&>h3]:font-bold [&>h3]:text-emerald-400 [&>h3]:mb-2 [&>ul]:list-disc [&>ul]:ml-5 [&>ul]:mb-3 [&>ol]:list-decimal [&>ol]:ml-5 [&>ol]:mb-3 [&>code]:bg-slate-800 [&>code]:text-emerald-300 [&>code]:px-1.5 [&>code]:py-0.5 [&>code]:rounded [&>pre]:bg-slate-900 [&>pre]:p-4 [&>pre]:rounded-lg [&>pre]:mb-4 [&>pre>code]:bg-transparent [&>pre>code]:text-blue-300 [&>pre>code]:p-0 [&>strong]:text-white [&>a]:text-blue-400 [&>a]:underline">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                    {exerciseDescription}
-                                </ReactMarkdown>
-                            </div>
-                        </div>
-                    )}
                     <div className="flex-1 relative flex flex-col min-h-0">
                         <Editor
                             height="100%"
