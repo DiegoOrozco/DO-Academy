@@ -335,7 +335,10 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                             }`}
                     >
                         <Settings size={18} />
-                        Ajustes del Curso
+                        <div className="flex flex-col items-start">
+                            <span>Ajustes del Curso</span>
+                            <span className="text-[9px] text-slate-500 font-normal">Porcentajes de Evaluación</span>
+                        </div>
                     </button>
 
                     <button

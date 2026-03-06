@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { MessageSquare, Send, User, Clock, AlertCircle, CornerDownRight } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { MessageSquare, Send, User, Clock, AlertCircle, CornerDownRight, ChevronDown, ChevronRight, Hash } from "lucide-react";
 
 import { createPost, createReply } from "@/actions/forum";
 
@@ -18,13 +18,21 @@ export default function DayForum({ day, studentId, courseId, onPostCreated }: Da
     const [isPosting, setIsPosting] = useState(false);
     const [timeLeft, setTimeLeft] = useState<string>("");
 
-    // Reply state
+    // Reply state - now supports replying to any post or reply
     const [replyingTo, setReplyingTo] = useState<string | null>(null);
     const [replyText, setReplyText] = useState("");
     const [isReplying, setIsReplying] = useState(false);
 
+    // Track which topic sections are expanded
+    const [expandedTopics, setExpandedTopics] = useState<string[]>([]);
+
     const isDeliveryDay = !!day.isDeliveryDay && day.assignmentType === "FORUM";
     const topics = day.forumTopics ? day.forumTopics.split("\n").filter((t: string) => t.trim() !== "") : [];
+
+    // Auto-expand all topics on mount
+    useEffect(() => {
+        setExpandedTopics(topics.map((_: string, i: number) => `topic-${i}`));
+    }, [day.forumTopics]);
 
     useEffect(() => {
         if (!day.dueDate) return;
@@ -92,7 +100,7 @@ export default function DayForum({ day, studentId, courseId, onPostCreated }: Da
             if (res.success) {
                 setReplyText("");
                 setReplyingTo(null);
-                onPostCreated(); // Refresh comments
+                onPostCreated();
             } else {
                 alert("Error al enviar respuesta: " + res.error);
             }
@@ -112,6 +120,149 @@ export default function DayForum({ day, studentId, courseId, onPostCreated }: Da
             return "...";
         }
     };
+
+    const toggleTopic = (topicKey: string) => {
+        setExpandedTopics(prev =>
+            prev.includes(topicKey) ? prev.filter(k => k !== topicKey) : [...prev, topicKey]
+        );
+    };
+
+    // Extract topic from post content
+    const getPostTopic = (content: string): string | null => {
+        const match = content.match(/^\[Tema: (.+?)\]/);
+        return match ? match[1] : null;
+    };
+
+    // Get content without the topic prefix
+    const getPostContent = (content: string): string => {
+        return content.replace(/^\[Tema: .+?\]\n\n/, "");
+    };
+
+    // Group posts by topic
+    const allPosts = day.posts || [];
+    const postsByTopic: Record<string, any[]> = {};
+    const ungroupedPosts: any[] = [];
+
+    allPosts.forEach((post: any) => {
+        const topic = getPostTopic(post.content);
+        if (topic) {
+            if (!postsByTopic[topic]) postsByTopic[topic] = [];
+            postsByTopic[topic].push(post);
+        } else {
+            ungroupedPosts.push(post);
+        }
+    });
+
+    // Render a single post with its replies (recursive-ready)
+    const renderPost = (post: any, isNested = false) => (
+        <div key={post.id} className={`${isNested ? "ml-4 sm:ml-8 border-l-2 border-slate-700/50 pl-4" : ""} flex flex-col gap-2`}>
+            <div className="bg-black/30 p-4 rounded-xl border border-white/5 flex flex-col gap-2 hover:border-white/10 transition-colors">
+                <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0 ${post.user?.role === "ADMIN" ? "bg-purple-600" : "bg-[var(--color-primary)]"}`}>
+                        <User size={14} />
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="font-bold text-slate-200 text-sm flex items-center gap-2">
+                            {post.user?.name || "Estudiante"}
+                            {post.user?.role === "ADMIN" && <span className="text-[9px] bg-purple-500/20 text-purple-400 px-1.5 py-[1px] rounded uppercase tracking-wider">Profesor</span>}
+                        </span>
+                        <span className="text-[10px] text-slate-500">{formatDate(post.createdAt)}</span>
+                    </div>
+                </div>
+
+                <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap pl-11">
+                    {isNested ? post.content : getPostContent(post.content)}
+                </p>
+
+                <div className="flex justify-end">
+                    <button
+                        onClick={() => {
+                            setReplyingTo(replyingTo === post.id ? null : post.id);
+                            setReplyText("");
+                        }}
+                        className="text-xs font-semibold text-slate-500 hover:text-[var(--color-primary)] transition-colors flex items-center gap-1"
+                    >
+                        <CornerDownRight size={12} />
+                        Responder
+                    </button>
+                </div>
+
+                {/* Reply Input */}
+                {replyingTo === post.id && (
+                    <form onSubmit={(e) => handleReply(post.id, e)} className="flex gap-2 mt-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <textarea
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            placeholder="Escribe tu respuesta..."
+                            className="flex-grow bg-[rgba(0,0,0,0.5)] border border-slate-700/50 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-[var(--color-primary)] min-h-[50px] resize-y"
+                            required
+                        />
+                        <button
+                            type="submit"
+                            disabled={isReplying || !replyText.trim()}
+                            className="bg-[var(--color-primary)] hover:bg-blue-600 disabled:opacity-50 text-white p-3 rounded-lg flex items-center justify-center h-fit self-end"
+                        >
+                            <Send size={14} />
+                        </button>
+                    </form>
+                )}
+            </div>
+
+            {/* Replies */}
+            {(post.replies || []).map((reply: any) => (
+                <div key={reply.id} className="ml-4 sm:ml-8 border-l-2 border-[var(--color-primary)]/20 pl-4">
+                    <div className="bg-black/20 p-3 rounded-xl border border-white/5 flex flex-col gap-2 hover:border-white/10 transition-colors">
+                        <div className="flex items-center gap-2">
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0 ${reply.user?.role === "ADMIN" ? "bg-purple-600 text-white" : "bg-slate-700 text-slate-300"}`}>
+                                <User size={12} />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="font-semibold text-slate-200 text-xs flex items-center gap-2">
+                                    {reply.user?.name || "Estudiante"}
+                                    {reply.user?.role === "ADMIN" && <span className="text-[8px] bg-purple-500/20 text-purple-400 px-1 py-[1px] rounded uppercase">Profesor</span>}
+                                </span>
+                                <span className="text-[10px] text-slate-500">{formatDate(reply.createdAt)}</span>
+                            </div>
+                        </div>
+                        <p className="text-sm text-slate-400 leading-relaxed whitespace-pre-wrap pl-9">{reply.content}</p>
+
+                        {/* Reply to reply */}
+                        <div className="flex justify-end">
+                            <button
+                                onClick={() => {
+                                    setReplyingTo(replyingTo === `reply-${reply.id}` ? null : `reply-${reply.id}`);
+                                    setReplyText("");
+                                }}
+                                className="text-[10px] font-semibold text-slate-500 hover:text-[var(--color-primary)] transition-colors flex items-center gap-1"
+                            >
+                                <CornerDownRight size={10} />
+                                Responder
+                            </button>
+                        </div>
+
+                        {replyingTo === `reply-${reply.id}` && (
+                            <form onSubmit={(e) => handleReply(post.id, e)} className="flex gap-2 mt-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <textarea
+                                    value={replyText}
+                                    onChange={(e) => setReplyText(e.target.value)}
+                                    placeholder={`Respondiendo a ${reply.user?.name || "Estudiante"}...`}
+                                    className="flex-grow bg-[rgba(0,0,0,0.5)] border border-slate-700/50 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-[var(--color-primary)] min-h-[40px] resize-y"
+                                    required
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={isReplying || !replyText.trim()}
+                                    className="bg-[var(--color-primary)] hover:bg-blue-600 disabled:opacity-50 text-white p-2 rounded-lg flex items-center justify-center h-fit self-end"
+                                >
+                                    <Send size={12} />
+                                </button>
+                            </form>
+                        )}
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
 
     return (
         <div className="flex flex-col gap-6 mt-8 p-6 glass-effect rounded-2xl border border-[var(--color-glass-border)] relative overflow-hidden">
@@ -183,87 +334,69 @@ export default function DayForum({ day, studentId, courseId, onPostCreated }: Da
                 </div>
             )}
 
-            {/* Posts List */}
-            <div className="flex flex-col gap-5 mt-4">
-                {(day.posts || []).length > 0 ? (
-                    (day.posts || []).map((post: any) => (
-                        <div key={post.id} className="bg-black/30 p-5 rounded-xl border border-[var(--color-glass-border)] flex flex-col gap-3">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="w-10 h-10 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white font-bold text-sm shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.5)]">
-                                    <User size={18} />
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="font-bold text-slate-200 text-sm">
-                                        {post.user?.name || "Estudiante"}
-                                        {post.user?.role === "ADMIN" && <span className="ml-2 text-[10px] bg-purple-500/20 text-purple-400 px-1.5 py-[1px] rounded uppercase tracking-wider">Profesor</span>}
-                                    </span>
-                                    <span className="text-[11px] text-slate-500">{formatDate(post.createdAt)}</span>
-                                </div>
-                            </div>
+            {/* Posts grouped by topic */}
+            <div className="flex flex-col gap-4 mt-2">
+                {topics.length > 0 ? (
+                    <>
+                        {topics.map((topic: string, tIdx: number) => {
+                            const topicKey = `topic-${tIdx}`;
+                            const topicPosts = postsByTopic[topic] || [];
+                            const isExpanded = expandedTopics.includes(topicKey);
 
-                            <div className="pl-13 text-sm text-slate-300 leading-relaxed whitespace-pre-wrap ml-1 border-l-2 border-slate-700/50 p-3 bg-white/[0.02] rounded-r-lg">
-                                {post.content}
-                            </div>
-
-                            {/* Actions */}
-                            <div className="flex justify-end mt-1">
-                                <button
-                                    onClick={() => setReplyingTo(replyingTo === post.id ? null : post.id)}
-                                    className="text-xs font-semibold text-slate-400 hover:text-[var(--color-primary)] transition-colors flex items-center gap-1"
-                                >
-                                    <CornerDownRight size={14} />
-                                    Responder
-                                </button>
-                            </div>
-
-                            {/* Reply Input */}
-                            {replyingTo === post.id && (
-                                <form onSubmit={(e) => handleReply(post.id, e)} className="mt-3 pl-8 flex gap-3 animate-in fade-in slide-in-from-top-2">
-                                    <textarea
-                                        value={replyText}
-                                        onChange={(e) => setReplyText(e.target.value)}
-                                        placeholder="Escribe tu respuesta..."
-                                        className="flex-grow bg-[rgba(0,0,0,0.5)] border border-slate-700/50 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-[var(--color-primary)] min-h-[60px] resize-y"
-                                        required
-                                    />
+                            return (
+                                <div key={topicKey} className="rounded-xl border border-slate-700/50 overflow-hidden bg-black/20">
+                                    {/* Topic Header */}
                                     <button
-                                        type="submit"
-                                        disabled={isReplying || !replyText.trim()}
-                                        className="bg-[var(--color-primary)] hover:bg-blue-600 disabled:opacity-50 text-white p-3 rounded-lg flex items-center justify-center h-fit self-end"
+                                        onClick={() => toggleTopic(topicKey)}
+                                        className="w-full flex items-center justify-between p-4 bg-white/[0.02] hover:bg-white/[0.04] transition-colors text-left"
                                     >
-                                        <Send size={16} />
-                                    </button>
-                                </form>
-                            )}
-
-                            {/* Replies List */}
-                            {(post.replies || []).length > 0 && (
-                                <div className="mt-2 pl-4 sm:pl-10 flex flex-col gap-3 sm:border-l-2 border-[var(--color-primary)]/20">
-                                    {(post.replies || []).map((reply: any) => (
-                                        <div key={reply.id} className="bg-black/40 p-3 sm:p-4 rounded-xl border border-white/5 flex gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 flex-shrink-0 text-xs">
-                                                <User size={14} />
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+                                                <Hash size={16} className="text-purple-400" />
                                             </div>
-                                            <div className="flex flex-col flex-grow">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className="font-semibold text-slate-200 text-xs">
-                                                        {reply.user?.name || "Estudiante"}
-                                                        {reply.user?.role === "ADMIN" && <span className="ml-2 text-[9px] bg-purple-500/20 text-purple-400 px-1.5 py-[1px] rounded uppercase">Profesor</span>}
-                                                    </span>
-                                                    <span className="text-[10px] text-slate-500">{formatDate(reply.createdAt)}</span>
-                                                </div>
-                                                <p className="text-sm text-slate-400 leading-relaxed whitespace-pre-wrap">{reply.content}</p>
+                                            <div>
+                                                <h4 className="text-sm font-bold text-white">{topic}</h4>
+                                                <span className="text-[10px] text-slate-500">{topicPosts.length} {topicPosts.length === 1 ? "participación" : "participaciones"}</span>
                                             </div>
                                         </div>
-                                    ))}
+                                        {isExpanded ? <ChevronDown size={18} className="text-slate-400" /> : <ChevronRight size={18} className="text-slate-400" />}
+                                    </button>
+
+                                    {/* Topic Thread */}
+                                    {isExpanded && (
+                                        <div className="p-4 flex flex-col gap-3 border-t border-slate-700/30 animate-in fade-in slide-in-from-top-2 duration-200">
+                                            {topicPosts.length > 0 ? (
+                                                topicPosts.map((post: any) => renderPost(post))
+                                            ) : (
+                                                <p className="text-xs text-slate-500 italic text-center py-4">Nadie ha participado en este tema aún. ¡Sé el primero!</p>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                        </div>
-                    ))
+                            );
+                        })}
+
+                        {/* Ungrouped posts (legacy or without topic) */}
+                        {ungroupedPosts.length > 0 && (
+                            <div className="rounded-xl border border-slate-700/50 overflow-hidden bg-black/20">
+                                <div className="p-4 bg-white/[0.02]">
+                                    <h4 className="text-sm font-bold text-slate-400">Otros Aportes</h4>
+                                </div>
+                                <div className="p-4 flex flex-col gap-3 border-t border-slate-700/30">
+                                    {ungroupedPosts.map((post: any) => renderPost(post))}
+                                </div>
+                            </div>
+                        )}
+                    </>
                 ) : (
-                    <div className="text-sm text-slate-500 italic p-8 text-center border border-dashed border-slate-700/50 rounded-xl bg-black/20">
-                        Nadie ha participado aún. ¡Sé el primero en iniciar la discusión!
-                    </div>
+                    // No topics defined - flat list
+                    allPosts.length > 0 ? (
+                        allPosts.map((post: any) => renderPost(post))
+                    ) : (
+                        <div className="text-sm text-slate-500 italic p-8 text-center border border-dashed border-slate-700/50 rounded-xl bg-black/20">
+                            Nadie ha participado aún. ¡Sé el primero en iniciar la discusión!
+                        </div>
+                    )
                 )}
             </div>
         </div>

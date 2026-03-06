@@ -6,6 +6,7 @@ import { ChevronLeft, PlayCircle, FileText, Download, MessageSquare, Send, User,
 import { createPost } from "@/actions/forum";
 import DayDelivery from "@/components/DayDelivery";
 import DayForum from "@/components/DayForum";
+import VideoQA from "@/components/VideoQA";
 
 export default function CourseViewerClient({ course, studentId }: { course: any, studentId: string }) {
     // If course has no weeks, safely fallback so UI doesn't crash
@@ -303,17 +304,26 @@ export default function CourseViewerClient({ course, studentId }: { course: any,
                             studentId={studentId}
                             courseId={course.id}
                             onPostCreated={() => {
-                                // Since activeDayData is bound to server sync or local state,
-                                // we can just trigger a router refresh to fetch new posts
                                 window.location.reload();
                             }}
                         />
                     ) : (
-                        <DayDelivery
-                            day={activeDayData}
-                            studentId={studentId}
-                            initialSubmission={activeDayData.submissions?.[0]}
-                        />
+                        <>
+                            <DayDelivery
+                                day={activeDayData}
+                                studentId={studentId}
+                                initialSubmission={activeDayData.submissions?.[0]}
+                            />
+                            {/* Video Q&A for non-forum days */}
+                            <VideoQA
+                                day={activeDayData}
+                                studentId={studentId}
+                                courseId={course.id}
+                                onPostCreated={() => {
+                                    window.location.reload();
+                                }}
+                            />
+                        </>
                     )}
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
