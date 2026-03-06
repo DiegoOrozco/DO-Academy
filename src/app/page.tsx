@@ -32,9 +32,9 @@ export default async function DashboardPage() {
                 <div className="absolute top-[10%] right-[-5%] w-[40%] h-[60%] bg-blue-400 opacity-[0.05] blur-[120px] rounded-full"></div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 sm:px-10 pt-24 md:pt-32 pb-12 md:pb-20 relative z-10">
+            <div className="max-w-[1600px] mx-auto px-6 sm:px-10 pt-24 md:pt-32 pb-12 md:pb-20 relative z-10">
                 {/* Hero Section */}
-                <header className="mb-12 md:mb-20 text-center md:text-left max-w-4xl">
+                <header className="mb-12 md:mb-20 text-center md:text-left max-w-5xl">
                     <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tighter text-[var(--text-primary)] mb-6 leading-[1.1]">
                         {homeConfig.heroTitle?.split("DO Academy")[0]}
                         <span className="text-[var(--color-primary)]">

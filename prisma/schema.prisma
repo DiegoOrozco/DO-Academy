@@ -8,35 +8,35 @@ datasource db {
 }
 
 model User {
-  id               String       @id @default(cuid())
-  email            String       @unique
-  name             String
-  password         String       // Hashed
-  role             String       @default("STUDENT") // STUDENT or ADMIN
-  emailVerified    Boolean      @default(true)
-  verificationToken String?      @unique
-  resetToken       String?      @unique
-  resetTokenExpiry DateTime?
-  createdAt        DateTime     @default(now())
-  enrollments      Enrollment[]
-  posts            Post[]
-  replies          Reply[]
-  videoProgresses  VideoProgress[]
-  submissions      Submission[]
+  id                String          @id @default(cuid())
+  email             String          @unique
+  name              String
+  password          String
+  role              String          @default("STUDENT")
+  createdAt         DateTime        @default(now())
+  emailVerified     Boolean         @default(true)
+  resetToken        String?         @unique
+  resetTokenExpiry  DateTime?
+  verificationToken String?         @unique
+  enrollments       Enrollment[]
+  posts             Post[]
+  replies           Reply[]
+  submissions       Submission[]
+  videoProgresses   VideoProgress[]
 }
 
 model Course {
-  id          String       @id @default(cuid())
-  title       String
-  description String?
-  thumbnail   String?
-  status      String       @default("published")
-  password    String       @default("doacademy")
+  id            String       @id @default(cuid())
+  title         String
+  description   String?
+  thumbnail     String?
+  status        String       @default("published")
+  password      String       @default("doacademy")
   createdAt     DateTime     @default(now())
-  weightQuiz    Int          @default(20)
-  weightLab     Int          @default(30)
   weightForum   Int          @default(10)
+  weightLab     Int          @default(30)
   weightProject Int          @default(40)
+  weightQuiz    Int          @default(20)
   enrollments   Enrollment[]
   weeks         Week[]
 }
@@ -45,63 +45,58 @@ model Enrollment {
   id        String   @id @default(cuid())
   userId    String
   courseId  String
-  status    String   @default("ACTIVE") // ACTIVE, INACTIVE
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    String   @default("ACTIVE")
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
 }
 
 model Week {
-  id        String   @id @default(cuid())
-  title     String
-  order     Int
-  courseId  String
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  days      Day[]
+  id       String @id @default(cuid())
+  title    String
+  order    Int
+  courseId String
+  days     Day[]
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
 
 model Day {
-  id        String     @id @default(cuid())
-  title     String
-  order     Int
-  videoId       String?    // YouTube video ID
-  materialUrl   String?
-  isDeliveryDay Boolean   @default(false)
-  assignmentType String   @default("LAB") // QUIZ, LAB, FORUM, PROJECT
-  forumTopics   String?   // Topics for forum assignments
-  dueDate       DateTime? // For deadlines
-  assignmentUrl String?
-  summaryUrl    String?   // PDF summary of the class
-  gradingSeverity Int     @default(1) // 1 to 5
-  
-  // Coding Exercise Fields
-  isCodingExercise    Boolean   @default(false)
-  exerciseDescription String?   @db.Text
-  testCases           Json?     // Array of { input: string, output: string }
-  expectedOutput      String?   @db.Text // Keeping for backward compatibility temporarily
-  similarityThreshold Float     @default(0.9)
-  enablePlagiarism    Boolean   @default(false)
-  codeTemplate        String?   @db.Text
-
-
-  weekId        String
-  week          Week      @relation(fields: [weekId], references: [id], onDelete: Cascade)
-  resources Resource[]
-
-  posts     Post[]
-  videoProgresses VideoProgress[]
-  submissions     Submission[]
+  id                  String          @id @default(cuid())
+  title               String
+  order               Int
+  videoId             String?
+  materialUrl         String?
+  weekId              String
+  assignmentUrl       String?
+  isDeliveryDay       Boolean         @default(false)
+  gradingSeverity     Int             @default(1)
+  assignmentType      String          @default("LAB")
+  dueDate             DateTime?
+  forumTopics         String?
+  codeTemplate        String?
+  enablePlagiarism    Boolean         @default(false)
+  expectedOutput      String?
+  isCodingExercise    Boolean         @default(false)
+  similarityThreshold Float           @default(0.9)
+  exerciseDescription String?
+  testCases           Json?
+  summaryUrl          String?
+  week                Week            @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  posts               Post[]
+  resources           Resource[]
+  submissions         Submission[]
+  videoProgresses     VideoProgress[]
 }
 
 model Resource {
-  id        String   @id @default(cuid())
-  title     String
-  url       String
-  type      String   // e.g., "DRIVE", "GITHUB", "PDF"
-  dayId     String
-  day       Day      @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  id    String @id @default(cuid())
+  title String
+  url   String
+  type  String
+  dayId String
+  day   Day    @relation(fields: [dayId], references: [id], onDelete: Cascade)
 }
 
 model Post {
@@ -110,8 +105,8 @@ model Post {
   createdAt DateTime @default(now())
   userId    String
   dayId     String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   day       Day      @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   replies   Reply[]
 }
 
@@ -121,8 +116,8 @@ model Reply {
   createdAt DateTime @default(now())
   userId    String
   postId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VideoProgress {
@@ -132,9 +127,8 @@ model VideoProgress {
   seconds   Int      @default(0)
   percent   Int?
   updatedAt DateTime @updatedAt
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   day       Day      @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, dayId])
 }
@@ -145,18 +139,17 @@ model SiteConfig {
 }
 
 model Submission {
-  id           String   @id @default(cuid())
-  userId       String
-  dayId        String
-  content      String   @db.Text
-  fileName     String
-  status       String   @default("PENDING") // PENDING, GRADED, FAILED
-  grade        Float?
-  feedback     Json?
-  createdAt    DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  day  Day  @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  userId    String
+  dayId     String
+  content   String
+  fileName  String
+  status    String   @default("PENDING")
+  grade     Float?
+  feedback  Json?
+  createdAt DateTime @default(now())
+  day       Day      @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, dayId])
   @@index([userId])
