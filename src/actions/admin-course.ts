@@ -104,6 +104,7 @@ export async function saveCourseData(courseId: string, data: any) {
                         similarityThreshold: parseFloat(day.similarityThreshold) || 0.9,
                         enablePlagiarism: !!day.enablePlagiarism,
                         codeTemplate: day.codeTemplate || null,
+                        summaryUrl: day.summaryUrl || null,
                         order: dIndex,
                         weekId: weekRecord.id // This handles moving the day to a different week!
                     },
@@ -125,6 +126,7 @@ export async function saveCourseData(courseId: string, data: any) {
                         similarityThreshold: parseFloat(day.similarityThreshold) || 0.9,
                         enablePlagiarism: !!day.enablePlagiarism,
                         codeTemplate: day.codeTemplate || null,
+                        summaryUrl: day.summaryUrl || null,
                         order: dIndex,
                         weekId: weekRecord.id
                     }
