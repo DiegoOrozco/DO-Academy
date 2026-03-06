@@ -5,6 +5,8 @@ import Editor from "@monaco-editor/react";
 import { Play, Send, CheckCircle, XCircle, AlertCircle, Maximize2, Minimize2, Copy, Trash2, Cpu, Code, Lock, Loader2, FileText } from "lucide-react";
 import { submitCodingExercise } from "@/actions/submissions";
 import Script from "next/script";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface StudentCodeEditorProps {
     initialCode?: string;
@@ -122,6 +124,9 @@ export default function StudentCodeEditor({
         setOutput("");
         setResult({ status: null, score: null });
         setOutputsArray([]);
+
+        // Permite que React dibuje el estado "Ejecutando..." antes de bloquear el hilo principal con Pyodide
+        await new Promise(r => setTimeout(r, 50));
 
         try {
             const casesToRun = testCases?.length ? testCases : [{ input: "", output: "" }];
@@ -266,16 +271,18 @@ export default function StudentCodeEditor({
                 {/* Editor Area */}
                 <div className="flex-1 flex flex-col min-h-[400px] relative border-r border-slate-700/30 bg-[#0B0D11]">
                     {exerciseDescription && (
-                        <div className="p-5 bg-[#14181E]/80 border-b border-slate-700/50">
-                            <h4 className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                        <div className="p-5 bg-[#14181E]/80 border-b border-slate-700/50 max-h-52 overflow-y-auto custom-scrollbar flex-shrink-0 relative">
+                            <h4 className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-3 flex items-center gap-2 sticky top-0 bg-[#14181E]/95 py-2 z-10">
                                 <FileText size={12} /> Instrucciones del Ejercicio
                             </h4>
-                            <div className="text-sm text-slate-300 leading-relaxed font-medium">
-                                {exerciseDescription.split('\n').map((line, i) => <p key={i} className="mb-1">{line}</p>)}
+                            <div className="text-[13px] text-slate-300 leading-relaxed font-medium [&>p]:mb-3 [&>h1]:text-lg [&>h1]:font-bold [&>h1]:mb-2 [&>h2]:text-base [&>h2]:font-bold [&>h2]:mb-2 [&>h3]:text-sm [&>h3]:font-bold [&>h3]:text-emerald-400 [&>h3]:mb-2 [&>ul]:list-disc [&>ul]:ml-5 [&>ul]:mb-3 [&>ol]:list-decimal [&>ol]:ml-5 [&>ol]:mb-3 [&>code]:bg-slate-800 [&>code]:text-emerald-300 [&>code]:px-1.5 [&>code]:py-0.5 [&>code]:rounded [&>pre]:bg-slate-900 [&>pre]:p-4 [&>pre]:rounded-lg [&>pre]:mb-4 [&>pre>code]:bg-transparent [&>pre>code]:text-blue-300 [&>pre>code]:p-0 [&>strong]:text-white [&>a]:text-blue-400 [&>a]:underline">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {exerciseDescription}
+                                </ReactMarkdown>
                             </div>
                         </div>
                     )}
-                    <div className="flex-1 relative">
+                    <div className="flex-1 relative flex flex-col min-h-0">
                         <Editor
                             height="100%"
                             defaultLanguage="python"

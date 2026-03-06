@@ -794,8 +794,8 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                                                                     newTc[idx].input = e.target.value;
                                                                                                                     handleUpdateDay(week.id, day.id, "testCases", newTc);
                                                                                                                 }}
-                                                                                                                placeholder="Entradas simuladas para input() separadas por línea. Ej:\nPedro\n25"
-                                                                                                                className="w-full h-16 bg-black/40 border border-slate-700/50 rounded flex-1 px-3 py-2 text-xs text-blue-300 font-mono resize-y focus:outline-none focus:border-blue-500 placeholder:text-slate-600"
+                                                                                                                placeholder="Escribe cada entrada simulada, presiona Enter para separar cada línea. Ejemplo:\nPedro\n25"
+                                                                                                                className="w-full h-24 bg-black/40 border border-slate-700/50 rounded flex-1 px-3 py-2 text-xs text-blue-300 font-mono resize-y focus:outline-none focus:border-blue-500 placeholder:text-slate-600"
                                                                                                             />
                                                                                                             <textarea
                                                                                                                 value={tc.output}
