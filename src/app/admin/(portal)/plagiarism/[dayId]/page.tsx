@@ -1,5 +1,5 @@
-import { prisma } from "@/lib/prisma";
-import PlagiarismReportClient from "./PlagiarismReportClient";
+import prisma from "@/lib/prisma";
+import PlagiarismReportClient from "../PlagiarismReportClient";
 import { notFound } from "next/navigation";
 
 interface PageProps {
