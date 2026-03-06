@@ -873,6 +873,14 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                                                         onChange={(e) => handleUpdateDay(week.id, day.id, "similarityThreshold", parseFloat(e.target.value))}
                                                                                                         className="w-full accent-emerald-500"
                                                                                                     />
+                                                                                                    {day.enablePlagiarism && (
+                                                                                                        <Link
+                                                                                                            href={`/admin/plagiarism/${day.id}`}
+                                                                                                            className="mt-2 inline-flex items-center gap-2 text-[10px] font-bold text-amber-500 hover:text-amber-400 uppercase tracking-widest bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/20"
+                                                                                                        >
+                                                                                                            <ShieldAlert size={14} /> Ver Reporte de Plagio
+                                                                                                        </Link>
+                                                                                                    )}
                                                                                                 </div>
 
                                                                                                 <div className="flex items-center gap-3 mt-4">
