@@ -47,7 +47,7 @@ self.onmessage = async (event) => {
           }
 
           let capturedOutput = "";
-          let inputLines = tc.input ? tc.input.split('\\n') : [];
+          let stdinRead = false;
 
           self.pyodide.setStdout({
               batched: (text) => {
@@ -57,10 +57,11 @@ self.onmessage = async (event) => {
 
           self.pyodide.setStdin({
               stdin: () => {
-                  if (inputLines.length > 0) {
-                      return inputLines.shift() || "";
-                  }
-                  return "";
+                  if (stdinRead) return undefined;
+                  stdinRead = true;
+                  // If there's input, return it with a newline to ensure input() works, 
+                  // otherwise just return empty string then EOF next call.
+                  return tc.input ? tc.input + "\\n" : "";
               }
           });
 
@@ -219,7 +220,7 @@ export default function StudentCodeEditor({
     };
 
     return (
-        <div className={`flex flex-col h-full bg-[#0B0D11] border border-slate-700/30 rounded-2xl overflow-hidden shadow-2xl transition-all ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : 'relative min-h-[550px]'}`}>
+        <div className={`flex flex-col bg-[#0B0D11] border border-slate-700/30 rounded-2xl overflow-hidden shadow-2xl transition-all ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : 'relative h-[650px]'}`}>
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 bg-[#14181E] border-b border-slate-700/50">
                 <div className="flex items-center gap-4">
