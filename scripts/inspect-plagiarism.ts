@@ -1,6 +1,5 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../src/lib/prisma';
+import stringSimilarity from 'string-similarity';
 
 async function main() {
     console.log("\n🔍 --- PLAGIARISM INSPECTOR ---");
@@ -34,24 +33,27 @@ async function main() {
     targetDay.submissions.forEach((s, i) => {
         console.log(`\nSubm #${i + 1} - Student: ${s.user.name} (${s.user.email})`);
         console.log(`📄 ID: ${s.id}`);
-        console.log(`📋 Content Snippet: "${s.content?.substring(0, 100).replace(/\n/g, ' ')}..."`);
+        console.log(`📋 Content: "${s.content?.substring(0, 500).replace(/\n/g, ' ')}..."`);
         console.log(`📏 Content Length: ${s.content?.length || 0}`);
     });
 
     // 2. Mock comparison
     if (targetDay.submissions.length >= 2) {
         console.log("\n🤖 --- MOCK COMPARISON (Threshold: " + (targetDay.similarityThreshold || 0.6) + ") ---");
-        const stringSimilarity = require('string-similarity');
-        const s1 = targetDay.submissions[0];
-        const s2 = targetDay.submissions[1];
+        for (let i = 0; i < targetDay.submissions.length; i++) {
+            for (let j = i + 1; j < targetDay.submissions.length; j++) {
+                const s1 = targetDay.submissions[i];
+                const s2 = targetDay.submissions[j];
 
-        if (s1.content && s2.content) {
-            const similarity = stringSimilarity.compareTwoStrings(s1.content, s2.content);
-            console.log(`Match Score [${s1.user.name} vs ${s2.user.name}]: ${(similarity * 100).toFixed(2)}%`);
-            if (similarity >= (targetDay.similarityThreshold || 0.6)) {
-                console.log("🚩 FLAG: Plagiarism Likely!");
-            } else {
-                console.log("✅ OK: Below threshold.");
+                if (s1.content && s2.content) {
+                    const similarity = stringSimilarity.compareTwoStrings(s1.content, s2.content);
+                    console.log(`Match Score [${s1.user.name} vs ${s2.user.name}]: ${(similarity * 100).toFixed(2)}%`);
+                    if (similarity >= (targetDay.similarityThreshold || 0.6)) {
+                        console.log("🚩 FLAG: Plagiarism Likely!");
+                    } else {
+                        console.log("✅ OK: Below threshold.");
+                    }
+                }
             }
         }
     }

@@ -16,10 +16,10 @@ export async function detectPlagiarism(dayId: string) {
 
         const day = await prisma.day.findUnique({
             where: { id: dayId },
-            select: { similarityThreshold: true }
+            select: { similarityThreshold: true } as any
         });
 
-        const threshold = day?.similarityThreshold || 0.6;
+        const threshold = (day as any)?.similarityThreshold || 0.6;
         console.log(`[Plagiarism] Analyzing day ${dayId} with threshold ${threshold}`);
 
         if (submissions.length < 2) return { success: true, similarities: [] };
