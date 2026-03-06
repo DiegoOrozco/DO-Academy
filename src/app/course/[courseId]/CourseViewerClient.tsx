@@ -304,7 +304,6 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
                                         <PlayCircle size={32} className="text-white opacity-50" />
                                     </div>
                                     <div className="space-y-1">
-                                        <span className="text-[10px] font-bold text-blue-300 uppercase tracking-[0.2em]">Nano Banana AI</span>
                                         <h3 className="text-xl md:text-2xl font-black text-white">{activeDay.title}</h3>
                                         <p className="text-sm text-blue-100/60 font-medium">Esta clase no cuenta con video interactivo aún.</p>
                                     </div>
