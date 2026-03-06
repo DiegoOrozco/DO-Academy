@@ -614,6 +614,45 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                                 placeholder="https://github.com/... o subir archivo"
                                                                             />
                                                                         </div>
+
+                                                                        <div className="space-y-1">
+                                                                            <div className="flex items-center justify-between">
+                                                                                <label className="text-xs font-medium text-slate-400 flex items-center gap-1">
+                                                                                    <FileText size={12} className="text-[var(--color-primary)]" /> Resumen de la Clase (PDF)
+                                                                                </label>
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <input
+                                                                                        type="file"
+                                                                                        id={`upload-summary-${day.id}`}
+                                                                                        className="hidden"
+                                                                                        accept=".pdf"
+                                                                                        onChange={(e) => {
+                                                                                            const f = e.target.files?.[0];
+                                                                                            if (f) handleFileUpload(week.id, day.id, f, "summaryUrl");
+                                                                                        }}
+                                                                                    />
+                                                                                    <button
+                                                                                        disabled={isUploadingFile === `${day.id}-summaryUrl`}
+                                                                                        onClick={() => document.getElementById(`upload-summary-${day.id}`)?.click()}
+                                                                                        className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--color-primary)] hover:text-white transition-colors uppercase tracking-widest bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20"
+                                                                                    >
+                                                                                        {isUploadingFile === `${day.id}-summaryUrl` ? (
+                                                                                            <Loader2 size={12} className="animate-spin" />
+                                                                                        ) : (
+                                                                                            <Upload size={12} />
+                                                                                        )}
+                                                                                        {isUploadingFile === `${day.id}-summaryUrl` ? "Subiendo..." : "Subir Resumen"}
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                            <input
+                                                                                type="text"
+                                                                                value={day.summaryUrl || ""}
+                                                                                onChange={(e) => handleUpdateDay(week.id, day.id, "summaryUrl", e.target.value)}
+                                                                                className="w-full bg-[rgba(0,0,0,0.5)] border border-slate-700/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[var(--color-primary)] transition-all"
+                                                                                placeholder="URL del PDF de resumen o subir archivo"
+                                                                            />
+                                                                        </div>
                                                                     </div>
 
                                                                     <div className="pt-4 border-t border-slate-800 flex flex-col items-start gap-6">

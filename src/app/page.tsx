@@ -127,8 +127,8 @@ export default async function DashboardPage() {
                     {/* Available Courses */}
                     <section id="explore-courses" className="space-y-8 scroll-mt-24">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-2xl font-black text-white flex items-center gap-3">
-                                <div className="w-1.5 h-6 bg-blue-500/30 rounded-full"></div>
+                            <h2 className="text-2xl font-black text-[var(--text-primary)] flex items-center gap-3">
+                                <div className="w-1.5 h-6 bg-[var(--color-primary)]/30 rounded-full"></div>
                                 Explorar Cursos
                             </h2>
                         </div>
@@ -144,12 +144,12 @@ export default async function DashboardPage() {
                                             alt={course.title}
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60 grayscale-[50%]"
                                         />
-                                        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]"></div>
+                                        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
                                         <div className="absolute inset-0 flex items-center justify-center">
-                                            <Lock size={32} className="text-white/30" />
+                                            <Lock size={32} className="text-white/40" />
                                         </div>
                                     </div>
-                                    <div className="p-6 flex flex-col flex-1 opacity-70">
+                                    <div className="p-6 flex flex-col flex-1 opacity-80 backdrop-grayscale-[50%]">
                                         <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2 line-clamp-2">
                                             {course.title}
                                         </h3>
@@ -163,7 +163,7 @@ export default async function DashboardPage() {
                                             </div>
                                             <Link
                                                 href={student ? `/course/${course.id}/unlock` : `/register?courseId=${course.id}`}
-                                                className="bg-white/10 hover:bg-white/20 text-white text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl transition-all border border-white/10"
+                                                className="bg-[var(--color-primary)] hover:bg-blue-600 text-white text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl transition-all shadow-lg shadow-blue-500/20"
                                             >
                                                 Inscribirse
                                             </Link>

@@ -73,6 +73,7 @@ model Day {
   forumTopics   String?   // Topics for forum assignments
   dueDate       DateTime? // For deadlines
   assignmentUrl String?
+  summaryUrl    String?   // PDF summary of the class
   gradingSeverity Int     @default(1) // 1 to 5
   
   // Coding Exercise Fields

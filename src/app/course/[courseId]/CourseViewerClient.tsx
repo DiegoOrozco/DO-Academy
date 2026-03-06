@@ -275,7 +275,7 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
                         <h2 className="text-2xl md:text-3xl lg:text-4xl font-black text-[var(--text-primary)] leading-tight">{activeDay.title}</h2>
                     </div>
 
-                    {/* Video Player Embed */}
+                    {/* Video Player Embed or AI Placeholder */}
                     <div className="w-full aspect-video rounded-2xl overflow-hidden glass-effect border border-[var(--border-color)] shadow-2xl relative bg-black/5">
                         {!isMounted ? (
                             <div className="absolute top-0 left-0 w-full h-full bg-black/20 animate-pulse" />
@@ -292,8 +292,23 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
                                 <div ref={playerDivRef} className="absolute top-0 left-0 w-full h-full" />
                             )
                         ) : (
-                            <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-slate-500 bg-black/50">
-                                No hay video disponible
+                            <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center relative overflow-hidden">
+                                <img
+                                    src="/placeholder-ai.png"
+                                    alt="Clase sin video"
+                                    className="absolute inset-0 w-full h-full object-cover opacity-60"
+                                />
+                                <div className="absolute inset-0 bg-blue-900/40 backdrop-blur-[4px]"></div>
+                                <div className="relative z-10 flex flex-col items-center gap-4 px-6 text-center">
+                                    <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20">
+                                        <PlayCircle size={32} className="text-white opacity-50" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <span className="text-[10px] font-bold text-blue-300 uppercase tracking-[0.2em]">Nano Banana AI</span>
+                                        <h3 className="text-xl md:text-2xl font-black text-white">{activeDay.title}</h3>
+                                        <p className="text-sm text-blue-100/60 font-medium">Esta clase no cuenta con video interactivo aún.</p>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -336,21 +351,40 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
                                 Materiales del Día
                             </h3>
 
-                            {activeDay.materialUrl ? (
+                            {activeDay.summaryUrl || activeDay.materialUrl ? (
                                 <div className="flex flex-col gap-3">
-                                    <a
-                                        href={activeDay.materialUrl}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="glass-effect p-3 rounded-xl flex items-center justify-between group border border-[var(--border-color)] hover:border-[var(--color-primary)] transition-all bg-[var(--card-bg)]"
-                                    >
-                                        <div className="flex items-center gap-3 truncate pr-4">
-                                            <div className="w-8 h-8 rounded-lg bg-black/5 flex items-center justify-center flex-shrink-0 text-[var(--text-secondary)] group-hover:text-[var(--color-primary)] transition-colors">
-                                                <Download size={14} />
+                                    {activeDay.summaryUrl && (
+                                        <a
+                                            href={activeDay.summaryUrl}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="glass-effect p-3 rounded-xl flex items-center justify-between group border border-orange-500/20 hover:border-orange-500 transition-all bg-orange-500/5"
+                                        >
+                                            <div className="flex items-center gap-3 truncate pr-4">
+                                                <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center flex-shrink-0 text-orange-400 group-hover:text-orange-300 transition-colors">
+                                                    <FileText size={14} />
+                                                </div>
+                                                <span className="text-sm font-bold text-orange-200 truncate">Resumen clase (PDF)</span>
                                             </div>
-                                            <span className="text-sm font-medium text-[var(--text-primary)] truncate">Repositorio / Material</span>
-                                        </div>
-                                    </a>
+                                            <Download size={14} className="text-orange-400/50 group-hover:text-orange-400 transition-colors" />
+                                        </a>
+                                    )}
+
+                                    {activeDay.materialUrl && (
+                                        <a
+                                            href={activeDay.materialUrl}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="glass-effect p-3 rounded-xl flex items-center justify-between group border border-[var(--border-color)] hover:border-[var(--color-primary)] transition-all bg-[var(--card-bg)]"
+                                        >
+                                            <div className="flex items-center gap-3 truncate pr-4">
+                                                <div className="w-8 h-8 rounded-lg bg-black/5 flex items-center justify-center flex-shrink-0 text-[var(--text-secondary)] group-hover:text-[var(--color-primary)] transition-colors">
+                                                    <Download size={14} />
+                                                </div>
+                                                <span className="text-sm font-medium text-[var(--text-primary)] truncate">Repositorio / Material</span>
+                                            </div>
+                                        </a>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="text-sm text-[var(--text-muted)] italic p-4 text-center border border-dashed border-[var(--border-color)] rounded-xl">
