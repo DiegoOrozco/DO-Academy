@@ -30,16 +30,8 @@ export function middleware(request: NextRequest) {
 
         if (verifiedValue !== "valid") {
             const url = request.nextUrl.clone();
-            if (pathname === "/admin") {
-                url.pathname = "/admin/login";
-                return NextResponse.redirect(url);
-            }
-            // Hide deeper admin routes behind 404
-            url.pathname = "/404";
-            const rewriteRes = NextResponse.rewrite(url);
-            // Copy headers to rewrite response
-            response.headers.forEach((v, k) => rewriteRes.headers.set(k, v));
-            return rewriteRes;
+            url.pathname = "/admin/login";
+            return NextResponse.redirect(url);
         }
     }
 

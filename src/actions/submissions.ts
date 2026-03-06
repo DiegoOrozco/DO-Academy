@@ -89,6 +89,8 @@ export async function submitCodingExercise(rawInput: any) {
             },
         });
 
+        console.log(`[Submission] Saved for user ${userId} on day ${dayId}. Content length: ${code.length}`);
+
         revalidatePath(`/courses`, "layout");
 
         return { success: true, submission, similarity: grade };

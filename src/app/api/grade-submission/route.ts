@@ -31,8 +31,19 @@ export async function POST(req: NextRequest) {
             ? `[PDF Document: ${fileName}]`
             : buffer.toString("utf-8");
 
-        const submission = await prisma.submission.create({
-            data: {
+        const submission = await prisma.submission.upsert({
+            where: {
+                userId_dayId: {
+                    userId: user.id,
+                    dayId: dayId
+                }
+            } as any,
+            update: {
+                content: dbContent,
+                fileName: fileName,
+                status: "PENDING",
+            },
+            create: {
                 userId: user.id,
                 dayId: dayId,
                 content: dbContent,

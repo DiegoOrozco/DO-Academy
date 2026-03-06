@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Save, Settings, List, Plus, Trash2, GripVertical, Video, Link2, Loader2, FileText, Upload, ChevronDown, ChevronRight, Tags, Calendar, Code, Lock } from "lucide-react";
+import { ArrowLeft, Save, Settings, List, Plus, Trash2, GripVertical, Video, Link2, Loader2, FileText, Upload, ChevronDown, ChevronRight, Tags, Calendar, Code, Lock, ShieldAlert } from "lucide-react";
 import { saveCourseData } from "@/actions/admin-course";
 import { useRouter } from "next/navigation";
 
