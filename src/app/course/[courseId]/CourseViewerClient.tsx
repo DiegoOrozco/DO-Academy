@@ -331,7 +331,7 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Resources Column */}
                         <div className="lg:col-span-1 flex flex-col gap-4">
-                            <h3 className="text-lg font-bold text-white flex items-center gap-2 pb-2 border-b border-[var(--color-glass-border)]">
+                            <h3 className="text-lg font-bold text-[var(--text-primary)] flex items-center gap-2 pb-2 border-b border-[var(--border-color)]">
                                 <FileText size={18} className="text-[var(--color-primary)]" />
                                 Materiales del Día
                             </h3>
@@ -342,18 +342,18 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
                                         href={activeDay.materialUrl}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="glass-effect p-3 rounded-xl flex items-center justify-between group hover:border-[var(--color-primary)] transition-all"
+                                        className="glass-effect p-3 rounded-xl flex items-center justify-between group border border-[var(--border-color)] hover:border-[var(--color-primary)] transition-all bg-[var(--card-bg)]"
                                     >
                                         <div className="flex items-center gap-3 truncate pr-4">
-                                            <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0 text-slate-300 group-hover:text-[var(--color-primary)] transition-colors">
+                                            <div className="w-8 h-8 rounded-lg bg-black/5 flex items-center justify-center flex-shrink-0 text-[var(--text-secondary)] group-hover:text-[var(--color-primary)] transition-colors">
                                                 <Download size={14} />
                                             </div>
-                                            <span className="text-sm font-medium text-slate-200 truncate">Repositorio / Material</span>
+                                            <span className="text-sm font-medium text-[var(--text-primary)] truncate">Repositorio / Material</span>
                                         </div>
                                     </a>
                                 </div>
                             ) : (
-                                <div className="text-sm text-slate-500 italic p-4 text-center border border-dashed border-slate-700 rounded-xl">
+                                <div className="text-sm text-[var(--text-muted)] italic p-4 text-center border border-dashed border-[var(--border-color)] rounded-xl">
                                     No hay recursos adicionales.
                                 </div>
                             )}

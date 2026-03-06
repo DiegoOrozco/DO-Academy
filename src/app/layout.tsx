@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { getAuthUser } from "@/lib/auth-utils";
+import { getSiteConfig } from "@/lib/config";
 
 export const metadata: Metadata = {
   title: "DO Academy",
@@ -16,6 +17,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const user = await getAuthUser();
+  const aboutConfig = await getSiteConfig("about");
 
   return (
     <html lang="es">
@@ -26,7 +28,7 @@ export default async function RootLayout({
         {children}
 
         {/* Global Footer */}
-        <Footer user={user} />
+        <Footer user={user} aboutConfig={aboutConfig} />
         <SpeedInsights />
       </body>
     </html>

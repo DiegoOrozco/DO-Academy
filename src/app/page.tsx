@@ -35,10 +35,6 @@ export default async function DashboardPage() {
             <div className="max-w-7xl mx-auto px-6 sm:px-10 pt-24 md:pt-32 pb-12 md:pb-20 relative z-10">
                 {/* Hero Section */}
                 <header className="mb-12 md:mb-20 text-center md:text-left max-w-4xl">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] md:text-xs font-bold uppercase tracking-widest mb-6 animate-pulse">
-                        <Sparkles size={14} />
-                        Plataforma Premium
-                    </div>
                     <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tighter text-[var(--text-primary)] mb-6 leading-[1.1]">
                         {homeConfig.heroTitle?.split("DO Academy")[0]}
                         <span className="text-[var(--color-primary)]">

@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Github, Linkedin, Twitter, Sparkles, Heart } from "lucide-react";
+import { Github, Linkedin, Twitter, Instagram, Sparkles, Heart } from "lucide-react";
 
-export default function Footer({ user }: { user?: any }) {
+export default function Footer({ user, aboutConfig }: { user?: any, aboutConfig?: any }) {
     const pathname = usePathname();
 
 
@@ -32,9 +32,14 @@ export default function Footer({ user }: { user?: any }) {
                             La plataforma definitiva para dominar el desarrollo moderno. Aprende con metodologías prácticas y proyectos reales diseñados para el mercado actual.
                         </p>
                         <div className="flex gap-4">
-                            <SocialIcon href="#" icon={<Github size={18} />} />
-                            <SocialIcon href="#" icon={<Linkedin size={18} />} />
-                            <SocialIcon href="#" icon={<Twitter size={18} />} />
+                            {aboutConfig?.socialLinks?.map((link: any, i: number) => {
+                                let Icon = Github;
+                                if (link.platform === "LinkedIn") Icon = Linkedin;
+                                if (link.platform === "Twitter") Icon = Twitter;
+                                if (link.platform === "Instagram") Icon = Instagram;
+
+                                return <SocialIcon key={i} href={link.url} icon={<Icon size={18} />} />;
+                            })}
                         </div>
                     </div>
 
