@@ -5,8 +5,8 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import prisma from "@/lib/prisma";
-
 import bcrypt from "bcryptjs";
+import { signSession } from "@/lib/session";
 
 
 export async function registerStudent(formData: FormData) {
@@ -36,8 +36,9 @@ export async function registerStudent(formData: FormData) {
 
 
         const cookieStore = await cookies();
-        cookieStore.set("student_id", user.id, {
+        cookieStore.set("student_id", signSession(user.id), {
             httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
             path: "/",
             maxAge: 60 * 60 * 24 * 30, // 30 days
         });
@@ -73,8 +74,9 @@ export async function loginStudent(formData: FormData) {
 
             if (isMatch) {
                 const cookieStore = await cookies();
-                cookieStore.set("student_id", user.id, {
+                cookieStore.set("student_id", signSession(user.id), {
                     httpOnly: true,
+                    secure: process.env.NODE_ENV === "production",
                     path: "/",
                     maxAge: 60 * 60 * 24 * 30,
                 });
@@ -165,7 +167,7 @@ export async function loginAdmin(formData: FormData) {
 
     if (password === ADMIN_PASSWORD) {
         const cookieStore = await cookies();
-        cookieStore.set("admin_session", "valid", {
+        cookieStore.set("admin_session", signSession("valid"), {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             path: "/",

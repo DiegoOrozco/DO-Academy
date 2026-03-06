@@ -1,11 +1,11 @@
-"use server";
-
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
+import { ensureAdmin } from "@/lib/auth-guards";
 
 export async function resetStudentPassword(userId: string, newPassword: string) {
+    await ensureAdmin();
     if (!userId || !newPassword) return { error: "Datos faltantes" };
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -20,6 +20,7 @@ export async function resetStudentPassword(userId: string, newPassword: string) 
 }
 
 export async function toggleEnrollmentStatus(enrollmentId: string, status: string) {
+    await ensureAdmin();
     await prisma.enrollment.update({
         where: { id: enrollmentId },
         data: { status }
@@ -29,6 +30,7 @@ export async function toggleEnrollmentStatus(enrollmentId: string, status: strin
 }
 
 export async function unenrollStudent(enrollmentId: string) {
+    await ensureAdmin();
     await prisma.enrollment.delete({
         where: { id: enrollmentId }
     });
@@ -37,6 +39,7 @@ export async function unenrollStudent(enrollmentId: string) {
 }
 
 export async function verifyStudentManual(userId: string) {
+    await ensureAdmin();
     await prisma.user.update({
         where: { id: userId },
         data: { emailVerified: true, verificationToken: null }

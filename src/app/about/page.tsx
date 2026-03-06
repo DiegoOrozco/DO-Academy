@@ -64,8 +64,13 @@ export default async function AboutPage() {
                         <h1 className="text-4xl md:text-6xl font-black text-[var(--text-primary)] mb-4 tracking-tight">
                             {aboutConfig.name?.split(" ")[0]} <span className="text-[var(--color-primary)]">{aboutConfig.name?.split(" ").slice(1).join(" ")}</span>
                         </h1>
-                        <p className="text-xl md:text-2xl font-semibold text-[var(--text-secondary)] mb-6">
-                            {aboutConfig.title}
+                        <p className="text-xl md:text-2xl font-semibold text-[var(--text-secondary)] mb-6 leading-tight">
+                            {aboutConfig.title?.includes(" · ")
+                                ? aboutConfig.title.split(" · ").map((part: string, i: number) => (
+                                    <span key={i} className="block">{part}</span>
+                                ))
+                                : aboutConfig.title
+                            }
                         </p>
                         <div className="flex flex-wrap justify-center md:justify-start gap-4">
                             {aboutConfig.socialLinks?.map((link: any, i: number) => {

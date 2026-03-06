@@ -1,15 +1,16 @@
-"use server";
-
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { ensureAdmin, ensureStudent } from "@/lib/auth-guards";
 
-export async function createPost(dayId: string, userId: string, content: string, courseId: string) {
+export async function createPost(dayId: string, content: string, courseId: string) {
     try {
+        const student = await ensureStudent();
+
         await prisma.post.create({
             data: {
                 content,
                 dayId,
-                userId
+                userId: student.id
             }
         });
 
@@ -21,14 +22,21 @@ export async function createPost(dayId: string, userId: string, content: string,
     }
 }
 
-export async function createReply(postId: string, content: string, userId?: string) {
+export async function createReply(postId: string, content: string) {
     try {
-        let actualUserId = userId;
+        const cookieStore = await (await import("next/headers")).cookies();
+        const adminSession = cookieStore.get("admin_session")?.value;
+        const isAdmin = (await import("@/lib/session")).verifySession(adminSession) === "valid";
 
-        if (!actualUserId) {
+        let actualUserId: string;
+
+        if (isAdmin) {
             const adminUser = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
             if (!adminUser) return { success: false, error: "No Admin User found" };
             actualUserId = adminUser.id;
+        } else {
+            const student = await ensureStudent();
+            actualUserId = student.id;
         }
 
         const reply = await prisma.reply.create({
@@ -70,6 +78,7 @@ export async function createReply(postId: string, content: string, userId?: stri
 
 export async function deletePost(postId: string) {
     try {
+        await ensureAdmin();
         await prisma.post.delete({
             where: { id: postId }
         });
@@ -84,6 +93,7 @@ export async function deletePost(postId: string) {
 
 export async function deleteReply(replyId: string) {
     try {
+        await ensureAdmin();
         await prisma.reply.delete({
             where: { id: replyId }
         });

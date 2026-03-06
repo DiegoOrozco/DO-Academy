@@ -1,10 +1,49 @@
-"use server";
-
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { ensureAdmin } from "@/lib/auth-guards";
+import { z } from "zod";
+import crypto from "crypto";
 
-export async function saveCourseData(courseId: string, data: any) {
+const courseDataSchema = z.object({
+    title: z.string().min(1),
+    description: z.string().optional(),
+    status: z.string(),
+    password: z.string().optional(),
+    thumbnail: z.string().optional(),
+    weightQuiz: z.union([z.number(), z.string()]).transform(v => parseInt(v.toString()) || 0),
+    weightLab: z.union([z.number(), z.string()]).transform(v => parseInt(v.toString()) || 0),
+    weightForum: z.union([z.number(), z.string()]).transform(v => parseInt(v.toString()) || 0),
+    weightProject: z.union([z.number(), z.string()]).transform(v => parseInt(v.toString()) || 0),
+    weeks: z.array(z.object({
+        id: z.string(),
+        title: z.string(),
+        days: z.array(z.object({
+            id: z.string(),
+            title: z.string(),
+            videoId: z.string().nullable().optional(),
+            materialUrl: z.string().nullable().optional(),
+            isDeliveryDay: z.boolean().optional(),
+            assignmentType: z.string().optional(),
+            forumTopics: z.string().nullable().optional(),
+            dueDate: z.string().nullable().optional(),
+            assignmentUrl: z.string().nullable().optional(),
+            gradingSeverity: z.number().optional(),
+            isCodingExercise: z.boolean().optional(),
+            exerciseDescription: z.string().nullable().optional(),
+            testCases: z.any().optional(),
+            expectedOutput: z.string().nullable().optional(),
+            similarityThreshold: z.union([z.number(), z.string()]).transform(v => parseFloat(v.toString()) || 0.9).optional(),
+            enablePlagiarism: z.boolean().optional(),
+            codeTemplate: z.string().nullable().optional(),
+            summaryUrl: z.string().nullable().optional()
+        }))
+    }))
+});
+
+export async function saveCourseData(courseId: string, rawData: any) {
     try {
+        await ensureAdmin();
+        const data = courseDataSchema.parse(rawData);
         // 1. Update Core Course Settings
         await prisma.course.update({
             where: { id: courseId },
@@ -14,11 +53,11 @@ export async function saveCourseData(courseId: string, data: any) {
                 status: data.status,
                 password: data.password,
                 thumbnail: data.thumbnail,
-                weightQuiz: parseInt(data.weightQuiz) || 20,
-                weightLab: parseInt(data.weightLab) || 30,
-                weightForum: parseInt(data.weightForum) || 10,
-                weightProject: parseInt(data.weightProject) || 40,
-            }
+                weightQuiz: parseInt(data.weightQuiz.toString()) || 20,
+                weightLab: parseInt(data.weightLab.toString()) || 30,
+                weightForum: parseInt(data.weightForum.toString()) || 10,
+                weightProject: parseInt(data.weightProject.toString()) || 40,
+            } as any
         });
 
         // 2. We'll handle Weeks and Days manually to preserve IDs if possible
@@ -107,7 +146,7 @@ export async function saveCourseData(courseId: string, data: any) {
                         summaryUrl: day.summaryUrl || null,
                         order: dIndex,
                         weekId: weekRecord.id // This handles moving the day to a different week!
-                    },
+                    } as any,
                     create: {
                         id: finalDayId,
                         title: day.title,
@@ -123,13 +162,13 @@ export async function saveCourseData(courseId: string, data: any) {
                         exerciseDescription: day.exerciseDescription || null,
                         testCases: day.testCases || [],
                         expectedOutput: day.expectedOutput || null,
-                        similarityThreshold: parseFloat(day.similarityThreshold) || 0.9,
+                        similarityThreshold: parseFloat(day.similarityThreshold.toString()) || 0.9,
                         enablePlagiarism: !!day.enablePlagiarism,
                         codeTemplate: day.codeTemplate || null,
                         summaryUrl: day.summaryUrl || null,
                         order: dIndex,
                         weekId: weekRecord.id
-                    }
+                    } as any
                 });
             });
 
@@ -151,6 +190,7 @@ export async function saveCourseData(courseId: string, data: any) {
 
 export async function createEmptyCourse() {
     try {
+        await ensureAdmin();
         const newCourse = await prisma.course.create({
             data: {
                 id: crypto.randomUUID(),

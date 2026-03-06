@@ -1,21 +1,20 @@
-"use server";
-
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import stringSimilarity from "string-similarity";
+import { ensureStudent } from "@/lib/auth-guards";
+import { z } from "zod";
 
-export async function submitCodingExercise({
-    userId,
-    dayId,
-    code,
-    outputs,
-}: {
-    userId: string;
-    dayId: string;
-    code: string;
-    outputs: string[];
-}) {
+const submissionSchema = z.object({
+    dayId: z.string().min(1),
+    code: z.string().min(1),
+    outputs: z.array(z.string())
+});
+
+export async function submitCodingExercise(rawInput: any) {
     try {
+        const { dayId, code, outputs } = submissionSchema.parse(rawInput);
+        const student = await ensureStudent();
+        const userId = student.id;
         const day = await prisma.day.findUnique({
             where: { id: dayId },
             select: {
@@ -23,8 +22,8 @@ export async function submitCodingExercise({
                 testCases: true,
                 similarityThreshold: true,
                 enablePlagiarism: true,
-            },
-        });
+            } as any,
+        }) as any;
 
         if (!day) throw new Error("Ejercicio no encontrado");
 
@@ -69,7 +68,7 @@ export async function submitCodingExercise({
         const submission = await prisma.submission.upsert({
             where: {
                 userId_dayId: { userId, dayId },
-            },
+            } as any,
             update: {
                 content: code,
                 status: "GRADED",

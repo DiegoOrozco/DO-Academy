@@ -1,10 +1,10 @@
-"use server";
-
 import prisma from "@/lib/prisma";
 import stringSimilarity from "string-similarity";
+import { ensureAdmin } from "@/lib/auth-guards";
 
 export async function detectPlagiarism(dayId: string) {
     try {
+        await ensureAdmin();
         const submissions = await prisma.submission.findMany({
             where: { dayId },
             include: {

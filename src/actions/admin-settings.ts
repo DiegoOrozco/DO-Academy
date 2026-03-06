@@ -1,10 +1,10 @@
-"use server";
-
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { ensureAdmin } from "@/lib/auth-guards";
 
 export async function updateSiteConfig(key: string, value: any) {
     try {
+        await ensureAdmin();
         await prisma.siteConfig.upsert({
             where: { key },
             update: { value },

@@ -1,9 +1,11 @@
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
+import { verifySession } from "./session";
 
 export async function getStudent() {
     const cookieStore = await cookies();
-    const studentId = cookieStore.get("student_id")?.value;
+    const studentSession = cookieStore.get("student_id")?.value;
+    const studentId = verifySession(studentSession);
 
     if (!studentId) return null;
 

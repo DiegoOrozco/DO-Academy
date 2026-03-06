@@ -8,7 +8,7 @@ import { getSiteConfig } from "@/lib/config";
 
 export const metadata: Metadata = {
   title: "DO Academy",
-  description: "Plataforma de cursos premium",
+  description: "Comunidad de aprendizaje de alto nivel",
 };
 
 export default async function RootLayout({

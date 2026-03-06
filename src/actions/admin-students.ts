@@ -1,10 +1,10 @@
-"use server";
-
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { ensureAdmin } from "@/lib/auth-guards";
 
 export async function deleteStudent(userId: string) {
+  await ensureAdmin();
   if (!userId) return redirect("/admin/students");
 
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });

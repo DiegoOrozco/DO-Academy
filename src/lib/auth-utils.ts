@@ -1,12 +1,16 @@
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
+import { verifySession } from "./session";
 
 export async function getAuthUser() {
     const cookieStore = await cookies();
-    const studentId = cookieStore.get("student_id")?.value;
+    const studentSession = cookieStore.get("student_id")?.value;
     const adminSession = cookieStore.get("admin_session")?.value;
 
-    if (adminSession === "valid") {
+    const studentId = verifySession(studentSession);
+    const isAdmin = verifySession(adminSession) === "valid";
+
+    if (isAdmin) {
         return {
             id: "admin",
             name: "Administrador",
