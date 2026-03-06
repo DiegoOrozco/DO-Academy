@@ -14,7 +14,13 @@ export async function detectPlagiarism(dayId: string) {
             }
         });
 
-        console.log(`[Plagiarism] Found ${submissions.length} submissions for day ${dayId}`);
+        const day = await prisma.day.findUnique({
+            where: { id: dayId },
+            select: { similarityThreshold: true }
+        });
+
+        const threshold = day?.similarityThreshold || 0.6;
+        console.log(`[Plagiarism] Analyzing day ${dayId} with threshold ${threshold}`);
 
         if (submissions.length < 2) return { success: true, similarities: [] };
 
@@ -28,7 +34,7 @@ export async function detectPlagiarism(dayId: string) {
 
                 console.log(`[Plagiarism] Comparing ${submissions[i].user?.email} vs ${submissions[j].user?.email}: similarity ${sim.toFixed(4)}`);
 
-                if (sim > 0.6) { // Only show significant similarities
+                if (sim >= threshold) {
                     similarities.push({
                         studentA: submissions[i].user?.name || submissions[i].user?.email,
                         studentB: submissions[j].user?.name || submissions[j].user?.email,

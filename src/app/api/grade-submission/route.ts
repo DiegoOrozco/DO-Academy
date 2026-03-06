@@ -69,6 +69,9 @@ export async function POST(req: NextRequest) {
                     status: "GRADED",
                     grade: gradingResult.nota,
                     feedback: gradingResult,
+                    // If Gemini extracted a summary of the code/logic, store it as content
+                    // This allows plagiarism detection to work on PDFs!
+                    ...(gradingResult.resumen_codigo && { content: gradingResult.resumen_codigo })
                 }
             });
 
