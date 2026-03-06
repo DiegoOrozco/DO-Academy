@@ -6,7 +6,7 @@ export default function SocialLink({ href, icon, label }: { href: string, icon: 
     return (
         <a
             href={href}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all font-bold"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--card-bg)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--color-primary)]/10 hover:border-[var(--color-primary)]/20 transition-all font-bold"
             target="_blank"
             rel="noopener noreferrer"
         >

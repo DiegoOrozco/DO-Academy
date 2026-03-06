@@ -50,8 +50,8 @@ export default async function AboutPage() {
                 {/* Hero Section */}
                 <div className="flex flex-col md:flex-row items-center gap-12 mb-20 animate-in fade-in slide-in-from-bottom-8 duration-700">
                     <div className="relative group">
-                        <div className="absolute inset-0 bg-blue-500 rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                        <div className="w-48 h-48 md:w-64 md:h-64 rounded-full border-2 border-white/10 p-2 relative z-10 bg-slate-900/50 backdrop-blur-sm overflow-hidden">
+                        <div className="absolute inset-0 bg-[var(--color-primary)] rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                        <div className="w-48 h-48 md:w-64 md:h-64 rounded-full border-2 border-[var(--border-color)] p-2 relative z-10 bg-[var(--card-bg)] backdrop-blur-sm overflow-hidden">
                             <img
                                 src={aboutConfig.imageUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop"}
                                 alt={aboutConfig.name}
@@ -61,10 +61,10 @@ export default async function AboutPage() {
                     </div>
 
                     <div className="flex-1 text-center md:text-left">
-                        <h1 className="text-4xl md:text-6xl font-black text-white mb-4 tracking-tight">
+                        <h1 className="text-4xl md:text-6xl font-black text-[var(--text-primary)] mb-4 tracking-tight">
                             {aboutConfig.name?.split(" ")[0]} <span className="text-[var(--color-primary)]">{aboutConfig.name?.split(" ").slice(1).join(" ")}</span>
                         </h1>
-                        <p className="text-xl md:text-2xl font-semibold text-slate-300 mb-6">
+                        <p className="text-xl md:text-2xl font-semibold text-[var(--text-secondary)] mb-6">
                             {aboutConfig.title}
                         </p>
                         <div className="flex flex-wrap justify-center md:justify-start gap-4">
@@ -83,11 +83,11 @@ export default async function AboutPage() {
                 {/* Bio Section */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
                     <div className="md:col-span-2 space-y-6">
-                        <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                        <h2 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-3">
                             <div className="w-1.5 h-6 bg-[var(--color-primary)] rounded-full"></div>
                             Mi Historia
                         </h2>
-                        <div className="space-y-4 text-lg text-slate-400 leading-relaxed font-medium markdown-content">
+                        <div className="space-y-4 text-lg text-[var(--text-secondary)] leading-relaxed font-medium markdown-content">
                             {aboutConfig.bio ? (
                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                     {aboutConfig.bio}
@@ -100,12 +100,12 @@ export default async function AboutPage() {
                         </div>
                     </div>
 
-                    <div className="glass-effect rounded-3xl p-8 border border-white/10 flex flex-col justify-between group overflow-hidden relative h-fit self-start sticky top-32">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-3xl -mr-16 -mt-16 group-hover:bg-blue-500/20 transition-all"></div>
+                    <div className="glass-effect rounded-3xl p-8 border border-[var(--border-color)] flex flex-col justify-between group overflow-hidden relative h-fit self-start sticky top-32">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primary)]/10 blur-3xl -mr-16 -mt-16 group-hover:bg-[var(--color-primary)]/20 transition-all"></div>
 
                         <div>
-                            <h3 className="text-xl font-bold text-white mb-4">¿Hablamos?</h3>
-                            <p className="text-slate-400 text-sm mb-8 font-medium">
+                            <h3 className="text-xl font-bold text-[var(--text-primary)] mb-4">¿Hablamos?</h3>
+                            <p className="text-[var(--text-secondary)] text-sm mb-8 font-medium">
                                 Si tienes dudas sobre los cursos o quieres colaborar en algún proyecto, envíame un mensaje.
                             </p>
                         </div>
@@ -143,13 +143,13 @@ export default async function AboutPage() {
                                             href={href}
                                             target={isEmail ? undefined : "_blank"}
                                             rel={isEmail ? undefined : "noopener noreferrer"}
-                                            className={`w-full flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 ${hoverBorder} hover:bg-white/10 transition-all group/btn`}
+                                            className={`w-full flex items-center justify-between p-4 rounded-xl bg-[var(--card-bg)] border border-[var(--border-color)] ${hoverBorder} hover:bg-[var(--color-primary)]/5 transition-all group/btn`}
                                         >
                                             <div className="flex items-center gap-3">
                                                 <Icon size={18} className={colorClass} />
-                                                <span className="text-sm font-bold text-white">{contact.type}</span>
+                                                <span className="text-sm font-bold text-[var(--text-primary)]">{contact.type}</span>
                                             </div>
-                                            <ArrowRight size={16} className="text-slate-500 group-hover/btn:translate-x-1 transition-transform" />
+                                            <ArrowRight size={16} className="text-[var(--text-muted)] group-hover/btn:translate-x-1 transition-transform" />
                                         </a>
                                     );
                                 })
@@ -157,23 +157,23 @@ export default async function AboutPage() {
                                 <>
                                     <a
                                         href={`mailto:${aboutConfig.contactEmail}`}
-                                        className="w-full flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 hover:border-blue-500/50 hover:bg-white/10 transition-all group/btn"
+                                        className="w-full flex items-center justify-between p-4 rounded-xl bg-[var(--card-bg)] border border-[var(--border-color)] hover:border-blue-500/50 hover:bg-[var(--color-primary)]/5 transition-all group/btn"
                                     >
                                         <div className="flex items-center gap-3">
                                             <Mail size={18} className="text-blue-400" />
-                                            <span className="text-sm font-bold text-white">Email</span>
+                                            <span className="text-sm font-bold text-[var(--text-primary)]">Email</span>
                                         </div>
-                                        <ArrowRight size={16} className="text-slate-500 group-hover/btn:translate-x-1 transition-transform" />
+                                        <ArrowRight size={16} className="text-[var(--text-muted)] group-hover/btn:translate-x-1 transition-transform" />
                                     </a>
                                     <a
                                         href={aboutConfig.contactWhatsapp}
-                                        className="w-full flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 hover:border-emerald-500/50 hover:bg-white/10 transition-all group/btn"
+                                        className="w-full flex items-center justify-between p-4 rounded-xl bg-[var(--card-bg)] border border-[var(--border-color)] hover:border-emerald-500/50 hover:bg-[var(--color-primary)]/5 transition-all group/btn"
                                     >
                                         <div className="flex items-center gap-3">
                                             <MessageCircle size={18} className="text-emerald-400" />
-                                            <span className="text-sm font-bold text-white">WhatsApp</span>
+                                            <span className="text-sm font-bold text-[var(--text-primary)]">WhatsApp</span>
                                         </div>
-                                        <ArrowRight size={16} className="text-slate-500 group-hover/btn:translate-x-1 transition-transform" />
+                                        <ArrowRight size={16} className="text-[var(--text-muted)] group-hover/btn:translate-x-1 transition-transform" />
                                     </a>
                                 </>
                             )}
@@ -194,9 +194,9 @@ export default async function AboutPage() {
 
 function StatCard({ label, value }: { label: string, value: string }) {
     return (
-        <div className="glass-effect rounded-2xl p-6 text-center border border-white/5 hover:border-[var(--color-primary)] transition-colors">
-            <div className="text-2xl font-black text-white mb-1">{value}</div>
-            <div className="text-[10px] uppercase tracking-widest font-black text-slate-500">{label}</div>
+        <div className="glass-effect rounded-2xl p-6 text-center border border-[var(--border-color)] hover:border-[var(--color-primary)] transition-colors">
+            <div className="text-2xl font-black text-[var(--text-primary)] mb-1">{value}</div>
+            <div className="text-[10px] uppercase tracking-widest font-black text-[var(--text-muted)]">{label}</div>
         </div>
     );
 }
