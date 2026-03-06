@@ -41,11 +41,7 @@ self.onmessage = async (event) => {
 
       for (let i = 0; i < casesToRun.length; i++) {
           const tc = casesToRun[i];
-          allOutput += \`\\n--- CASO DE PRUEBA \${i + 1} ---\\n\`;
-          if (tc.input) {
-              allOutput += \`[Input]\\n\${tc.input}\\n\`;
-          }
-
+          
           let capturedOutput = "";
           let stdinRead = false;
 
@@ -59,24 +55,33 @@ self.onmessage = async (event) => {
               stdin: () => {
                   if (stdinRead) return undefined;
                   stdinRead = true;
-                  // If there's input, return it with a newline to ensure input() works, 
-                  // otherwise just return empty string then EOF next call.
                   return tc.input ? tc.input + "\\n" : "";
               }
           });
 
           try {
-              // Creating a new dictionary for globals to reset state between runs
               const globals = self.pyodide.globals.get('dict')();
               await self.pyodide.runPythonAsync(code, { globals });
               globals.destroy();
               
-              const finalOutput = capturedOutput || "(Sin salida visual)";
-              allOutput += \`[Output]\\n\${finalOutput}\\n\`;
-              generatedOutputs.push(capturedOutput.trim());
+              const actual = capturedOutput.trim();
+              const expected = tc.output ? tc.output.trim() : "";
+              const isMatch = actual === expected;
+              
+              allOutput += \`--- CASO DE PRUEBA \${i + 1}: \${isMatch ? "✅ PASÓ" : "❌ FALLÓ"} ---\\n\`;
+              if (!isMatch) {
+                  allOutput += \`[Esperado]: \${expected || "(Vacio)"}\\n\`;
+                  allOutput += \`[Obtenido]: \${actual || "(Sin salida)"}\\n\`;
+              } else {
+                  allOutput += \`[Salida]: \${actual || "(Correcta)"}\\n\`;
+              }
+              allOutput += "\\n";
+              
+              generatedOutputs.push(actual);
           } catch (err) {
-              allOutput += \`[Error]\\n\${err.message}\\n\`;
-              generatedOutputs.push(""); // Push empty on error to keep array length
+              allOutput += \`--- CASO DE PRUEBA \${i + 1}: ⚠️ ERROR ---\\n\`;
+              allOutput += \`[Error]: \${err.message}\\n\\n\`;
+              generatedOutputs.push(""); 
           }
       }
 
