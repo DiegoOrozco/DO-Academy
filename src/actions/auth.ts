@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { signSession } from "@/lib/session";
+import { signSession, verifySession } from "@/lib/session";
 
 
 export async function registerStudent(formData: FormData) {
@@ -109,7 +109,8 @@ export async function unlockCourse(courseId: string, formData: FormData) {
     const password = formData.get("password") as string;
 
     const cookieStore = await cookies();
-    const studentId = cookieStore.get("student_id")?.value;
+    const studentSession = cookieStore.get("student_id")?.value;
+    const studentId = verifySession(studentSession);
 
     if (!studentId) {
         redirect("/login");
@@ -120,7 +121,7 @@ export async function unlockCourse(courseId: string, formData: FormData) {
         select: { id: true, password: true }
     });
 
-    if (course && password === course.password) {
+    if (course && password.trim() === (course.password || "").trim()) {
         // Create actual Enrollment in DB
         let enrollmentSuccess = false;
         try {

@@ -79,7 +79,7 @@ Feedback general: Tono implacable de auditoría técnica. Prepara para grandes e
         const currentSeverityPrompt = severityPrompts[severity as keyof typeof severityPrompts] || severityPrompts[1];
 
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash",
+            model: "gemini-1.5-flash",
             systemInstruction: SYSTEM_PROMPT + "\nCRITERIO DE EVALUACIÓN ACTUAL:\n" + currentSeverityPrompt,
             generationConfig: {
                 responseMimeType: "application/json"

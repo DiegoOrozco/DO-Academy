@@ -53,7 +53,7 @@ export async function saveCourseData(courseId: string, rawData: any) {
                 title: data.title,
                 description: data.description,
                 status: data.status,
-                password: data.password,
+                password: data.password?.trim() || "",
                 thumbnail: data.thumbnail,
                 weightQuiz: parseInt(data.weightQuiz.toString()) || 20,
                 weightLab: parseInt(data.weightLab.toString()) || 30,

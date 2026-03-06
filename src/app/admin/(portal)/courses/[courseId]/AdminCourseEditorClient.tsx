@@ -680,7 +680,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                                         <select
                                                                                             value={day.assignmentType || "LAB"}
                                                                                             onChange={(e) => handleUpdateDay(week.id, day.id, "assignmentType", e.target.value)}
-                                                                                            className="w-full bg-[rgba(255,255,255,0.05)] border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 transition-all"
+                                                                                            className="w-full bg-[rgba(255,255,255,0.05)] border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 transition-all font-sans"
                                                                                         >
                                                                                             <option value="QUIZ">Quiz / Prueba Corta</option>
                                                                                             <option value="LAB">Laboratorio Práctico</option>
@@ -698,7 +698,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                                             type="datetime-local"
                                                                                             value={day.dueDate ? new Date(day.dueDate).toISOString().slice(0, 16) : ""}
                                                                                             onChange={(e) => handleUpdateDay(week.id, day.id, "dueDate", e.target.value ? new Date(e.target.value).toISOString() : null)}
-                                                                                            className="w-full bg-[rgba(255,255,255,0.05)] border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-rose-500 transition-all"
+                                                                                            className="w-full bg-[rgba(255,255,255,0.05)] border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-rose-500 transition-all font-sans"
                                                                                         />
                                                                                     </div>
                                                                                 </div>
@@ -710,210 +710,203 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                                             value={day.forumTopics || ""}
                                                                                             onChange={(e) => handleUpdateDay(week.id, day.id, "forumTopics", e.target.value)}
                                                                                             placeholder={"Tema 1: ¿Qué opinas de X?\nTema 2: ¿Cómo resolverías Y?"}
-                                                                                            className="w-full h-24 bg-[rgba(255,255,255,0.05)] border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 transition-all resize-y"
+                                                                                            className="w-full h-24 bg-[rgba(255,255,255,0.05)] border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 transition-all resize-y font-sans"
                                                                                         />
                                                                                     </div>
                                                                                 )}
 
                                                                                 {day.assignmentType !== "FORUM" && (
-                                                                                    <div>
-                                                                                        <div className="flex items-center justify-between mb-1">
-                                                                                            <div className="flex items-center gap-2">
-                                                                                                <FileText size={12} className="text-blue-400" />
-                                                                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Enunciado (PDF/Doc)</label>
+                                                                                    <div className="space-y-6">
+                                                                                        <div>
+                                                                                            <div className="flex items-center justify-between mb-1">
+                                                                                                <div className="flex items-center gap-2">
+                                                                                                    <FileText size={12} className="text-blue-400" />
+                                                                                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Enunciado (PDF/Doc)</label>
+                                                                                                </div>
+                                                                                                <div className="flex items-center gap-2">
+                                                                                                    <input
+                                                                                                        type="file"
+                                                                                                        id={`upload-${day.id}`}
+                                                                                                        className="hidden"
+                                                                                                        accept=".pdf,.doc,.docx"
+                                                                                                        onChange={(e) => {
+                                                                                                            const f = e.target.files?.[0];
+                                                                                                            if (f) handleFileUpload(week.id, day.id, f, "assignmentUrl");
+                                                                                                        }}
+                                                                                                    />
+                                                                                                    <button
+                                                                                                        disabled={isUploadingFile === `${day.id}-assignmentUrl`}
+                                                                                                        onClick={() => (document.getElementById(`upload-${day.id}`) as HTMLInputElement)?.click()}
+                                                                                                        className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--color-primary)] hover:text-white transition-colors uppercase tracking-widest bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20"
+                                                                                                    >
+                                                                                                        {isUploadingFile === `${day.id}-assignmentUrl` ? (
+                                                                                                            <Loader2 size={12} className="animate-spin" />
+                                                                                                        ) : (
+                                                                                                            <Upload size={12} />
+                                                                                                        )}
+                                                                                                        {isUploadingFile === `${day.id}-assignmentUrl` ? "Subiendo..." : "Subir PDF"}
+                                                                                                    </button>
+                                                                                                </div>
                                                                                             </div>
-                                                                                            <div className="flex items-center gap-2">
-                                                                                                <input
-                                                                                                    type="file"
-                                                                                                    id={`upload-${day.id}`}
-                                                                                                    className="hidden"
-                                                                                                    accept=".pdf,.doc,.docx"
-                                                                                                    onChange={(e) => {
-                                                                                                        const f = e.target.files?.[0];
-                                                                                                        if (f) handleFileUpload(week.id, day.id, f, "assignmentUrl");
-                                                                                                    }}
-                                                                                                />
-                                                                                                <button
-                                                                                                    disabled={isUploadingFile === `${day.id}-assignmentUrl`}
-                                                                                                    onClick={() => document.getElementById(`upload-${day.id}`)?.click()}
-                                                                                                    className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--color-primary)] hover:text-white transition-colors uppercase tracking-widest bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20"
-                                                                                                >
-                                                                                                    {isUploadingFile === `${day.id}-assignmentUrl` ? (
-                                                                                                        <Loader2 size={12} className="animate-spin" />
-                                                                                                    ) : (
-                                                                                                        <Upload size={12} />
-                                                                                                    )}
-                                                                                                    {isUploadingFile === `${day.id}-assignmentUrl` ? "Subiendo..." : "Subir PDF"}
-                                                                                                </button>
+                                                                                            <input
+                                                                                                type="text"
+                                                                                                value={day.assignmentUrl || ""}
+                                                                                                onChange={(e) => handleUpdateDay(week.id, day.id, "assignmentUrl", e.target.value)}
+                                                                                                className="w-full bg-[rgba(0,100,255,0.05)] border border-blue-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600 mb-4 font-sans"
+                                                                                                placeholder="Subir archivo o pegar enlace externo..."
+                                                                                            />
+
+                                                                                            <div className="pt-4 border-t border-slate-800 space-y-4">
+                                                                                                <div className="flex flex-col sm:flex-row gap-6">
+                                                                                                    <div className="flex-1 space-y-4">
+                                                                                                        <label className="flex items-center gap-3 cursor-pointer group/toggle">
+                                                                                                            <div className="relative inline-flex items-center">
+                                                                                                                <input
+                                                                                                                    type="checkbox"
+                                                                                                                    className="sr-only peer"
+                                                                                                                    checked={!!day.enablePlagiarism}
+                                                                                                                    onChange={(e) => handleUpdateDay(week.id, day.id, "enablePlagiarism", e.target.checked)}
+                                                                                                                />
+                                                                                                                <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+                                                                                                            </div>
+                                                                                                            <div className="flex items-center gap-2">
+                                                                                                                <ShieldAlert size={14} className="text-amber-500" />
+                                                                                                                <span className="text-[10px] font-bold text-white uppercase tracking-widest group-hover/toggle:text-amber-400 transition-colors">Activar Detección de Plagio</span>
+                                                                                                            </div>
+                                                                                                        </label>
+
+                                                                                                        {day.enablePlagiarism && (
+                                                                                                            <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-3 pl-4 border-l-2 border-amber-500/20">
+                                                                                                                <div className="space-y-1">
+                                                                                                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex justify-between">
+                                                                                                                        Sensibilidad ({Math.round((day.similarityThreshold || 0.6) * 100)}%)
+                                                                                                                    </label>
+                                                                                                                    <input
+                                                                                                                        type="range"
+                                                                                                                        min="0.1"
+                                                                                                                        max="0.95"
+                                                                                                                        step="0.05"
+                                                                                                                        value={day.similarityThreshold || 0.6}
+                                                                                                                        onChange={(e) => handleUpdateDay(week.id, day.id, "similarityThreshold", parseFloat(e.target.value))}
+                                                                                                                        className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                                                                                                                    />
+                                                                                                                    <p className="text-[9px] text-slate-500">Menor valor = Más estricto.</p>
+                                                                                                                </div>
+
+                                                                                                                <Link
+                                                                                                                    href={`/admin/plagiarism/${day.id}`}
+                                                                                                                    className="inline-flex items-center gap-2 text-[10px] font-bold text-amber-500 hover:text-amber-400 uppercase tracking-widest bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/20 transition-all font-mono"
+                                                                                                                >
+                                                                                                                    <ShieldAlert size={12} /> Ver Reporte
+                                                                                                                </Link>
+                                                                                                            </div>
+                                                                                                        )}
+                                                                                                    </div>
+
+                                                                                                    <div className="flex-1 space-y-2">
+                                                                                                        <div className="flex items-center gap-2">
+                                                                                                            <Settings size={12} className="text-orange-400" />
+                                                                                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nivel de Exigencia (IA)</label>
+                                                                                                        </div>
+                                                                                                        <select
+                                                                                                            value={day.gradingSeverity || 1}
+                                                                                                            onChange={(e) => handleUpdateDay(week.id, day.id, "gradingSeverity", parseInt(e.target.value))}
+                                                                                                            className="w-full bg-[rgba(255,150,0,0.05)] border border-orange-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition-all font-sans"
+                                                                                                        >
+                                                                                                            <option value={1}>Nivel 1: Introductorio</option>
+                                                                                                            <option value={2}>Nivel 2: Estándar</option>
+                                                                                                            <option value={3}>Nivel 3: Avanzado</option>
+                                                                                                            <option value={4}>Nivel 4: Profesional</option>
+                                                                                                            <option value={5}>Nivel 5: Élite</option>
+                                                                                                        </select>
+                                                                                                    </div>
+                                                                                                </div>
                                                                                             </div>
                                                                                         </div>
-                                                                                        <input
-                                                                                            type="text"
-                                                                                            value={day.assignmentUrl || ""}
-                                                                                            onChange={(e) => handleUpdateDay(week.id, day.id, "assignmentUrl", e.target.value)}
-                                                                                            className="w-full bg-[rgba(0,100,255,0.05)] border border-blue-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600 mb-4"
-                                                                                            placeholder="Subir archivo o pegar enlace externo..."
-                                                                                        />
 
-                                                                                        <div className="space-y-2">
-                                                                                            <div className="flex items-center gap-2">
-                                                                                                <Settings size={12} className="text-orange-400" />
-                                                                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nivel de Exigencia (IA)</label>
-                                                                                            </div>
-                                                                                            <select
-                                                                                                value={day.gradingSeverity || 1}
-                                                                                                onChange={(e) => handleUpdateDay(week.id, day.id, "gradingSeverity", parseInt(e.target.value))}
-                                                                                                className="w-full bg-[rgba(255,150,0,0.05)] border border-orange-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition-all"
-                                                                                            >
-                                                                                                <option value={1}>Nivel 1: Introductorio (Enfoque en lógica)</option>
-                                                                                                <option value={2}>Nivel 2: Estándar (Reviso nomenclatura básica)</option>
-                                                                                                <option value={3}>Nivel 3: Avanzado (Exijo consistencia de estilo)</option>
-                                                                                                <option value={4}>Nivel 4: Profesional (PEP8 / SQL Normalizado)</option>
-                                                                                                <option value={5}>Nivel 5: Élite (Cero redundancia y detección IA)</option>
-                                                                                            </select>
+                                                                                        <div className="pt-4 border-t border-slate-800 space-y-4">
+                                                                                            <label className="flex items-center gap-3 cursor-pointer group/toggle">
+                                                                                                <div className="relative inline-flex items-center">
+                                                                                                    <input
+                                                                                                        type="checkbox"
+                                                                                                        className="sr-only peer"
+                                                                                                        checked={!!day.isCodingExercise}
+                                                                                                        onChange={(e) => handleUpdateDay(week.id, day.id, "isCodingExercise", e.target.checked)}
+                                                                                                    />
+                                                                                                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                                                                                                </div>
+                                                                                                <div className="flex items-center gap-2">
+                                                                                                    <Code size={14} className="text-emerald-400" />
+                                                                                                    <span className="text-xs font-bold text-white uppercase tracking-widest group-hover/toggle:text-emerald-400 transition-colors">Activar Ejercicio de Programación</span>
+                                                                                                </div>
+                                                                                            </label>
+
+                                                                                            {day.isCodingExercise && (
+                                                                                                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300 pl-6 border-l border-emerald-500/20 mt-4">
+                                                                                                    <div className="space-y-1">
+                                                                                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Enunciado del Ejercicio</label>
+                                                                                                        <textarea
+                                                                                                            value={day.exerciseDescription || ""}
+                                                                                                            onChange={(e) => handleUpdateDay(week.id, day.id, "exerciseDescription", e.target.value)}
+                                                                                                            placeholder="Describe el problema que el alumno debe resolver..."
+                                                                                                            className="w-full h-24 bg-black/40 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-emerald-500 transition-all resize-y font-sans"
+                                                                                                        />
+                                                                                                    </div>
+
+                                                                                                    <div className="space-y-2">
+                                                                                                        <div className="flex items-center justify-between">
+                                                                                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Casos de Prueba (Input / Output)</label>
+                                                                                                            <button
+                                                                                                                onClick={() => {
+                                                                                                                    const currentTestCases = Array.isArray(day.testCases) ? [...day.testCases] : [];
+                                                                                                                    handleUpdateDay(week.id, day.id, "testCases", [...currentTestCases, { input: "", output: "" }]);
+                                                                                                                }}
+                                                                                                                className="text-xs text-emerald-500 hover:text-emerald-400 font-bold flex items-center gap-1 bg-emerald-500/10 px-2 py-1 rounded"
+                                                                                                            >
+                                                                                                                <Plus size={12} /> Añadir Caso
+                                                                                                            </button>
+                                                                                                        </div>
+                                                                                                        {Array.isArray(day.testCases) && day.testCases.map((tc: any, tcIdx: number) => (
+                                                                                                            <div key={tcIdx} className="flex gap-2 items-start bg-slate-800/30 p-3 rounded-lg border border-slate-700/50">
+                                                                                                                <div className="flex-1 space-y-2">
+                                                                                                                    <textarea
+                                                                                                                        value={tc.input}
+                                                                                                                        onChange={(e) => {
+                                                                                                                            const newTc = [...day.testCases];
+                                                                                                                            newTc[tcIdx].input = e.target.value;
+                                                                                                                            handleUpdateDay(week.id, day.id, "testCases", newTc);
+                                                                                                                        }}
+                                                                                                                        placeholder="Entrada..."
+                                                                                                                        className="w-full h-20 bg-black/40 border border-slate-700/50 rounded p-2 text-xs text-blue-300 font-mono focus:border-blue-500 focus:outline-none"
+                                                                                                                    />
+                                                                                                                    <textarea
+                                                                                                                        value={tc.output}
+                                                                                                                        onChange={(e) => {
+                                                                                                                            const newTc = [...day.testCases];
+                                                                                                                            newTc[tcIdx].output = e.target.value;
+                                                                                                                            handleUpdateDay(week.id, day.id, "testCases", newTc);
+                                                                                                                        }}
+                                                                                                                        placeholder="Salida..."
+                                                                                                                        className="w-full h-20 bg-black/40 border border-slate-700/50 rounded p-2 text-xs text-emerald-400 font-mono focus:border-emerald-500 focus:outline-none"
+                                                                                                                    />
+                                                                                                                </div>
+                                                                                                                <button
+                                                                                                                    onClick={() => {
+                                                                                                                        const newTc = day.testCases.filter((_: any, i: number) => i !== tcIdx);
+                                                                                                                        handleUpdateDay(week.id, day.id, "testCases", newTc);
+                                                                                                                    }}
+                                                                                                                    className="text-rose-500 hover:text-rose-400 p-2 bg-rose-500/10 rounded transition-colors"
+                                                                                                                >
+                                                                                                                    <Trash2 size={14} />
+                                                                                                                </button>
+                                                                                                            </div>
+                                                                                                        ))}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            )}
                                                                                         </div>
                                                                                     </div>
                                                                                 )}
-
-                                                                                {/* Coding Exercise Settings */}
-                                                                                <div className="pt-4 border-t border-slate-800 space-y-4">
-                                                                                    <label className="flex items-center gap-3 cursor-pointer group/toggle">
-                                                                                        <div className="relative inline-flex items-center">
-                                                                                            <input
-                                                                                                type="checkbox"
-                                                                                                className="sr-only peer"
-                                                                                                checked={!!day.isCodingExercise}
-                                                                                                onChange={(e) => handleUpdateDay(week.id, day.id, "isCodingExercise", e.target.checked)}
-                                                                                            />
-                                                                                            <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                                                                                        </div>
-                                                                                        <div className="flex items-center gap-2">
-                                                                                            <Code size={14} className="text-emerald-400" />
-                                                                                            <span className="text-xs font-bold text-white uppercase tracking-widest group-hover/toggle:text-emerald-400 transition-colors">Activar Ejercicio de Programación</span>
-                                                                                        </div>
-                                                                                    </label>
-
-                                                                                    {day.isCodingExercise && (
-                                                                                        <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300 pl-6 border-l border-emerald-500/20 mt-4">
-                                                                                            <div className="space-y-1">
-                                                                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Enunciado del Ejercicio</label>
-                                                                                                <textarea
-                                                                                                    value={day.exerciseDescription || ""}
-                                                                                                    onChange={(e) => handleUpdateDay(week.id, day.id, "exerciseDescription", e.target.value)}
-                                                                                                    placeholder="Describe el problema que el alumno debe resolver..."
-                                                                                                    className="w-full h-24 bg-black/40 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-emerald-500 transition-all resize-y"
-                                                                                                />
-                                                                                            </div>
-
-                                                                                            <div className="space-y-2">
-                                                                                                <div className="flex items-center justify-between">
-                                                                                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Casos de Prueba (Input / Output)</label>
-                                                                                                    <button
-                                                                                                        onClick={() => {
-                                                                                                            const currentTestCases = Array.isArray(day.testCases) ? [...day.testCases] : [];
-                                                                                                            handleUpdateDay(week.id, day.id, "testCases", [...currentTestCases, { input: "", output: "" }]);
-                                                                                                        }}
-                                                                                                        className="text-xs text-emerald-500 hover:text-emerald-400 font-bold flex items-center gap-1 bg-emerald-500/10 px-2 py-1 rounded"
-                                                                                                    >
-                                                                                                        <Plus size={12} /> Añadir Caso
-                                                                                                    </button>
-                                                                                                </div>
-
-                                                                                                {(!day.testCases || day.testCases.length === 0) && (
-                                                                                                    <p className="text-xs text-slate-500 italic p-3 bg-black/20 rounded border border-dashed border-slate-700">No hay casos de prueba. Añade al menos uno.</p>
-                                                                                                )}
-
-                                                                                                {Array.isArray(day.testCases) && day.testCases.map((tc: any, idx: number) => (
-                                                                                                    <div key={idx} className="flex gap-2 items-start bg-slate-800/30 p-3 rounded-lg border border-slate-700/50">
-                                                                                                        <div className="flex-1 space-y-2">
-                                                                                                            <textarea
-                                                                                                                value={tc.input}
-                                                                                                                onChange={(e) => {
-                                                                                                                    const newTc = [...day.testCases];
-                                                                                                                    newTc[idx].input = e.target.value;
-                                                                                                                    handleUpdateDay(week.id, day.id, "testCases", newTc);
-                                                                                                                }}
-                                                                                                                placeholder="Escribe cada entrada simulada, presiona Enter para separar cada línea. Ejemplo:\nPedro\n25"
-                                                                                                                className="w-full h-24 bg-black/40 border border-slate-700/50 rounded flex-1 px-3 py-2 text-xs text-blue-300 font-mono resize-y focus:outline-none focus:border-blue-500 placeholder:text-slate-600"
-                                                                                                            />
-                                                                                                            <textarea
-                                                                                                                value={tc.output}
-                                                                                                                onChange={(e) => {
-                                                                                                                    const newTc = [...day.testCases];
-                                                                                                                    newTc[idx].output = e.target.value;
-                                                                                                                    handleUpdateDay(week.id, day.id, "testCases", newTc);
-                                                                                                                }}
-                                                                                                                placeholder="Salida esperada (stdout)"
-                                                                                                                className="w-full h-16 bg-black/40 border border-slate-700/50 rounded flex-1 px-3 py-2 text-xs text-emerald-400 font-mono resize-y focus:outline-none focus:border-emerald-500 placeholder:text-slate-600"
-                                                                                                            />
-                                                                                                        </div>
-                                                                                                        <button
-                                                                                                            onClick={() => {
-                                                                                                                const newTc = day.testCases.filter((_: any, i: number) => i !== idx);
-                                                                                                                handleUpdateDay(week.id, day.id, "testCases", newTc);
-                                                                                                            }}
-                                                                                                            className="text-rose-500 hover:text-rose-400 p-2 bg-rose-500/10 hover:bg-rose-500/20 rounded transition-colors"
-                                                                                                            title="Eliminar Caso"
-                                                                                                        >
-                                                                                                            <Trash2 size={14} />
-                                                                                                        </button>
-                                                                                                    </div>
-                                                                                                ))}
-                                                                                            </div>
-
-                                                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                                                                <div className="space-y-1">
-                                                                                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Umbral de Similitud ({Math.round((day.similarityThreshold || 0.9) * 100)}%)</label>
-                                                                                                    <input
-                                                                                                        type="range"
-                                                                                                        min="0"
-                                                                                                        max="1"
-                                                                                                        step="0.05"
-                                                                                                        value={day.similarityThreshold || 0.9}
-                                                                                                        onChange={(e) => handleUpdateDay(week.id, day.id, "similarityThreshold", parseFloat(e.target.value))}
-                                                                                                        className="w-full accent-emerald-500"
-                                                                                                    />
-                                                                                                    {day.enablePlagiarism && (
-                                                                                                        <Link
-                                                                                                            href={`/admin/plagiarism/${day.id}`}
-                                                                                                            className="mt-2 inline-flex items-center gap-2 text-[10px] font-bold text-amber-500 hover:text-amber-400 uppercase tracking-widest bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/20"
-                                                                                                        >
-                                                                                                            <ShieldAlert size={14} /> Ver Reporte de Plagio
-                                                                                                        </Link>
-                                                                                                    )}
-                                                                                                </div>
-
-                                                                                                <div className="flex items-center gap-3 mt-4">
-                                                                                                    <label className="flex items-center gap-3 cursor-pointer group/toggle">
-                                                                                                        <div className="relative inline-flex items-center">
-                                                                                                            <input
-                                                                                                                type="checkbox"
-                                                                                                                className="sr-only peer"
-                                                                                                                checked={!!day.enablePlagiarism}
-                                                                                                                onChange={(e) => handleUpdateDay(week.id, day.id, "enablePlagiarism", e.target.checked)}
-                                                                                                            />
-                                                                                                            <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
-                                                                                                        </div>
-                                                                                                        <div className="flex items-center gap-2">
-                                                                                                            <Lock size={12} className="text-amber-500" />
-                                                                                                            <span className="text-[10px] font-bold text-white uppercase tracking-widest">Bloquear Copiar/Pegar</span>
-                                                                                                        </div>
-                                                                                                    </label>
-                                                                                                </div>
-                                                                                            </div>
-
-                                                                                            <div className="space-y-1">
-                                                                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Código Inicial (Template)</label>
-                                                                                                <textarea
-                                                                                                    value={day.codeTemplate || ""}
-                                                                                                    onChange={(e) => handleUpdateDay(week.id, day.id, "codeTemplate", e.target.value)}
-                                                                                                    placeholder="def mi_funcion():\n    # Escribe aquí tu código..."
-                                                                                                    className="w-full h-32 bg-black/40 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-blue-300 font-mono focus:outline-none focus:border-blue-500 transition-all resize-y"
-                                                                                                />
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    )}
-                                                                                </div>
                                                                             </div>
                                                                         )}
                                                                     </div>
@@ -946,6 +939,6 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
 
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
