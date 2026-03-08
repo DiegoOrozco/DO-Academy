@@ -49,7 +49,13 @@ export async function getStudentList(sheetName: string) {
         if (error.message?.includes("invalid_grant")) errorMsg = "Error de autenticación. La clave privada es incorrecta.";
 
         // Si no es un error conocido, mostrar el mensaje técnico para debugear
-        if (errorMsg === "Error al conectar con Google Sheets.") {
+        if (error.message?.includes("DECODER routines")) {
+            const raw = process.env.GOOGLE_SHEETS_PRIVATE_KEY || "";
+            const len = raw.length;
+            const start = raw.substring(0, 15);
+            const end = raw.substring(raw.length - 15);
+            errorMsg = `Llave Inválida (Len:${len}). Empieza con: [${start}] Termina con: [${end}]. Asegúrate de usar el formato de Vercel sugerido.`;
+        } else if (errorMsg === "Error al conectar con Google Sheets.") {
             errorMsg = `Error de conexión: ${error.message || "Error desconocido"}`;
         }
 
