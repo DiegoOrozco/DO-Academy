@@ -152,11 +152,11 @@ export default function StudentCheckInPage() {
                                     ))
                                 ) : (
                                     <div className="flex flex-col items-center justify-center p-8 text-center gap-2">
-                                        <AlertCircle className="text-slate-600" size={24} />
+                                        <AlertCircle className="text-red-400" size={24} />
                                         <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest leading-loose">
-                                            {students.length === 0
+                                            {fetchError || (students.length === 0
                                                 ? "No se pudo cargar la lista.\nVerifica con el profesor si la configuración es correcta."
-                                                : "No se encontraron coincidenas."}
+                                                : "No se encontraron coincidenas.")}
                                         </p>
                                     </div>
                                 )}
