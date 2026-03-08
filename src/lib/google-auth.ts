@@ -5,23 +5,38 @@ export function formatPrivateKey(key: string | undefined): string | undefined {
 
     let k = key;
 
-    // 1. If the user pasted the entire JSON by accident, try to extract just the key
     try {
         const parsed = JSON.parse(k);
         if (parsed.private_key) {
             k = parsed.private_key;
         }
     } catch (e) {
-        // Not a JSON, which is fine
+        // Not JSON
     }
 
-    // 2. Clean surrounding quotes that might have been added by Vercel/copy-paste
-    k = k.trim().replace(/^['"`]|['"`]$/g, '');
+    // 1. Remove all quotes and literal \n or actual newlines
+    k = k.trim().replace(/^['"`]|['"`]$/g, '').replace(/\\n/g, '').replace(/\n/g, '');
 
-    // 3. Handle literal \n (backslash + n) and replace them with real newlines
-    k = k.replace(/\\n/g, '\n');
+    // 2. Identify header and footer
+    const header = "-----BEGIN PRIVATE KEY-----";
+    const footer = "-----END PRIVATE KEY-----";
 
-    return k;
+    if (k.includes(header) && k.includes(footer)) {
+        // Extract JUST the base64 content
+        const base64Content = k.substring(
+            k.indexOf(header) + header.length,
+            k.indexOf(footer)
+        ).replace(/\s/g, ""); // Remove any remaining whitespace
+
+        // 3. Re-wrap base64 content into exact 64-character lines
+        const match = base64Content.match(/.{1,64}/g);
+        if (match) {
+            return `${header}\n${match.join("\n")}\n${footer}\n`;
+        }
+    }
+
+    // Fallback if header/footer not found (unlikely given previous debug)
+    return k.replace(/\\n/g, '\n');
 }
 
 export async function getSheetsClient(readonly = true) {
