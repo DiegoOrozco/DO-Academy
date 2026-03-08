@@ -6,11 +6,11 @@ import { sendMassEmail, getCoursesList } from "@/actions/admin-email";
 import dynamic from "next/dynamic";
 
 // Import Quill dynamically to avoid SSR issues
-const ReactQuill = dynamic(() => import("react-quill"), {
+const ReactQuill = dynamic(() => import("react-quill-new"), {
     ssr: false,
     loading: () => <div className="h-64 bg-white/5 border border-white/10 rounded-2xl animate-pulse" />
 });
-import "react-quill/dist/quill.snow.css";
+import "react-quill-new/dist/quill.snow.css";
 
 export default function CommunicationsPage() {
     const [courses, setCourses] = useState<{ id: string, title: string }[]>([]);
