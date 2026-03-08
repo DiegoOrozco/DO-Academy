@@ -1,24 +1,14 @@
-import { google } from "googleapis";
+import { getSheetsClient } from "./google-auth";
 
-const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
-
-async function getSheetsClient() {
-    const auth = new google.auth.GoogleAuth({
-        credentials: {
-            client_email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
-            private_key: process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, "\n").replace(/"/g, "").trim(),
-        },
-        scopes: SCOPES,
-    });
-
-    return google.sheets({ version: "v4", auth });
+async function getSheets() {
+    return getSheetsClient(false);
 }
 
 export async function markAttendance(studentName: string, sheetName: string) {
     const spreadsheetId = process.env.GOOGLE_SHEETS_ID;
     if (!spreadsheetId) throw new Error("GOOGLE_SHEETS_ID not configured");
 
-    const sheets = await getSheetsClient();
+    const sheets = await getSheets();
 
     // 1. Get the sheet data to find Row (Student) and Column (Date)
     const response = await sheets.spreadsheets.values.get({

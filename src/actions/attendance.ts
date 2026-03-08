@@ -3,18 +3,11 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { markAttendance } from "@/lib/google-sheets";
-import { google } from "googleapis";
+import { getSheetsClient } from "@/lib/google-auth";
 
 // Helper to get sheets client for reading student list
 async function getSheets() {
-    const auth = new google.auth.GoogleAuth({
-        credentials: {
-            client_email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
-            private_key: process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, "\n").replace(/"/g, "").trim(),
-        },
-        scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
-    });
-    return google.sheets({ version: "v4", auth });
+    return getSheetsClient(true);
 }
 
 export async function getStudentList(sheetName: string) {
