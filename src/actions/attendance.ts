@@ -19,21 +19,31 @@ async function getSheets() {
 
 export async function getStudentList(sheetName: string) {
     const spreadsheetId = process.env.GOOGLE_SHEETS_ID;
-    if (!spreadsheetId) return [];
+    if (!spreadsheetId) {
+        console.error("GOOGLE_SHEETS_ID target is missing");
+        return [];
+    }
 
     try {
         const sheets = await getSheets();
+        // Quote sheet name in case it's numeric or has spaces
+        const range = `'${sheetName}'!C2:C200`;
+
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId,
-            range: `${sheetName}!C2:C100`, // Student names are in Column C
+            range,
         });
 
         const rows = response.data.values;
-        if (!rows) return [];
+        if (!rows || rows.length === 0) {
+            console.warn(`No data found in range: ${range}`);
+            return [];
+        }
 
+        // Filter out empty rows and numbers if they are separate
         return rows.map(row => row[0]).filter(Boolean);
-    } catch (error) {
-        console.error("Error fetching students from sheet:", error);
+    } catch (error: any) {
+        console.error("Error fetching students from sheet:", error.message || error);
         return [];
     }
 }

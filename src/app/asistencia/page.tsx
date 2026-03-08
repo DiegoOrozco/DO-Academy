@@ -14,13 +14,22 @@ export default function StudentCheckInPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+    const [isFetchingStudents, setIsFetchingStudents] = useState(false);
+
     useEffect(() => {
         const init = async () => {
-            const active = await getActiveSession();
-            setSession(active);
-            if (active) {
-                const list = await getStudentList(active.sheetName);
-                setStudents(list);
+            setIsFetchingStudents(true);
+            try {
+                const active = await getActiveSession();
+                setSession(active);
+                if (active) {
+                    const list = await getStudentList(active.sheetName);
+                    setStudents(list);
+                }
+            } catch (error) {
+                console.error("Init error:", error);
+            } finally {
+                setIsFetchingStudents(false);
             }
         };
         init();
@@ -88,8 +97,8 @@ export default function StudentCheckInPage() {
                 <div className="glass-effect rounded-3xl p-8 border border-white/10 shadow-2xl space-y-6">
                     {message && (
                         <div className={`p-4 rounded-2xl flex gap-3 items-center border ${message.type === "success"
-                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
-                                : "bg-red-500/10 text-red-500 border-red-500/20"
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
+                            : "bg-red-500/10 text-red-500 border-red-500/20"
                             }`}>
                             {message.type === "success" ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
                             <span className="text-sm font-bold">{message.text}</span>
@@ -112,7 +121,12 @@ export default function StudentCheckInPage() {
                             </div>
 
                             <div className="max-h-48 overflow-y-auto custom-scrollbar bg-black/20 border border-white/5 rounded-2xl p-2 space-y-1">
-                                {filteredStudents.length > 0 ? (
+                                {isFetchingStudents ? (
+                                    <div className="flex flex-col items-center justify-center p-8 gap-2">
+                                        <Loader2 className="animate-spin text-[var(--color-primary)]" size={24} />
+                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest animate-pulse">Cargando Estudiantes...</p>
+                                    </div>
+                                ) : filteredStudents.length > 0 ? (
                                     filteredStudents.map(name => (
                                         <button
                                             key={name}
@@ -122,15 +136,22 @@ export default function StudentCheckInPage() {
                                                 setSearchTerm(name);
                                             }}
                                             className={`w-full text-left px-4 py-3 rounded-xl transition-all text-sm font-medium ${selectedStudent === name
-                                                    ? "bg-[var(--color-primary)] text-white shadow-lg"
-                                                    : "text-slate-400 hover:bg-white/5 hover:text-white"
+                                                ? "bg-[var(--color-primary)] text-white shadow-lg"
+                                                : "text-slate-400 hover:bg-white/5 hover:text-white"
                                                 }`}
                                         >
                                             {name}
                                         </button>
                                     ))
                                 ) : (
-                                    <p className="text-center p-4 text-slate-600 text-xs italic">No se encontraron nombres</p>
+                                    <div className="flex flex-col items-center justify-center p-8 text-center gap-2">
+                                        <AlertCircle className="text-slate-600" size={24} />
+                                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest leading-loose">
+                                            {students.length === 0
+                                                ? "No se pudo cargar la lista.\nVerifica con el profesor si la configuración es correcta."
+                                                : "No se encontraron coincidenas."}
+                                        </p>
+                                    </div>
                                 )}
                             </div>
                         </div>
