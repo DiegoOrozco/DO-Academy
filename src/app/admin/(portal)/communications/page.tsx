@@ -3,11 +3,20 @@
 import { useState, useEffect, useTransition } from "react";
 import { Mail, Send, Users, Info, CheckCircle2, AlertCircle } from "lucide-react";
 import { sendMassEmail, getCoursesList } from "@/actions/admin-email";
+import dynamic from "next/dynamic";
+
+// Import Quill dynamically to avoid SSR issues
+const ReactQuill = dynamic(() => import("react-quill"), {
+    ssr: false,
+    loading: () => <div className="h-64 bg-white/5 border border-white/10 rounded-2xl animate-pulse" />
+});
+import "react-quill/dist/quill.snow.css";
 
 export default function CommunicationsPage() {
     const [courses, setCourses] = useState<{ id: string, title: string }[]>([]);
     const [isPending, startTransition] = useTransition();
     const [result, setResult] = useState<{ success: boolean, message?: string, count?: number } | null>(null);
+    const [emailContent, setEmailContent] = useState("");
 
     useEffect(() => {
         getCoursesList().then(setCourses);
@@ -15,14 +24,29 @@ export default function CommunicationsPage() {
 
     const handleSubmit = async (formData: FormData) => {
         setResult(null);
+        // Append the rich text content to formData
+        formData.set("content", emailContent);
+
         startTransition(async () => {
             try {
                 const res = await sendMassEmail(formData);
                 setResult(res);
+                if (res.success) {
+                    setEmailContent(""); // Clear on success
+                }
             } catch (err: any) {
                 setResult({ success: false, message: err.message });
             }
         });
+    };
+
+    const modules = {
+        toolbar: [
+            [{ 'header': [1, 2, false] }],
+            ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+            ['link', 'clean']
+        ],
     };
 
     return (
@@ -33,11 +57,11 @@ export default function CommunicationsPage() {
                     Comunicados
                 </h1>
                 <p className="text-slate-400 max-w-2xl">
-                    Envía avisos, actualizaciones o mensajes informativos a tus estudiantes directamente a su correo electrónico personal.
+                    Envía avisos, actualizaciones o mensajes informativos a tus estudiantes directamente a su correo electrónico personal con formato profesional.
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-20">
                 {/* Form Section */}
                 <div className="lg:col-span-2 space-y-6">
                     <form action={handleSubmit} className="glass-effect rounded-3xl border border-white/10 p-6 md:p-8 space-y-6">
@@ -65,15 +89,21 @@ export default function CommunicationsPage() {
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Mensaje:</label>
-                            <textarea
-                                required
-                                name="content"
-                                rows={10}
-                                placeholder="Escribe aquí tu mensaje... Puedes usar saltos de línea para separar párrafos."
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/50 transition-all resize-none leading-relaxed"
-                            ></textarea>
+                        <div className="space-y-2 quill-wrapper">
+                            <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Mensaje con Formato:</label>
+                            <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden min-h-[300px]">
+                                <ReactQuill
+                                    theme="snow"
+                                    value={emailContent}
+                                    onChange={setEmailContent}
+                                    placeholder="Escribe aquí tu mensaje profesional..."
+                                    modules={modules}
+                                    className="h-full"
+                                />
+                            </div>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest ml-1 mt-2">
+                                El texto se enviará tal cual lo ves con negritas, listas y enlaces.
+                            </p>
                         </div>
 
                         <button
@@ -145,6 +175,42 @@ export default function CommunicationsPage() {
                     </div>
                 </div>
             </div>
+
+            <style jsx global>{`
+                .quill-wrapper .ql-toolbar {
+                    background: rgba(255, 255, 255, 0.05);
+                    border: none !important;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    padding: 12px !important;
+                }
+                .quill-wrapper .ql-container {
+                    border: none !important;
+                    font-family: inherit;
+                    font-size: 16px;
+                    color: white;
+                    min-height: 300px;
+                }
+                .quill-wrapper .ql-editor.ql-blank::before {
+                    color: rgba(255, 255, 255, 0.3);
+                    font-style: normal;
+                }
+                .quill-wrapper .ql-stroke {
+                    stroke: #94a3b8 !important;
+                }
+                .quill-wrapper .ql-fill {
+                    fill: #94a3b8 !important;
+                }
+                .quill-wrapper .ql-picker {
+                    color: #94a3b8 !important;
+                }
+                .quill-wrapper .ql-active .ql-stroke {
+                    stroke: white !important;
+                }
+                .quill-wrapper .ql-picker-options {
+                    background-color: #0f172a !important;
+                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                }
+            `}</style>
         </div>
     );
 }

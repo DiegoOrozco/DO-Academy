@@ -44,7 +44,7 @@ export async function sendMassEmail(formData: FormData) {
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
       <h2 style="color: #3b82f6;">DO Academy - Comunicado</h2>
       <div style="line-height: 1.6; color: #333; font-size: 16px;">
-        ${content.replace(/\n/g, '<br>')}
+        ${content}
       </div>
       <hr style="margin-top: 30px; border: 0; border-top: 1px solid #eee;">
       <p style="font-size: 12px; color: #999; text-align: center;">
