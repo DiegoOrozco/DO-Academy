@@ -15,6 +15,7 @@ export default function StudentCheckInPage() {
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
     const [fetchError, setFetchError] = useState<string | null>(null);
+    const [isFetchingStudents, setIsFetchingStudents] = useState(false);
 
     useEffect(() => {
         const init = async () => {
