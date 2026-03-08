@@ -14,20 +14,27 @@ export default function StudentCheckInPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-    const [isFetchingStudents, setIsFetchingStudents] = useState(false);
+    const [fetchError, setFetchError] = useState<string | null>(null);
 
     useEffect(() => {
         const init = async () => {
             setIsFetchingStudents(true);
+            setFetchError(null);
             try {
                 const active = await getActiveSession();
                 setSession(active);
                 if (active) {
-                    const list = await getStudentList(active.sheetName);
-                    setStudents(list);
+                    const res = await getStudentList(active.sheetName);
+                    if (res.success) {
+                        setStudents(res.data || []);
+                    } else {
+                        setFetchError(res.error || "Error desconocido.");
+                        console.error("Fetch error:", res.debug);
+                    }
                 }
             } catch (error) {
                 console.error("Init error:", error);
+                setFetchError("Error al conectar con el servidor.");
             } finally {
                 setIsFetchingStudents(false);
             }
