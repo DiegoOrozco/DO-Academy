@@ -12,13 +12,13 @@ model User {
   email             String          @unique
   name              String
   password          String
-  googleId          String?         @unique
   role              String          @default("STUDENT")
   createdAt         DateTime        @default(now())
   emailVerified     Boolean         @default(true)
   resetToken        String?         @unique
   resetTokenExpiry  DateTime?
   verificationToken String?         @unique
+  googleId          String?         @unique
   enrollments       Enrollment[]
   posts             Post[]
   replies           Reply[]
@@ -160,9 +160,18 @@ model Submission {
 model Communication {
   id              String   @id @default(cuid())
   subject         String
-  content         String   @db.Text
+  content         String
   recipientCount  Int
-  targetGroupId   String?  // Nullable if sent to "all"
-  targetGroupName String   // "Todos" or the course title
+  targetGroupId   String?
+  targetGroupName String
   createdAt       DateTime @default(now())
+}
+
+model AttendanceSession {
+  id        String   @id @default(cuid())
+  code      String
+  expiresAt DateTime
+  sheetName String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
 }

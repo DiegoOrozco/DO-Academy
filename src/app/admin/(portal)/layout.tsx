@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, BookOpen, MessageSquare, Settings, LogOut, Menu, X, Users, GraduationCap, ShieldAlert, Mail } from "lucide-react";
+import { LayoutDashboard, BookOpen, MessageSquare, Settings, LogOut, Menu, X, Users, GraduationCap, ShieldAlert, Mail, CheckCircle } from "lucide-react";
 import { logoutAdmin } from "../../../actions/auth";
 
 export default function AdminPortalLayout({ children }: { children: React.ReactNode }) {
@@ -19,6 +19,7 @@ export default function AdminPortalLayout({ children }: { children: React.ReactN
         { name: "Ajustes del Sitio", href: "/admin/settings", icon: <Settings size={18} /> },
         { name: "Reporte de Plagio", href: "/admin/plagiarism", icon: <ShieldAlert size={18} /> },
         { name: "Q&A Inbox", href: "/admin/qa", icon: <MessageSquare size={18} /> },
+        { name: "Pase de Lista", href: "/admin/attendance", icon: <CheckCircle size={18} /> },
         { name: "Ver sitio alumnos", href: "/", icon: <BookOpen size={18} />, special: true },
     ];
 
