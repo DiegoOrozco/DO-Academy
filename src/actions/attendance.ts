@@ -20,13 +20,15 @@ async function getSheets() {
 export async function getStudentList(sheetName: string) {
     const spreadsheetId = process.env.GOOGLE_SHEETS_ID;
     if (!spreadsheetId) {
-        console.error("GOOGLE_SHEETS_ID target is missing");
-        return [];
+        return { success: false, error: "Falta configurar GOOGLE_SHEETS_ID en Vercel." };
+    }
+
+    if (!process.env.GOOGLE_SHEETS_CLIENT_EMAIL) {
+        return { success: false, error: "Falta configurar GOOGLE_SHEETS_CLIENT_EMAIL." };
     }
 
     try {
         const sheets = await getSheets();
-        // Quote sheet name in case it's numeric or has spaces
         const range = `'${sheetName}'!C2:C200`;
 
         const response = await sheets.spreadsheets.values.get({
@@ -36,15 +38,28 @@ export async function getStudentList(sheetName: string) {
 
         const rows = response.data.values;
         if (!rows || rows.length === 0) {
-            console.warn(`No data found in range: ${range}`);
-            return [];
+            return {
+                success: false,
+                error: `No se encontraron datos en la columna C. ¿Seguro que la hoja se llama '${sheetName}'?`,
+                debug: `Range attempted: ${range}`
+            };
         }
 
-        // Filter out empty rows and numbers if they are separate
-        return rows.map(row => row[0]).filter(Boolean);
+        const students = rows.map((row: any) => row[0]).filter(Boolean);
+        return { success: true, data: students };
     } catch (error: any) {
-        console.error("Error fetching students from sheet:", error.message || error);
-        return [];
+        console.error("Error fetching students:", error);
+
+        let errorMsg = "Error al conectar con Google Sheets.";
+        if (error.message?.includes("not found")) errorMsg = `No se encontró la hoja '${sheetName}'.`;
+        if (error.message?.includes("permission denied")) errorMsg = "Permiso denegado. Revisa si compartiste el Excel con el correo del Bot.";
+        if (error.message?.includes("invalid_grant")) errorMsg = "Error de autenticación. La clave privada es incorrecta.";
+
+        return {
+            success: false,
+            error: errorMsg,
+            debug: error.message
+        };
     }
 }
 
