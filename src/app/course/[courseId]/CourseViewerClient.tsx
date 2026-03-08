@@ -364,7 +364,7 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
                                 <div className="flex flex-col gap-3">
                                     {activeDay.summaryUrl && (
                                         <a
-                                            href={activeDay.summaryUrl}
+                                            href={`${activeDay.summaryUrl}${activeDay.summaryUrl.includes('vercel-storage.com') ? '?download=1' : ''}`}
                                             target="_blank"
                                             rel="noreferrer"
                                             className="glass-effect p-3 rounded-xl flex items-center justify-between group border border-orange-500/20 hover:border-orange-500 transition-all bg-orange-500/5"
@@ -381,7 +381,7 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
 
                                     {activeDay.materialUrl && (
                                         <a
-                                            href={activeDay.materialUrl}
+                                            href={`${activeDay.materialUrl}${activeDay.materialUrl.includes('vercel-storage.com') ? '?download=1' : ''}`}
                                             target="_blank"
                                             rel="noreferrer"
                                             className="glass-effect p-3 rounded-xl flex items-center justify-between group border border-[var(--border-color)] hover:border-[var(--color-primary)] transition-all bg-[var(--card-bg)]"

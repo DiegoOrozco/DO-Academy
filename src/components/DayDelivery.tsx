@@ -107,7 +107,7 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
 
                 {!day.isCodingExercise && (
                     <a
-                        href={day.assignmentUrl || "#"}
+                        href={day.assignmentUrl ? `${day.assignmentUrl}${day.assignmentUrl.includes('vercel-storage.com') ? '?download=1' : ''}` : "#"}
                         target="_blank"
                         rel="noreferrer"
                         className={`flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-xl border border-white/10 transition-all text-sm font-semibold group ${!day.assignmentUrl ? "opacity-50 cursor-not-allowed" : ""}`}
