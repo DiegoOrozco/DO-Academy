@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Save, Settings, List, Plus, Trash2, GripVertical, Video, Link2, Loader2, FileText, Upload, ChevronDown, ChevronRight, Tags, Calendar, Code, Lock, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Save, Settings, List, Plus, Trash2, GripVertical, Video, Link2, Loader2, FileText, Upload, ChevronDown, ChevronRight, Tags, Calendar, Code, Lock, ShieldAlert, Copy } from "lucide-react";
 import { saveCourseData } from "@/actions/admin-course";
 import { useRouter } from "next/navigation";
 
@@ -130,6 +130,20 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                 weeks: course.weeks.filter((w: any) => w.id !== weekId)
             });
         }
+    };
+
+    const handleDuplicateWeek = (week: any) => {
+        const newWeek = {
+            ...week,
+            id: `w${Date.now()}`,
+            title: `${week.title} (Copia)`,
+            days: week.days.map((day: any, index: number) => ({
+                ...day,
+                id: `d${Date.now()}-${index}`,
+            }))
+        };
+        setCourse({ ...course, weeks: [...course.weeks, newWeek] });
+        setExpandedWeeks(prev => [...prev, newWeek.id]);
     };
 
     const handleAddDay = (weekId: string) => {
@@ -518,6 +532,13 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                         />
                                                     </div>
                                                     <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => handleDuplicateWeek(week)}
+                                                            className="text-slate-500 hover:text-emerald-400 transition-colors p-2 rounded-lg hover:bg-emerald-500/10"
+                                                            title="Duplicar Semana"
+                                                        >
+                                                            <Copy size={18} />
+                                                        </button>
                                                         <button
                                                             onClick={() => handleDeleteWeek(week.id)}
                                                             className="text-slate-500 hover:text-red-400 transition-colors p-2 rounded-lg hover:bg-red-500/10"
