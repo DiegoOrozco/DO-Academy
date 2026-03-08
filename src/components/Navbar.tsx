@@ -11,7 +11,8 @@ import {
     X,
     Info,
     Shield,
-    GraduationCap
+    GraduationCap,
+    ArrowRight
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import ThemeToggle from "./ThemeToggle";
@@ -64,11 +65,24 @@ export default function Navbar({ user }: NavbarProps) {
 
     return (
         <nav
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled || user?.role === "ADMIN"
                 ? "py-3 bg-[var(--nav-bg)] backdrop-blur-xl border-b border-[var(--border-color)] shadow-2xl"
                 : "py-6 bg-transparent"
                 }`}
         >
+            {user?.role === "ADMIN" && (
+                <div className="bg-[var(--color-primary)] text-white text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] py-2 px-4 flex items-center justify-center gap-4 border-b border-white/10 shadow-[0_4px_20px_rgba(59,130,246,0.2)]">
+                    <span className="flex items-center gap-1.5 backdrop-blur-md bg-white/10 px-2 py-0.5 rounded-md">
+                        <Shield size={12} fill="currentColor" className="opacity-80" />
+                        Modo Vista Previa
+                    </span>
+                    <span className="hidden sm:inline opacity-60">|</span>
+                    <Link href="/admin" className="hover:underline flex items-center gap-1 group/back">
+                        Volver al Panel Admin
+                        <ArrowRight size={10} className="group-hover/back:translate-x-0.5 transition-transform" />
+                    </Link>
+                </div>
+            )}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center">
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-2 group">

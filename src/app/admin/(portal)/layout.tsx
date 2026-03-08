@@ -19,6 +19,7 @@ export default function AdminPortalLayout({ children }: { children: React.ReactN
         { name: "Ajustes del Sitio", href: "/admin/settings", icon: <Settings size={18} /> },
         { name: "Reporte de Plagio", href: "/admin/plagiarism", icon: <ShieldAlert size={18} /> },
         { name: "Q&A Inbox", href: "/admin/qa", icon: <MessageSquare size={18} /> },
+        { name: "Ver sitio alumnos", href: "/", icon: <BookOpen size={18} />, special: true },
     ];
 
     return (
@@ -77,6 +78,11 @@ export default function AdminPortalLayout({ children }: { children: React.ReactN
                             >
                                 {link.icon}
                                 {link.name}
+                                {link.special && (
+                                    <span className="ml-auto text-[10px] font-black uppercase tracking-tighter bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/30 group-hover:bg-emerald-500/30 transition-all">
+                                        Live
+                                    </span>
+                                )}
                             </Link>
                         );
                     })}
