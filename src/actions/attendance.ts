@@ -55,6 +55,11 @@ export async function getStudentList(sheetName: string) {
         if (error.message?.includes("permission denied")) errorMsg = "Permiso denegado. Revisa si compartiste el Excel con el correo del Bot.";
         if (error.message?.includes("invalid_grant")) errorMsg = "Error de autenticación. La clave privada es incorrecta.";
 
+        // Si no es un error conocido, mostrar el mensaje técnico para debugear
+        if (errorMsg === "Error al conectar con Google Sheets.") {
+            errorMsg = `Error de conexión: ${error.message || "Error desconocido"}`;
+        }
+
         return {
             success: false,
             error: errorMsg,
