@@ -69,6 +69,26 @@ export async function sendMassEmail(formData: FormData) {
             replyTo: "no-reply@do-academy.com" // Discourage direct replies
         });
 
+        // Log to history
+        let targetGroupName = "Todos los estudiantes";
+        if (targetCourseId && targetCourseId !== "all") {
+            const course = await prisma.course.findUnique({
+                where: { id: targetCourseId },
+                select: { title: true }
+            });
+            if (course) targetGroupName = course.title;
+        }
+
+        await prisma.communication.create({
+            data: {
+                subject,
+                content: content, // Store the raw content or HTML? Let's store raw editor content
+                recipientCount: emails.length,
+                targetGroupId: targetCourseId === "all" ? null : targetCourseId,
+                targetGroupName: targetGroupName
+            }
+        });
+
         revalidatePath("/admin/communications");
         return { success: true, count: emails.length };
     } catch (error: any) {
@@ -81,5 +101,13 @@ export async function getCoursesList() {
     await ensureAdmin();
     return await prisma.course.findMany({
         select: { id: true, title: true }
+    });
+}
+
+export async function getCommunicationHistory() {
+    await ensureAdmin();
+    return await prisma.communication.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 20
     });
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useTransition, memo } from "react";
 import { Mail, Send, Users, Info, CheckCircle2, AlertCircle } from "lucide-react";
-import { sendMassEmail, getCoursesList } from "@/actions/admin-email";
+import { sendMassEmail, getCoursesList, getCommunicationHistory } from "@/actions/admin-email";
 import dynamic from "next/dynamic";
 
 // Import Quill dynamically to avoid SSR issues
@@ -61,12 +61,14 @@ OptimizedEditor.displayName = "OptimizedEditor";
 
 export default function CommunicationsPage() {
     const [courses, setCourses] = useState<{ id: string, title: string }[]>([]);
+    const [history, setHistory] = useState<any[]>([]);
     const [isPending, startTransition] = useTransition();
     const [result, setResult] = useState<{ success: boolean, message?: string, count?: number } | null>(null);
     const [emailContent, setEmailContent] = useState("");
 
     useEffect(() => {
         getCoursesList().then(setCourses);
+        getCommunicationHistory().then(setHistory);
     }, []);
 
     const handleSubmit = async (formData: FormData) => {
@@ -80,6 +82,7 @@ export default function CommunicationsPage() {
                 setResult(res);
                 if (res.success) {
                     setEmailContent(""); // Clear on success
+                    getCommunicationHistory().then(setHistory); // Refresh history
                 }
             } catch (err: any) {
                 setResult({ success: false, message: err.message });
@@ -99,7 +102,7 @@ export default function CommunicationsPage() {
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-20">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10">
                 {/* Form Section */}
                 <div className="lg:col-span-2 space-y-6">
                     <form action={handleSubmit} className="glass-effect rounded-3xl border border-white/10 p-6 md:p-8 space-y-6">
@@ -202,6 +205,44 @@ export default function CommunicationsPage() {
                             Antes de enviar un mensaje masivo, puedes inscribirte tú mismo en un curso de prueba y enviártelo para ver cómo queda el diseño.
                         </p>
                     </div>
+                </div>
+            </div>
+
+            {/* History Section */}
+            <div className="space-y-6 pb-20">
+                <div className="flex items-center gap-3">
+                    <div className="w-1 h-8 bg-[var(--color-primary)] rounded-full" />
+                    <h2 className="text-xl font-black text-white uppercase tracking-wider">Historial de Comunicados</h2>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {history.length > 0 ? (
+                        history.map((comm) => (
+                            <div key={comm.id} className="glass-effect rounded-2xl border border-white/10 p-5 space-y-3 hover:border-white/20 transition-all">
+                                <div className="flex justify-between items-start gap-4">
+                                    <h4 className="font-bold text-white line-clamp-1">{comm.subject}</h4>
+                                    <span className="text-[10px] bg-white/5 px-2 py-1 rounded text-slate-400 whitespace-nowrap font-bold">
+                                        {new Date(comm.createdAt).toLocaleDateString()}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-4 text-xs text-slate-400">
+                                    <div className="flex items-center gap-1.5">
+                                        <Users size={14} className="text-[var(--color-primary)]" />
+                                        <span>{comm.recipientCount} alumnos</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <Mail size={14} className="text-[var(--color-primary)]" />
+                                        <span>{comm.targetGroupName}</span>
+                                    </div>
+                                </div>
+                                <div className="text-xs text-slate-500 line-clamp-2 italic" dangerouslySetInnerHTML={{ __html: comm.content }} />
+                            </div>
+                        ))
+                    ) : (
+                        <div className="col-span-full py-10 text-center glass-effect rounded-3xl border border-white/10">
+                            <p className="text-slate-500 font-bold uppercase tracking-widest text-sm">No hay envíos registrados todavía.</p>
+                        </div>
+                    )}
                 </div>
             </div>
 

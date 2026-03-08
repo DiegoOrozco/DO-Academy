@@ -156,3 +156,13 @@ model Submission {
   @@index([userId])
   @@index([dayId])
 }
+
+model Communication {
+  id              String   @id @default(cuid())
+  subject         String
+  content         String   @db.Text
+  recipientCount  Int
+  targetGroupId   String?  // Nullable if sent to "all"
+  targetGroupName String   // "Todos" or the course title
+  createdAt       DateTime @default(now())
+}
