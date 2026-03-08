@@ -77,9 +77,16 @@ export default async function StudentRegisterPage({
                         </div>
                     </div>
 
+                    {error === "google_linked" && (
+                        <div className="mb-4 bg-orange-500/20 text-orange-400 text-sm p-4 rounded-lg border border-orange-500/30 text-center font-medium shadow-[0_0_15px_rgba(249,115,22,0.1)]">
+                            <p className="font-bold mb-1">Correo vinculado a Google</p>
+                            <p className="opacity-80 text-xs">Ya tienes una cuenta activa usando Google Auth. Haz clic en "Comenzar con Google" para entrar.</p>
+                        </div>
+                    )}
+
                     {error === "exists" && (
                         <div className="mb-4 bg-red-500/20 text-red-500 text-sm p-3 rounded-lg border border-red-500/30 text-center font-medium">
-                            Este correo ya está registrado o hubo un error.
+                            Este correo ya está registrado. <Link href="/login" className="underline font-bold">Inicia sesión aquí</Link>
                         </div>
                     )}
                     {error === "missing" && (

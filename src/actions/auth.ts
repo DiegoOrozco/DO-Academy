@@ -15,12 +15,21 @@ export async function registerStudent(formData: FormData) {
     const password = formData.get("password") as string;
     const courseId = formData.get("courseId") as string;
 
-    if (!name || !email || !password) {
-        redirect("/register?error=missing");
-    }
-
     let success = false;
     try {
+        // Check if user already exists
+        const existingUser = await prisma.user.findUnique({
+            where: { email }
+        });
+
+        if (existingUser) {
+            if (existingUser.googleId) {
+                redirect("/login?error=google_linked");
+            } else {
+                redirect("/login?error=exists");
+            }
+        }
+
         // Hash the password before saving
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -69,6 +78,11 @@ export async function loginStudent(formData: FormData) {
         });
 
         if (user && user.role === "STUDENT") {
+            // Check if user is linked to Google
+            if (user.googleId) {
+                redirect("/login?error=google_linked");
+            }
+
             // Verify the hashed password
             const isMatch = await bcrypt.compare(password, user.password);
 
