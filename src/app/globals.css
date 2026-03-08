@@ -99,5 +99,27 @@ body {
     font-weight: 800;
     margin-top: 2rem;
     margin-bottom: 1rem;
+
+    .glow-emerald-sm {
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+    }
+
+    @keyframes pulseSubtle {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.85;
+        transform: scale(0.98);
+      }
+    }
+
+    .animate-pulse-subtle {
+      animation: pulseSubtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
   }
 }

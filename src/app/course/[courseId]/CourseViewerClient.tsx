@@ -153,13 +153,23 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
                     </div>
 
                     {/* Mobile Toggle Button */}
-                    <button
-                        onClick={() => setIsSidebarOpen(true)}
-                        className="lg:hidden flex items-center gap-2 bg-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/20 text-[var(--color-primary)] px-3 py-1.5 rounded-lg border border-[var(--color-primary)]/20 transition-all text-xs font-bold"
-                    >
-                        <BookOpen size={16} />
-                        <span className="hidden sm:inline">Ver Contenido</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <Link
+                            href="/asistencia"
+                            className="flex items-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/20 transition-all text-xs font-bold glow-emerald-sm animate-pulse-subtle"
+                        >
+                            <User size={16} />
+                            <span>Asistencia</span>
+                        </Link>
+
+                        <button
+                            onClick={() => setIsSidebarOpen(true)}
+                            className="lg:hidden flex items-center gap-2 bg-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/20 text-[var(--color-primary)] px-3 py-1.5 rounded-lg border border-[var(--color-primary)]/20 transition-all text-xs font-bold"
+                        >
+                            <BookOpen size={16} />
+                            <span className="hidden sm:inline">Ver Contenido</span>
+                        </button>
+                    </div>
                 </div>
             </header>
 
