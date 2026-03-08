@@ -159,7 +159,7 @@ export default async function DashboardPage() {
                                         <div className="mt-auto flex items-center justify-between pt-6 border-t border-[var(--border-color)]">
                                             <div className="flex items-center gap-2 text-[var(--text-secondary)] text-xs font-bold uppercase tracking-widest">
                                                 <BookOpen size={14} />
-                                                Cerrado
+                                                Abierto
                                             </div>
                                             <Link
                                                 href={student ? `/course/${course.id}/unlock` : `/register?courseId=${course.id}`}

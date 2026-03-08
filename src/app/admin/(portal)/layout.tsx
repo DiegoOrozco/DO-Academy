@@ -17,7 +17,7 @@ export default function AdminPortalLayout({ children }: { children: React.ReactN
         { name: "Estudiantes", href: "/admin/students", icon: <Users size={18} /> },
         { name: "Ajustes del Sitio", href: "/admin/settings", icon: <Settings size={18} /> },
         { name: "Reporte de Plagio", href: "/admin/plagiarism", icon: <ShieldAlert size={18} /> },
-        { name: "Q&A Inbox", href: "/admin/qa", icon: <MessageSquare size={18} />, badge: 4 },
+        { name: "Q&A Inbox", href: "/admin/qa", icon: <MessageSquare size={18} /> },
     ];
 
     return (
@@ -76,11 +76,6 @@ export default function AdminPortalLayout({ children }: { children: React.ReactN
                             >
                                 {link.icon}
                                 {link.name}
-                                {link.badge && (
-                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 bg-[var(--color-primary)] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                        {link.badge}
-                                    </span>
-                                )}
                             </Link>
                         );
                     })}

@@ -3,13 +3,12 @@ import Link from "next/link";
 import { ShieldAlert, BookOpen, Calendar, ArrowRight } from "lucide-react";
 
 export default async function PlagiarismIndexPage() {
-    const daysWithPlagiarism = await (prisma.day.findMany as any)({
+    const daysWithPlagiarism = await prisma.day.findMany({
         where: {
             OR: [
                 { enablePlagiarism: true },
                 { isCodingExercise: true }
             ],
-            isDeliveryDay: true
         },
         include: {
             week: {

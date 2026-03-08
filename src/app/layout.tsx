@@ -20,7 +20,7 @@ export default async function RootLayout({
   const aboutConfig = await getSiteConfig("about");
 
   return (
-    <html lang="es">
+    <html lang="es" data-scroll-behavior="smooth">
       <head>
         <script
           dangerouslySetInnerHTML={{
