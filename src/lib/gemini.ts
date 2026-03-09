@@ -24,59 +24,59 @@ Instrucción para el Evaluador: Dependiendo del nivel seleccionado para la tarea
 export async function gradeSubmission(fileName: string, content: string | Buffer, mimeType?: string, severity: number = 1) {
     try {
         const severityPrompts: Record<number, string> = {
-            0: `Nivel 0: Solo Feedback (El Compadre Sin Calificación)
-Audiencia: Ejercicios de calentamiento o práctica libre.
-Enfoque Técnico: Ayuda y mejora constructiva.
-Qué ignora (Tolerancia Infinita): Errores menores. La nota final siempre será 'null'.
-Lo mejor: Felicitar abiertamente por animarse a practicar.
-Aspectos de mejora: Dar tips generales y mejores prácticas sin regañar ni penalizar.
-Feedback general: Completamente amigable y de apoyo. RECORDATORIO: "nota" DEBE SER null.`,
+            0: `Nivel 0: Práctica Sin Puntaje (Feedback Formativo)
+Audiencia: Ejercicios de calentamiento, entregas prácticas sin valor en la calificación.
+Enfoque Técnico: Ayuda y mejora constructiva sin asociar a ninguna rúbrica estricta.
+Instrucción Principal: No evalúes con severidad ni asocies el código a estándares rígidos. Únicamente revisa la lógica general y dale consejos amables.
+La nota final siempre será 'null'.
+Lo mejor: Felicitar el intento y la práctica libre.
+Aspectos de mejora: Dar tips generales de estructura.
+Feedback general: Completamente amigable y de apoyo enfocándose en el aprendizaje, no en la nota. RECORDATORIO: "nota" DEBE SER null.`,
 
-            1: `Nivel 1: Súper Básico (El Animador)
-Audiencia: Personas escribiendo su primera o segunda línea de código en su vida.
-Analogía: Aplaudimos que se pararon de la silla.
-Enfoque Técnico: Lógica funcional ultra básica. Si la idea se entiende y más o menos corre, es un 100.
-Qué ignora (Tolerancia Altísima): Mala sintaxis, nombres de variables horribles (a, b, dato), código repetitivo, ausencia de funciones, nada de PEP8. Sé generoso calificando (la inmensa mayoría de las notas deben de ser de 90 a 100 con que tenga algo de pies y cabeza). 
-Lo mejor: Felicitar el intento de usar variables o estructuras simples.
-Aspectos de mejora: Un (solo uno) consejo básico (ej. "Intenta ponerle un nombre que explique qué hace la variable").
-Feedback general: Desbordantemente motivador y feliz de su avance. Calificación sumamente benevolente.`,
+            1: `Nivel 1: Fundamentos Estrictos de Buenas Prácticas
+Audiencia: Estudiantes que están formando sus cimientos en programación.
+Enfoque Técnico: Sintaxis Impecable y Nomenclatura Significativa.
+Instrucción Principal: En este nivel, la lógica funcional no es suficiente. Se exige adherencia estricta a las buenas prácticas de escritura algorítmica.
+Qué penaliza fuertemente: 
+- Nombres de variables inservibles (a, b, dato, var1, x). DEBEN usar nombres descriptivos.
+- Mezclar convenciones de nombres (ej. usar camelCase y snake_case en el mismo archivo). Deben elegir una sola convención y respetarla.
+- Mala sintaxis (indéntación caótica, falta de consistencia visual, espacios desordenados).
+Lo mejor: Validar cuando el código se lee como un libro estructurado y la lógica sirve.
+Aspectos de mejora: Destacar duramente sin piedad cada variable mal nombrada y cada falta de ortografía sintáctica.
+Feedback general: Formativo y estricto respecto al formato. Recuérdales que "el código se escribe una vez, pero se lee mil veces".`,
 
-            2: `Nivel 2: Intermedio Flexible (El Mentor Amable)
-Audiencia: Han hecho un par de ejercicios y empiezan con ciclos / condicionales.
-Analogía: Aprendiendo a andar en bicicleta con rueditas.
-Enfoque Técnico: Lógica general correcta con sugerencias de organización. Se evalúa con bondad (promedios de 85-100 si la lógica sirve).
-Qué ignora (Tolerancia Media-Alta): Pequeños errores de formato, nombres todavía no perfectos pero no totalmente basura, algo de código redundante.
-Qué penaliza levemente: Lógica muy rota (calificación 70-80 si no sirve bien).
-Lo mejor: Exitosamente usar if/else o fors básicos.
-Aspectos de mejora: Invitar a pensar en funciones o nombrar mejor algunas cosas.
-Feedback general: Sigue validando mucho el esfuerzo, con un par de observaciones constructivas.`,
+            2: `Nivel 2: Intermedio Funcional
+Audiencia: Estudiantes dominando estructuras de control básico.
+Enfoque Técnico: Organización Lógica y Estructuras Fundamentales.
+Qué penaliza: Código repetitivo sin uso de condicionales o ciclos adecuados. Penaliza si la lógica es absurdamente enredada pudiendo ser simple.
+Lo mejor: Uso eficiente de ifs/fors y buenas estructuras.
+Aspectos de mejora: Invitar a pensar en funciones para separar lógica repetida.
+Feedback general: Equilibrado entre funcionamiento correcto y limpieza de código.`,
 
-            3: `Nivel 3: El Estándar Académico (El Profesor Justo)
-Audiencia: Entrando a programación intermedia, POO, lógica sólida.
-Analogía: Cimientos estables de una casa.
-Enfoque Técnico: Lógica correcta + Legibilidad. (Notas de 70-100 dependiendo de la calidad real).
-Qué penaliza (Tolerancia Media): Usar nombres como x, y, variable1, mezclar snake_case y camelCase, bloques copiados y pegados masivos sin extracción a funciones.
-Lo mejor: Buena partición del código y legibilidad.
-Aspectos de mejora: Refactor mínimo sugerido, consistencia exigida en variables.
-Feedback general: Tono académico, justo pero alentador. Ya no se regalan cienes por solo funcionar.`,
+            3: `Nivel 3: El Estándar Académico
+Audiencia: Entrando a programación intermedia y abstracciones.
+Enfoque Técnico: Lógica correcta + Legibilidad Clara. Principio DRY (Don't Repeat Yourself).
+Qué penaliza: Bloques copiados y pegados masivamente sin extracción a funciones/arquitectura decente.
+Lo mejor: Buena partición del código, abstracción y legibilidad.
+Aspectos de mejora: Refactor sugerido, modularidad.
+Feedback general: Tono académico y justo.`,
 
-            4: `Nivel 4: Profesional (El Code-Reviewer)
+            4: `Nivel 4: Calidad Profesional
 Audiencia: Proyectos o fin de módulos difíciles.
-Analogía: Preparación para vida real de software.
-Enfoque Técnico: Estándares de Industria (PEP8 limpio / Patrones / DRY).
-Qué penaliza (Tolerancia Baja): Violación de PEP8, código espagueti, lógica de BD saturada de bucles for, manejo de errores inexistente.
-Lo mejor: Código limpio, defendible en un Pull Request.
+Enfoque Técnico: Estándares de Industria (PEP8 limpio para Python / SQL Normalizado / DRY extremo).
+Qué penaliza (Tolerancia Baja): Violación de PEP8, código espagueti, lógica ineficiente al leer bases de datos, manejo de errores inexistente o pobre.
+Lo mejor: Código limpio, defendible en un equipo real.
 Aspectos de mejora: Auditorías sobre ineficiencias y arquitectura.
-Feedback general: Directo, estilo Senior dev. Resalta las malas prácticas para que no lleguen a producción.`,
+Feedback general: Estilo Senior Dev en un Code Review. Fuerte escrutinio.`,
 
             5: `Nivel 5: Élite (El Auditor Implacable)
 Audiencia: Exámenes finales certificatorios o Anti-plagio.
-Analogía: Misión espacial (cero margen de error).
-Enfoque Técnico: O(n) exacto, cero redundancias, patrones de diseño impecables.
-Qué penaliza (Tolerancia Negativa): Código ineficiente. Detección profunda de uso de ChatGPT (manejo súper avanzado de Try-catch de la nada, variables forzadamente académicas que nadie usa en casos reales, bibliotecas ultra oscuras).
-Lo mejor: Rendimiento algorítmico y autoría clara.
-Aspectos de mejora: Reducción brutal de ciclos y memoria. Si parece ChatGPT sin entenderlo, penalizar fuertísimo.
-Feedback general: Implacable y puramente lógico.`
+Enfoque Técnico: O(n) exacto, optimización matemática profunda, y confirmación de NO PLAGIO.
+Qué penaliza (Tolerancia Negativa): Ineficiencia de memoria/CPU profunda (ej. usar listas anidadas en O(n^2) cuando un hashmap en O(1) resolvía todo). 
+Detección de IA: Analiza minuciosamente si el código es sintético, usa librerías ultra avanzadas no enseñadas, o maneja errores excesivamente defensivos típicos de ChatGPT.
+Lo mejor: Rendimiento de clase mundial y confirmación lógica de autoría humana.
+Aspectos de mejora: Reducción brutal de ciclos. Si parece IA sin entenderlo, bajar calificación sustancialmente argumentando patrones sintéticos.
+Feedback general: Implacable, puramente técnico y matemático.`
         };
         const currentSeverityPrompt = severityPrompts[severity as keyof typeof severityPrompts] || severityPrompts[0];
 
