@@ -10,8 +10,33 @@ export default function AdminSettingsClient({ initialConfigs }: { initialConfigs
     const [activeTab, setActiveTab] = useState("home");
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-    const home = configs.home || {};
-    const about = configs.about || {};
+    const home = Object.keys(configs.home || {}).length > 0 ? configs.home : {
+        heroTitle: "Domina la Tecnología con DO Academy",
+        heroSubtitle: "Accede a contenido exclusivo diseñado por expertos para llevar tus habilidades al siguiente nivel profesional.",
+        heroButtonText: "Empezar Ahora",
+        heroButtonLink: "/register"
+    };
+
+    const about = Object.keys(configs.about || {}).length > 0 ? configs.about : {
+        name: "Diego Orozco",
+        title: "Creador de Experiencias Digitales & Mentor Tech",
+        bio: "Apasionado por la educación y el desarrollo de software. He dedicado los últimos años a construir plataformas que ayudan a miles de estudiantes a dominar nuevas tecnologías.\n\nEn DO Academy, mi misión es democratizar el acceso al conocimiento técnico de alta calidad, creando no solo cursos, sino experiencias de aprendizaje que transformen carreras.",
+        stats: [
+            { label: "Años Exp.", value: "8+" },
+            { label: "Cursos", value: "12" },
+            { label: "Estudiantes", value: "5k+" },
+            { label: "Cafés/Día", value: "3" }
+        ],
+        socialLinks: [
+            { platform: "GitHub", url: "#" },
+            { platform: "LinkedIn", url: "#" }
+        ],
+        contacts: [
+            { type: "Email", value: "diego@doacademy.com" },
+            { type: "WhatsApp", value: "#" }
+        ]
+    };
+
 
     const handleSave = async (key: string, value: any) => {
         setIsSaving(true);
