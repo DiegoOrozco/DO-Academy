@@ -270,9 +270,27 @@ export default function AdminSettingsClient({ initialConfigs }: { initialConfigs
                                             }}
                                             className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-white font-bold"
                                         />
+                                        <button
+                                            onClick={() => {
+                                                const next = about.stats.filter((_: any, idx: number) => idx !== i);
+                                                updateAbout({ stats: next });
+                                            }}
+                                            className="ml-auto text-red-500 hover:text-red-400 text-[10px] uppercase font-bold"
+                                        >
+                                            Quitar
+                                        </button>
                                     </div>
                                 ))}
                             </div>
+                            <button
+                                onClick={() => {
+                                    const next = [...(about.stats || []), { label: "", value: "" }];
+                                    updateAbout({ stats: next });
+                                }}
+                                className="w-full py-2 border border-dashed border-white/10 rounded-lg text-slate-500 hover:text-white hover:border-white/20 transition-all text-xs font-bold"
+                            >
+                                + Añadir Estadística
+                            </button>
                         </div>
 
                         <div className="space-y-4">
@@ -296,11 +314,12 @@ export default function AdminSettingsClient({ initialConfigs }: { initialConfigs
                                                 <option value="LinkedIn">LinkedIn</option>
                                                 <option value="Twitter">Twitter (X)</option>
                                                 <option value="Instagram">Instagram</option>
+                                                <option value="Email">Email / Correo</option>
                                                 <option value="Web">Sitio Web / Link</option>
                                             </select>
                                             <input
                                                 value={link.url}
-                                                placeholder="URL (https://...)"
+                                                placeholder={link.platform === "Email" ? "ej: hola@dominio.com" : "URL (https://...)"}
                                                 onChange={(e) => {
                                                     const next = [...about.socialLinks];
                                                     next[i] = { ...link, url: e.target.value };
