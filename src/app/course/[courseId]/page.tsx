@@ -26,9 +26,11 @@ export default async function CourseViewerPage({ params }: { params: Promise<{ c
         where: { id: courseId },
         include: {
             weeks: {
+                where: isAdmin ? undefined : { isVisible: true },
                 orderBy: { order: 'asc' },
                 include: {
                     days: {
+                        where: isAdmin ? undefined : { isVisible: true },
                         orderBy: { order: 'asc' },
                         include: {
                             posts: {

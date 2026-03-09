@@ -19,6 +19,7 @@ const courseDataSchema = z.object({
     weeks: z.array(z.object({
         id: z.string(),
         title: z.string(),
+        isVisible: z.boolean().optional().default(true),
         days: z.array(z.object({
             id: z.string(),
             title: z.string(),
@@ -37,7 +38,8 @@ const courseDataSchema = z.object({
             similarityThreshold: z.union([z.number(), z.string()]).transform(v => parseFloat(v.toString()) || 0.9).optional(),
             enablePlagiarism: z.boolean().optional(),
             codeTemplate: z.string().nullable().optional(),
-            summaryUrl: z.string().nullable().optional()
+            summaryUrl: z.string().nullable().optional(),
+            isVisible: z.boolean().optional().default(true)
         }))
     }))
 });
@@ -111,12 +113,14 @@ export async function saveCourseData(courseId: string, rawData: any) {
                 where: { id: finalWeekId },
                 update: {
                     title: week.title,
-                    order: wIndex
+                    order: wIndex,
+                    isVisible: week.isVisible
                 },
                 create: {
                     id: finalWeekId,
                     title: week.title,
                     order: wIndex,
+                    isVisible: week.isVisible,
                     courseId: courseId
                 }
             });
@@ -146,6 +150,7 @@ export async function saveCourseData(courseId: string, rawData: any) {
                         enablePlagiarism: !!day.enablePlagiarism,
                         codeTemplate: day.codeTemplate || null,
                         summaryUrl: day.summaryUrl || null,
+                        isVisible: day.isVisible,
                         order: dIndex,
                         weekId: weekRecord.id // This handles moving the day to a different week!
                     } as any,
@@ -168,6 +173,7 @@ export async function saveCourseData(courseId: string, rawData: any) {
                         enablePlagiarism: !!day.enablePlagiarism,
                         codeTemplate: day.codeTemplate || null,
                         summaryUrl: day.summaryUrl || null,
+                        isVisible: day.isVisible,
                         order: dIndex,
                         weekId: weekRecord.id
                     } as any

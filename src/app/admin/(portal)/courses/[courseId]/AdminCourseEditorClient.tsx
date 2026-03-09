@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Save, Settings, List, Plus, Trash2, GripVertical, Video, Link2, Loader2, FileText, Upload, ChevronDown, ChevronRight, Tags, Calendar, Code, Lock, ShieldAlert, Copy } from "lucide-react";
+import { ArrowLeft, Save, Settings, List, Plus, Trash2, GripVertical, Video, Link2, Loader2, FileText, Upload, ChevronDown, ChevronRight, Tags, Calendar, Code, Lock, ShieldAlert, Copy, Eye, EyeOff } from "lucide-react";
 import { saveCourseData } from "@/actions/admin-course";
 import { useRouter } from "next/navigation";
 
@@ -120,6 +120,13 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
         setCourse({
             ...course,
             weeks: course.weeks.map((w: any) => w.id === weekId ? { ...w, title: newTitle } : w)
+        });
+    };
+
+    const handleToggleWeekVisibility = (weekId: string, currentVisibility: boolean) => {
+        setCourse({
+            ...course,
+            weeks: course.weeks.map((w: any) => w.id === weekId ? { ...w, isVisible: !currentVisibility } : w)
         });
     };
 
@@ -508,7 +515,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                 >
                                     <div className="space-y-4">
                                         {course.weeks.map((week: any, wIndex: number) => (
-                                            <SortableItem key={week.id} id={week.id} className="glass-effect border border-[var(--color-glass-border)] rounded-2xl overflow-visible shadow-lg flex flex-col w-full">
+                                            <SortableItem key={week.id} id={week.id} className={`glass-effect border border-[var(--color-glass-border)] rounded-2xl overflow-visible shadow-lg flex flex-col w-full ${week.isVisible === false ? "opacity-60 bg-black/50" : ""}`}>
                                                 {/* Week Header */}
                                                 <div className="bg-slate-900/50 p-4 border-b border-[var(--color-glass-border)] flex items-center justify-between gap-4 w-full">
                                                     <div className="flex items-center gap-3 pr-4 border-r border-slate-800">
@@ -532,6 +539,13 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                         />
                                                     </div>
                                                     <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => handleToggleWeekVisibility(week.id, week.isVisible !== false)}
+                                                            className={`text-slate-500 hover:text-white transition-colors p-2 rounded-lg ${week.isVisible === false ? "text-slate-600 bg-slate-800/50 hover:bg-slate-700/50" : "hover:bg-slate-800/80"}`}
+                                                            title={week.isVisible === false ? "Mostrar Semana a los Alumnos" : "Ocultar Semana a los Alumnos"}
+                                                        >
+                                                            {week.isVisible === false ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                        </button>
                                                         <button
                                                             onClick={() => handleDuplicateWeek(week)}
                                                             className="text-slate-500 hover:text-emerald-400 transition-colors p-2 rounded-lg hover:bg-emerald-500/10"
@@ -557,9 +571,16 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                             strategy={verticalListSortingStrategy}
                                                         >
                                                             {week.days.map((day: any, dIndex: number) => (
-                                                                <SortableItem key={day.id} id={day.id} className="bg-black/30 border border-slate-700/50 rounded-xl p-4 flex flex-col gap-4 relative group">
+                                                                <SortableItem key={day.id} id={day.id} className={`bg-black/30 border border-slate-700/50 rounded-xl p-4 flex flex-col gap-4 relative group ${day.isVisible === false ? "opacity-60 bg-black/60 border-dashed" : ""}`}>
 
-                                                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex gap-2">
+                                                                        <button
+                                                                            onClick={() => handleUpdateDay(week.id, day.id, "isVisible", day.isVisible === false ? true : false)}
+                                                                            className="text-slate-500 hover:text-white transition-colors"
+                                                                            title={day.isVisible === false ? "Mostrar Día a los Alumnos" : "Ocultar Día a los Alumnos"}
+                                                                        >
+                                                                            {day.isVisible === false ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                                        </button>
                                                                         <button
                                                                             onClick={() => handleDeleteDay(week.id, day.id)}
                                                                             className="text-slate-500 hover:text-red-400 transition-colors"

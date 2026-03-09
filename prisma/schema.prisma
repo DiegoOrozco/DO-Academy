@@ -56,18 +56,20 @@ model Enrollment {
 }
 
 model Week {
-  id       String @id @default(cuid())
-  title    String
-  order    Int
-  courseId String
-  days     Day[]
-  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  id        String @id @default(cuid())
+  title     String
+  order     Int
+  isVisible Boolean @default(true)
+  courseId  String
+  days      Day[]
+  course    Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
 
 model Day {
   id                  String              @id @default(cuid())
   title               String
   order               Int
+  isVisible           Boolean             @default(true)
   videoId             String?
   materialUrl         String?
   weekId              String
