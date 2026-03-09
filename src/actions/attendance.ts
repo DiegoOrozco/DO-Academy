@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { markAttendance } from "@/lib/google-sheets";
 import { getSheetsClient } from "@/lib/google-auth";
+import { getAuthUser } from "@/lib/auth-utils";
 
 // Helper to get sheets client for reading student list
 async function getSheets() {
@@ -101,7 +102,29 @@ export async function getActiveSession() {
     return session;
 }
 
+export async function getTodayAttendanceLog(sheetName: string) {
+    const user = await getAuthUser();
+    if (!user) return null;
+
+    const dateText = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
+
+    return await prisma.attendanceLog.findUnique({
+        where: {
+            userId_dateText_sheetName: {
+                userId: user.id,
+                dateText,
+                sheetName
+            }
+        }
+    });
+}
+
 export async function submitStudentAttendance(studentName: string, code: string) {
+    const authUser = await getAuthUser();
+    if (!authUser) {
+        return { success: false, error: "Debes iniciar sesión para registrar asistencia." };
+    }
+
     const session = await getActiveSession();
 
     if (!session) {
@@ -112,11 +135,75 @@ export async function submitStudentAttendance(studentName: string, code: string)
         return { success: false, error: "La clave de asistencia es incorrecta." };
     }
 
+    const dateText = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
+
     try {
-        await markAttendance(studentName, session.sheetName);
-        return { success: true };
+        // Find existing today's log for this user & sheet
+        const existingLog = await prisma.attendanceLog.findUnique({
+            where: {
+                userId_dateText_sheetName: {
+                    userId: authUser.id,
+                    dateText,
+                    sheetName: session.sheetName
+                }
+            }
+        });
+
+        if (!existingLog) {
+            // STEP 1: First check-in
+            if (!studentName) {
+                return { success: false, error: "Debes seleccionar tu nombre para el primer check-in." };
+            }
+
+            await prisma.attendanceLog.create({
+                data: {
+                    userId: authUser.id,
+                    studentName,
+                    dateText,
+                    sheetName: session.sheetName,
+                    checkIns: 1
+                }
+            });
+
+            return {
+                success: true,
+                step: 1,
+                message: "¡Primer check-in registrado! Recuerda volver al final de la clase para confirmar tu asistencia."
+            };
+        }
+
+        if (existingLog.checkIns === 1) {
+            // STEP 2: Second check-in
+            // Overwrite studentName with the one securely locked in DB to avoid switching
+            const verifiedStudentName = existingLog.studentName;
+
+            // Finally, write to Google Sheets
+            await markAttendance(verifiedStudentName, session.sheetName);
+
+            // Mark as fully completed in DB
+            await prisma.attendanceLog.update({
+                where: { id: existingLog.id },
+                data: { checkIns: 2 }
+            });
+
+            return {
+                success: true,
+                step: 2,
+                message: "¡Asistencia registrada con éxito! Ya puedes cerrar esta ventana."
+            };
+        }
+
+        if (existingLog.checkIns >= 2) {
+            return {
+                success: false,
+                error: "Ya completaste ambos check-ins hoy. ¡Tu asistencia ya está registrada!"
+            };
+        }
+
+        return { success: false, error: "Estado de asistencia inválido." };
+
     } catch (error: any) {
         console.error("Attendance Error:", error);
-        return { success: false, error: error.message || "Error al actualizar la hoja de Excel." };
+        return { success: false, error: error.message || "Error al registrar la asistencia." };
     }
 }

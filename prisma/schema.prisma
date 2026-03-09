@@ -25,6 +25,7 @@ model User {
   submissions        Submission[]
   videoProgresses    VideoProgress[]
   deadlineExceptions DeadlineException[]
+  attendanceLogs     AttendanceLog[]
 }
 
 model Course {
@@ -194,3 +195,20 @@ model DeadlineException {
   @@index([userId])
   @@index([dayId])
 }
+
+model AttendanceLog {
+  id          String   @id @default(cuid())
+  userId      String
+  studentName String
+  dateText    String   // e.g. "2026-03-09"
+  sheetName   String
+  checkIns    Int      @default(0) // 1 for first check-in, 2 for fully completed
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dateText, sheetName])
+  @@index([userId])
+}
+
