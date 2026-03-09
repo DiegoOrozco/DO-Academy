@@ -87,7 +87,7 @@ Feedback general: Implacable, puramente técnico y matemático.`
         const currentSeverityPrompt = severityPrompts[severity as keyof typeof severityPrompts] || severityPrompts[0];
 
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: "gemini-2.5-flash",
             systemInstruction: SYSTEM_PROMPT + "\nCRITERIO DE EVALUACIÓN ACTUAL:\n" + currentSeverityPrompt,
             generationConfig: {
                 responseMimeType: "application/json"
