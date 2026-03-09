@@ -21,7 +21,13 @@ Matriz de Evaluación Progresiva (Sistemas de 6 Niveles)
 Instrucción para el Evaluador: Dependiendo del nivel seleccionado para la tarea, la evaluación deberá ajustar su severidad, su tono y su nivel de exigencia técnica.
 `;
 
-export async function gradeSubmission(fileName: string, content: string | Buffer, mimeType?: string, severity: number = 1) {
+export async function gradeSubmission(
+    fileName: string,
+    content: string | Buffer,
+    mimeType?: string,
+    severity: number = 1,
+    instructions?: string
+) {
     try {
         const severityPrompts: Record<number, string> = {
             0: `Nivel 0: Práctica Sin Puntaje (Feedback Formativo)
@@ -88,7 +94,11 @@ Feedback general: Implacable, puramente técnico y matemático.`
             }
         });
 
-        const prompt = `Archivo a evaluar: ${fileName}\nPor favor, califica la entrega del estudiante basándote en el nivel de exigencia indicado.`;
+        let prompt = `Archivo a evaluar: ${fileName}\nPor favor, califica la entrega del estudiante basándote en el nivel de exigencia indicado.`;
+
+        if (instructions) {
+            prompt += `\n\n=== INSTRUCCIONES DE LA TAREA / ENUNCIADO ===\n${instructions}\n=============================================\n\nPor favor, utiliza estrictamente este enunciado para evaluar si el estudiante cumplió con lo solicitado.\n`;
+        }
 
         const parts: any[] = [{ text: prompt }];
 

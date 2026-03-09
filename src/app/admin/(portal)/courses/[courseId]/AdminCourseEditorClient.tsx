@@ -778,6 +778,19 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                                                 placeholder="Subir archivo o pegar enlace externo..."
                                                                                             />
 
+                                                                                            <div className="space-y-1 mb-4">
+                                                                                                <div className="flex items-center gap-2 mb-1">
+                                                                                                    <FileText size={12} className="text-blue-400" />
+                                                                                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Enunciado (Texto Markdown)</label>
+                                                                                                </div>
+                                                                                                <textarea
+                                                                                                    value={day.exerciseDescription || ""}
+                                                                                                    onChange={(e) => handleUpdateDay(week.id, day.id, "exerciseDescription", e.target.value)}
+                                                                                                    placeholder="Opcional: Escribe el problema o las instrucciones en formato Markdown..."
+                                                                                                    className="w-full h-24 bg-[rgba(0,100,255,0.05)] border border-blue-500/20 rounded-lg px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-blue-500 transition-all resize-y font-sans"
+                                                                                                />
+                                                                                            </div>
+
                                                                                             <div className="pt-4 border-t border-slate-800 space-y-4">
                                                                                                 <div className="flex flex-col sm:flex-row gap-6">
                                                                                                     <div className="flex-1 space-y-4">
@@ -866,16 +879,6 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
 
                                                                                             {day.isCodingExercise && (
                                                                                                 <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300 pl-6 border-l border-emerald-500/20 mt-4">
-                                                                                                    <div className="space-y-1">
-                                                                                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Enunciado del Ejercicio</label>
-                                                                                                        <textarea
-                                                                                                            value={day.exerciseDescription || ""}
-                                                                                                            onChange={(e) => handleUpdateDay(week.id, day.id, "exerciseDescription", e.target.value)}
-                                                                                                            placeholder="Describe el problema que el alumno debe resolver..."
-                                                                                                            className="w-full h-24 bg-black/40 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-emerald-500 transition-all resize-y font-sans"
-                                                                                                        />
-                                                                                                    </div>
-
                                                                                                     <div className="space-y-2">
                                                                                                         <div className="flex items-center justify-between">
                                                                                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Casos de Prueba (Input / Output)</label>

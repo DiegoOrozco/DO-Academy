@@ -53,14 +53,20 @@ export async function POST(req: NextRequest) {
         });
 
         try {
-            // Fetch day to get grading severity
+            // Fetch day to get grading severity and instructions
             const day = await prisma.day.findUnique({
                 where: { id: dayId },
-                select: { gradingSeverity: true }
+                select: { gradingSeverity: true, exerciseDescription: true }
             });
 
-            // Call Gemini for grading (now supporting buffers and severity)
-            const gradingResult = await gradeSubmission(fileName, buffer, mimeType, day?.gradingSeverity || 1);
+            // Call Gemini for grading (now supporting buffers, severity, and instructions)
+            const gradingResult = await gradeSubmission(
+                fileName,
+                buffer,
+                mimeType,
+                day?.gradingSeverity || 1,
+                day?.exerciseDescription || undefined
+            );
 
             // Update submission with results
             const updatedSubmission = await prisma.submission.update({
