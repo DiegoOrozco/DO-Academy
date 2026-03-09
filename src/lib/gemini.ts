@@ -90,7 +90,8 @@ Feedback general: Implacable, puramente técnico y matemático.`
             model: "gemini-2.5-flash",
             systemInstruction: SYSTEM_PROMPT + "\nCRITERIO DE EVALUACIÓN ACTUAL:\n" + currentSeverityPrompt,
             generationConfig: {
-                responseMimeType: "application/json"
+                responseMimeType: "application/json",
+                temperature: 0.0,
             }
         });
 

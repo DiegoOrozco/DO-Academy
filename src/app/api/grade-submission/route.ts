@@ -104,8 +104,8 @@ export async function POST(req: NextRequest) {
                     grade: gradingResult.nota,
                     feedback: gradingResult,
                     // If Gemini extracted a summary of the code/logic, store it as content
-                    // This allows plagiarism detection to work on PDFs!
-                    ...(gradingResult.resumen_codigo && { content: gradingResult.resumen_codigo })
+                    // BUT ONLY if the original submission was a PDF. If it was raw code, keep the raw code for accurate plagiarism detection.
+                    ...(gradingResult.resumen_codigo && mimeType === "application/pdf" && { content: gradingResult.resumen_codigo })
                 }
             });
 
