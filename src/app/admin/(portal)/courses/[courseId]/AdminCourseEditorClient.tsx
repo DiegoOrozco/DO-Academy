@@ -707,6 +707,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                                             <option value="LAB">Laboratorio Práctico</option>
                                                                                             <option value="FORUM">Foro de Discusión</option>
                                                                                             <option value="PROJECT">Proyecto Final</option>
+                                                                                            <option value="PRACTICE">Práctica Libre (Sin Valor de Rúbrica)</option>
                                                                                         </select>
                                                                                     </div>
 

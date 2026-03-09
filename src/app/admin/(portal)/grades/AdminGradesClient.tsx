@@ -160,8 +160,9 @@ export default function AdminGradesClient({
                                                                                 ${sub.assignmentType === 'LAB' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : ''}
                                                                                 ${sub.assignmentType === 'FORUM' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : ''}
                                                                                 ${sub.assignmentType === 'PROJECT' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : ''}
+                                                                                ${sub.assignmentType === 'PRACTICE' ? 'bg-slate-500/10 text-slate-400 border border-slate-500/20' : ''}
                                                                             `}>
-                                                                                {sub.assignmentType}
+                                                                                {sub.assignmentType === 'PRACTICE' ? 'PRÁCTICA' : sub.assignmentType}
                                                                             </span>
                                                                             <span className={`text-sm font-black ${sub.grade >= 70 ? 'text-emerald-400' : 'text-rose-400'}`}>
                                                                                 {sub.grade}/100
