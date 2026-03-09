@@ -12,9 +12,7 @@ export async function getCoursesAndDays() {
         include: {
             weeks: {
                 include: {
-                    days: {
-                        where: { isDeliveryDay: true }
-                    }
+                    days: true
                 }
             }
         }

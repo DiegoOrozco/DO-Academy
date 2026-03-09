@@ -31,14 +31,14 @@ export default function AdminExceptionsClient({
 
     // Filter courses that have delivery days
     const coursesWithDeliveries = courses.filter(c =>
-        c.weeks.some((w: any) => w.days.some((d: any) => d.isDeliveryDay))
+        c.weeks.some((w: any) => w.days.some((d: any) => d.isDeliveryDay || !!d.dueDate))
     );
 
     const activeCourse = courses.find(c => c.id === selectedCourseId);
     let allDeliveryDays: any[] = [];
     if (activeCourse) {
         activeCourse.weeks.forEach((w: any) => {
-            w.days.filter((d: any) => d.isDeliveryDay).forEach((d: any) => {
+            w.days.filter((d: any) => d.isDeliveryDay || !!d.dueDate).forEach((d: any) => {
                 allDeliveryDays.push({ ...d, weekTitle: w.title });
             });
         });
