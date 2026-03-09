@@ -89,10 +89,6 @@ export default async function AboutPage() {
                 {/* Bio Section */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
                     <div className="md:col-span-2 space-y-6">
-                        <h2 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-3">
-                            <div className="w-1.5 h-6 bg-[var(--color-primary)] rounded-full"></div>
-                            Mi Historia
-                        </h2>
                         <div className="space-y-4 text-lg text-[var(--text-secondary)] leading-relaxed font-medium markdown-content">
                             {aboutConfig.bio ? (
                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>

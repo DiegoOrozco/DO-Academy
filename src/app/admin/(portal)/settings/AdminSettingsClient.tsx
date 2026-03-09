@@ -101,18 +101,7 @@ export default function AdminSettingsClient({ initialConfigs }: { initialConfigs
                             value={home.heroSubtitle}
                             onChange={(v) => updateHome({ heroSubtitle: v })}
                         />
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                                label="Texto Botón"
-                                value={home.heroButtonText}
-                                onChange={(v) => updateHome({ heroButtonText: v })}
-                            />
-                            <FormField
-                                label="Enlace Botón"
-                                value={home.heroButtonLink}
-                                onChange={(v) => updateHome({ heroButtonLink: v })}
-                            />
-                        </div>
+
                     </div>
 
                     <div className="flex justify-end pt-4">

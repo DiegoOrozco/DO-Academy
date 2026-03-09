@@ -17,7 +17,7 @@ export default async function StudentLoginPage({
     }
 
     return (
-        <div className="min-h-screen bg-[var(--background)] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        <div className="min-h-screen bg-[var(--background)] flex flex-col items-center justify-center px-4 pt-32 pb-12 relative overflow-hidden">
             {/* Background Decorative Elements */}
             <div className="absolute top-0 left-0 w-full h-[500px] overflow-hidden z-0 pointer-events-none">
                 <div className="absolute top-[-20%] left-[20%] w-[50%] h-[100%] bg-[var(--color-primary)] opacity-[0.15] blur-[150px] rounded-full"></div>
