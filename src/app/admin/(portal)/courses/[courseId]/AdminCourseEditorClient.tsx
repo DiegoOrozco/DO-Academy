@@ -834,9 +834,10 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                                                             onChange={(e) => handleUpdateDay(week.id, day.id, "gradingSeverity", parseInt(e.target.value))}
                                                                                                             className="w-full bg-[rgba(255,150,0,0.05)] border border-orange-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition-all font-sans"
                                                                                                         >
-                                                                                                            <option value={1}>Nivel 1: Introductorio</option>
-                                                                                                            <option value={2}>Nivel 2: Estándar</option>
-                                                                                                            <option value={3}>Nivel 3: Avanzado</option>
+                                                                                                            <option value={0}>Nivel 0: Solo Feedback (Sin Calificación)</option>
+                                                                                                            <option value={1}>Nivel 1: Súper Básico</option>
+                                                                                                            <option value={2}>Nivel 2: Intermedio Flexible</option>
+                                                                                                            <option value={3}>Nivel 3: Estándar Académico</option>
                                                                                                             <option value={4}>Nivel 4: Profesional</option>
                                                                                                             <option value={5}>Nivel 5: Élite</option>
                                                                                                         </select>
