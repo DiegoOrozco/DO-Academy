@@ -3,21 +3,36 @@ import Link from "next/link";
 import { Lock, PlayCircle, BookOpen, ArrowRight, Sparkles } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { getStudent } from "@/lib/student-auth";
+import { unstable_cache } from "next/cache";
+
+const getCachedHomeConfig = unstable_cache(
+    async () => await getSiteConfig("home"),
+    ['home-config'],
+    { revalidate: 3600 } // Cache for 1 hour
+);
+
+const getCachedCourses = unstable_cache(
+    async () => await prisma.course.findMany({
+        where: { status: "published" },
+        orderBy: { id: 'asc' }
+    }),
+    ['published-courses'],
+    { revalidate: 3600 } // Cache for 1 hour
+);
 
 export default async function DashboardPage() {
     const student = await getStudent();
-    const homeConfig = await getSiteConfig("home") || {
+
+    // Fetch cached data to reduce DB operations
+    const homeConfig = await getCachedHomeConfig() || {
         heroTitle: "Domina la Tecnología con DO Academy",
         heroSubtitle: "Accede a contenido exclusivo diseñado por expertos para llevar tus habilidades al siguiente nivel profesional.",
         heroButtonText: "Empezar Ahora",
         heroButtonLink: "/register"
     };
 
-    // Fetch all published courses
-    const allCourses = await prisma.course.findMany({
-        where: { status: "published" },
-        orderBy: { id: 'asc' }
-    });
+    // Fetch all published courses with cache
+    const allCourses = await getCachedCourses();
 
     const enrolledCourseIds = student?.enrollments.map((e: any) => e.courseId) || [];
 

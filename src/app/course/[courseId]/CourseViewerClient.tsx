@@ -36,44 +36,40 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
     // Accurate video progress via YouTube IFrame API
     const playerRef = useRef<any>(null);
     const playerDivRef = useRef<HTMLDivElement | null>(null);
-    const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const lastSentAtRef = useRef<number>(0);
     const lastSecondsRef = useRef<number>(0);
     const [usePlainIframe, setUsePlainIframe] = useState(false);
 
-    const sendProgress = async (seconds: number, percent: number | null) => {
+    const sendProgress = async (seconds: number, percent: number | null, isUnload = false) => {
         const now = Date.now();
-        // throttle ~4s or if almost identical second
-        if (now - lastSentAtRef.current < 4000 && Math.abs(seconds - lastSecondsRef.current) < 1) return;
+        // throttle if not explicitly unloading
+        if (!isUnload && now - lastSentAtRef.current < 4000 && Math.abs(seconds - lastSecondsRef.current) < 1) return;
         lastSentAtRef.current = now;
         lastSecondsRef.current = seconds;
         try {
             await fetch("/api/progress", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ dayId: activeDay.id, seconds: Math.floor(seconds), percent: percent ?? undefined })
+                body: JSON.stringify({ dayId: activeDay.id, seconds: Math.floor(seconds), percent: percent ?? undefined }),
+                keepalive: isUnload
             });
         } catch { }
     };
 
-    const startPolling = () => {
-        stopPolling();
-        pollTimerRef.current = setInterval(() => {
-            const p: any = playerRef.current;
-            if (!p || typeof p.getCurrentTime !== "function") return;
-            const sec = p.getCurrentTime() || 0;
-            const dur = p.getDuration && p.getDuration() ? p.getDuration() : 0;
-            const pct = dur > 0 ? Math.min(100, Math.round((sec / dur) * 100)) : null;
-            sendProgress(sec, pct);
-        }, 5000);
+    const sendCurrentProgress = (isUnload = false) => {
+        const p: any = playerRef.current;
+        if (!p || typeof p.getCurrentTime !== "function") return;
+        const sec = p.getCurrentTime() || 0;
+        const dur = p.getDuration && p.getDuration() ? p.getDuration() : 0;
+        const pct = dur > 0 ? Math.min(100, Math.round((sec / dur) * 100)) : null;
+        sendProgress(sec, pct, isUnload);
     };
 
-    const stopPolling = () => {
-        if (pollTimerRef.current) {
-            clearInterval(pollTimerRef.current);
-            pollTimerRef.current = null;
-        }
-    };
+    useEffect(() => {
+        const handleBeforeUnload = () => sendCurrentProgress(true);
+        window.addEventListener("beforeunload", handleBeforeUnload);
+        return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    }, [activeDay.id]);
 
     // Load YT script and instantiate player per active day
     useEffect(() => {
@@ -107,16 +103,15 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
                     videoId: activeDay.videoId,
                     playerVars: { rel: 0, modestbranding: 1 },
                     events: {
-                        onReady: () => { startPolling(); },
+                        onReady: () => { /* No auto polling start */ },
                         onStateChange: (e: any) => {
                             const YT = (window as any).YT;
                             const p: any = playerRef.current;
                             const sec = p?.getCurrentTime ? p.getCurrentTime() : 0;
                             const dur = p?.getDuration ? p.getDuration() : 0;
                             const pct = dur > 0 ? Math.min(100, Math.round((sec / dur) * 100)) : null;
-                            if (e.data === YT.PlayerState.PLAYING) startPolling();
-                            else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.BUFFERING) { stopPolling(); sendProgress(sec, pct); }
-                            else if (e.data === YT.PlayerState.ENDED) { stopPolling(); sendProgress(dur || sec, 100); }
+                            if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.BUFFERING) { sendProgress(sec, pct); }
+                            else if (e.data === YT.PlayerState.ENDED) { sendProgress(dur || sec, 100); }
                         }
                     }
                 });
@@ -128,7 +123,7 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
 
         return () => {
             cancelled = true;
-            stopPolling();
+            sendCurrentProgress(true);
             try { playerRef.current?.destroy?.(); } catch { }
             playerRef.current = null;
         };
