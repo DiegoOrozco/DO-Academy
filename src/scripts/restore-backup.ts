@@ -27,11 +27,14 @@ async function restoreDatabase() {
 
         // 1. CLEAR CURRENT DATABASE (In reverse dependency order)
         console.log("🧹 Wiping current database records...");
-        await prisma.consoleOutput.deleteMany({});
-        await prisma.testResult.deleteMany({});
+        await prisma.attendanceSession.deleteMany({});
+        await prisma.communication.deleteMany({});
+        await prisma.videoProgress.deleteMany({});
+        await prisma.reply.deleteMany({});
+        await prisma.post.deleteMany({});
+        await prisma.submission.deleteMany({});
         await prisma.enrollment.deleteMany({});
-        await prisma.preloadedFile.deleteMany({});
-        await prisma.codeFile.deleteMany({});
+        await prisma.resource.deleteMany({});
         await prisma.day.deleteMany({});
         await prisma.week.deleteMany({});
         await prisma.course.deleteMany({});
@@ -48,14 +51,19 @@ async function restoreDatabase() {
         if (backup.data.weeks.length) await prisma.week.createMany({ data: backup.data.weeks });
         if (backup.data.days.length) await prisma.day.createMany({ data: backup.data.days });
 
-        console.log("📥 Restoring system files (CodeFiles, PreloadedFiles)...");
-        if (backup.data.codeFiles.length) await prisma.codeFile.createMany({ data: backup.data.codeFiles });
-        if (backup.data.preloadedFiles.length) await prisma.preloadedFile.createMany({ data: backup.data.preloadedFiles });
+        console.log("📥 Restoring system files (Resources)...");
+        if (backup.data.resources.length) await prisma.resource.createMany({ data: backup.data.resources });
 
-        console.log("📥 Restoring student data (Enrollments, Progress, Console)...");
+        console.log("📥 Restoring student data (Enrollments, Submissions, Posts)...");
         if (backup.data.enrollments.length) await prisma.enrollment.createMany({ data: backup.data.enrollments });
-        if (backup.data.testResults.length) await prisma.testResult.createMany({ data: backup.data.testResults });
-        if (backup.data.consoleOutputs.length) await prisma.consoleOutput.createMany({ data: backup.data.consoleOutputs });
+        if (backup.data.submissions.length) await prisma.submission.createMany({ data: backup.data.submissions });
+        if (backup.data.posts.length) await prisma.post.createMany({ data: backup.data.posts });
+        if (backup.data.replies.length) await prisma.reply.createMany({ data: backup.data.replies });
+        if (backup.data.videoProgresses.length) await prisma.videoProgress.createMany({ data: backup.data.videoProgresses });
+
+        console.log("📥 Restoring communications and attendance...");
+        if (backup.data.communications.length) await prisma.communication.createMany({ data: backup.data.communications });
+        if (backup.data.attendanceSessions.length) await prisma.attendanceSession.createMany({ data: backup.data.attendanceSessions });
 
         console.log(`🎉 RESTORATION COMPLETE!`);
         console.log(`Successfully hydrated database from ${backup.timestamp}`);

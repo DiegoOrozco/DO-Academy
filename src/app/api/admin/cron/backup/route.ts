@@ -23,11 +23,14 @@ export async function GET(request: Request) {
         const courses = await prisma.course.findMany();
         const weeks = await prisma.week.findMany();
         const days = await prisma.day.findMany();
-        const codeFiles = await prisma.codeFile.findMany();
-        const preloadedFiles = await prisma.preloadedFile.findMany();
+        const resources = await prisma.resource.findMany();
         const enrollments = await prisma.enrollment.findMany();
-        const testResults = await prisma.testResult.findMany();
-        const consoleOutputs = await prisma.consoleOutput.findMany();
+        const submissions = await prisma.submission.findMany();
+        const posts = await prisma.post.findMany();
+        const replies = await prisma.reply.findMany();
+        const videoProgresses = await prisma.videoProgress.findMany();
+        const communications = await prisma.communication.findMany();
+        const attendanceSessions = await prisma.attendanceSession.findMany();
 
         const backupData = {
             timestamp: new Date().toISOString(),
@@ -38,11 +41,14 @@ export async function GET(request: Request) {
                 courses,
                 weeks,
                 days,
-                codeFiles,
-                preloadedFiles,
+                resources,
                 enrollments,
-                testResults,
-                consoleOutputs
+                submissions,
+                posts,
+                replies,
+                videoProgresses,
+                communications,
+                attendanceSessions
             }
         };
 
