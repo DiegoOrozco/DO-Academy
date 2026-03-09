@@ -28,6 +28,17 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
 
     const isDeliveryDay = !!day.isDeliveryDay;
 
+    let isLate = false;
+    if (day.dueDate) {
+        let effectiveDate = new Date(day.dueDate);
+        if (day.deadlineExceptions && day.deadlineExceptions.length > 0) {
+            effectiveDate = new Date(day.deadlineExceptions[0].newDueDate);
+        }
+        if (new Date() > effectiveDate) {
+            isLate = true;
+        }
+    }
+
     if (!isDeliveryDay) return null;
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -142,6 +153,7 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                             testCases={day.testCases || []}
                             similarityThreshold={day.similarityThreshold || 0.9}
                             enablePlagiarism={day.enablePlagiarism}
+                            isLate={isLate}
                             onSuccess={async (grade) => {
                                 window.location.reload();
                             }}
@@ -149,13 +161,18 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                     ) : !submission ? (
                         <div className="flex flex-col gap-4">
                             <div
-                                className={`relative border-2 border-dashed rounded-xl p-8 transition-all flex flex-col items-center justify-center text-center cursor-pointer ${isDragging ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 scale-[1.01]" :
-                                    file ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5" : "border-slate-700 hover:border-slate-500 bg-black/20"
+                                className={`relative border-2 border-dashed rounded-xl p-8 transition-all flex flex-col items-center justify-center text-center ${isLate
+                                        ? "border-rose-500/30 bg-rose-500/5 cursor-not-allowed opacity-75"
+                                        : isDragging
+                                            ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 scale-[1.01] cursor-pointer"
+                                            : file
+                                                ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5 cursor-pointer"
+                                                : "border-slate-700 hover:border-slate-500 bg-black/20 cursor-pointer"
                                     }`}
-                                onClick={() => document.getElementById("file-upload")?.click()}
-                                onDrop={handleDrop}
-                                onDragOver={handleDragOver}
-                                onDragLeave={handleDragLeave}
+                                onClick={() => !isLate && document.getElementById("file-upload")?.click()}
+                                onDrop={isLate ? undefined : handleDrop}
+                                onDragOver={isLate ? undefined : handleDragOver}
+                                onDragLeave={isLate ? undefined : handleDragLeave}
                             >
                                 <input
                                     id="file-upload"
@@ -180,6 +197,11 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                                         <Upload size={32} className="text-slate-500 mb-2" />
                                         <p className="text-slate-300 font-medium">Arrastra tu tarea aquí o haz clic para subir</p>
                                         <p className="text-xs text-slate-500 mt-1">Formatos aceptados: .py, .sql, .pdf</p>
+                                        {isLate && (
+                                            <p className="text-xs font-bold text-rose-400 mt-2 bg-rose-500/10 px-3 py-1 rounded inline-block">
+                                                Fecha límite expirada
+                                            </p>
+                                        )}
                                     </>
                                 )}
                             </div>
@@ -193,16 +215,27 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
 
                             <button
                                 onClick={handleSubmit}
-                                disabled={!file || isUploading}
-                                className="w-full bg-[var(--color-primary)] hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-xl transition-all duration-300 shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
+                                disabled={!file || isUploading || isLate}
+                                className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95 ${isLate
+                                        ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                                        : "bg-[var(--color-primary, #0066FF)] hover:brightness-110 text-white"
+                                    }`}
                             >
                                 {isUploading ? (
                                     <>
                                         <Loader2 size={18} className="animate-spin" />
-                                        El profesor virtual está revisando tu código...
+                                        Enviando solución...
+                                    </>
+                                ) : isLate ? (
+                                    <>
+                                        <AlertCircle size={18} />
+                                        Entrega Expirada
                                     </>
                                 ) : (
-                                    "Enviar Tarea"
+                                    <>
+                                        <Upload size={18} />
+                                        Enviar Tarea
+                                    </>
                                 )}
                             </button>
                         </div>

@@ -11,6 +11,7 @@ interface StudentCodeEditorProps {
     testCases?: Array<{ input: string; output: string }>;
     similarityThreshold?: number;
     enablePlagiarism?: boolean;
+    isLate?: boolean;
     onSuccess?: (grade: number) => void;
     dayId: string;
     userId: string;
@@ -98,6 +99,7 @@ export default function StudentCodeEditor({
     testCases = [],
     similarityThreshold = 0.9,
     enablePlagiarism = false,
+    isLate = false,
     onSuccess,
     dayId,
     userId,
@@ -265,10 +267,13 @@ export default function StudentCodeEditor({
                     </button>
                     <button
                         onClick={handleSubmit}
-                        disabled={isExecuting || isSubmitting || isPyodideLoading}
-                        className="flex items-center gap-2 px-6 py-2 bg-[var(--color-primary, #0066FF)] hover:brightness-110 text-white rounded-xl text-xs font-bold transition-all shadow-lg active:scale-95 disabled:opacity-50"
+                        disabled={isExecuting || isSubmitting || isPyodideLoading || isLate}
+                        className={`flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold transition-all shadow-lg active:scale-95 ${isLate
+                                ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                                : "bg-[var(--color-primary, #0066FF)] hover:brightness-110 text-white"
+                            }`}
                     >
-                        {isSubmitting ? "Subiendo..." : "Enviar Lab"}
+                        {isSubmitting ? "Subiendo..." : isLate ? "Expirado" : "Enviar Lab"}
                         <Send size={14} />
                     </button>
                 </div>

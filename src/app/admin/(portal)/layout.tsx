@@ -14,6 +14,7 @@ export default function AdminPortalLayout({ children }: { children: React.ReactN
         { name: "Dashboard", href: "/admin", icon: <LayoutDashboard size={18} /> },
         { name: "Mis Cursos", href: "/admin/courses", icon: <BookOpen size={18} /> },
         { name: "Libro de Calificaciones", href: "/admin/grades", icon: <GraduationCap size={18} /> },
+        { name: "Excepciones de Fecha", href: "/admin/exceptions", icon: <MessageSquare size={18} /> },
         { name: "Estudiantes", href: "/admin/students", icon: <Users size={18} /> },
         { name: "Comunicados", href: "/admin/communications", icon: <Mail size={18} /> },
         { name: "Ajustes del Sitio", href: "/admin/settings", icon: <Settings size={18} /> },

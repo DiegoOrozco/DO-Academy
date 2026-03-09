@@ -8,22 +8,23 @@ datasource db {
 }
 
 model User {
-  id                String          @id @default(cuid())
-  email             String          @unique
-  name              String
-  password          String
-  role              String          @default("STUDENT")
-  createdAt         DateTime        @default(now())
-  emailVerified     Boolean         @default(true)
-  resetToken        String?         @unique
-  resetTokenExpiry  DateTime?
-  verificationToken String?         @unique
-  googleId          String?         @unique
-  enrollments       Enrollment[]
-  posts             Post[]
-  replies           Reply[]
-  submissions       Submission[]
-  videoProgresses   VideoProgress[]
+  id                 String              @id @default(cuid())
+  email              String              @unique
+  name               String
+  password           String
+  role               String              @default("STUDENT")
+  createdAt          DateTime            @default(now())
+  emailVerified      Boolean             @default(true)
+  resetToken         String?             @unique
+  resetTokenExpiry   DateTime?
+  verificationToken  String?             @unique
+  googleId           String?             @unique
+  enrollments        Enrollment[]
+  posts              Post[]
+  replies            Reply[]
+  submissions        Submission[]
+  videoProgresses    VideoProgress[]
+  deadlineExceptions DeadlineException[]
 }
 
 model Course {
@@ -64,31 +65,32 @@ model Week {
 }
 
 model Day {
-  id                  String          @id @default(cuid())
+  id                  String              @id @default(cuid())
   title               String
   order               Int
   videoId             String?
   materialUrl         String?
   weekId              String
   assignmentUrl       String?
-  isDeliveryDay       Boolean         @default(false)
-  gradingSeverity     Int             @default(1)
-  assignmentType      String          @default("LAB")
+  isDeliveryDay       Boolean             @default(false)
+  gradingSeverity     Int                 @default(1)
+  assignmentType      String              @default("LAB")
   dueDate             DateTime?
   forumTopics         String?
   codeTemplate        String?
-  enablePlagiarism    Boolean         @default(false)
+  enablePlagiarism    Boolean             @default(false)
   expectedOutput      String?
-  isCodingExercise    Boolean         @default(false)
-  similarityThreshold Float           @default(0.9)
+  isCodingExercise    Boolean             @default(false)
+  similarityThreshold Float               @default(0.9)
   exerciseDescription String?
   testCases           Json?
   summaryUrl          String?
-  week                Week            @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  week                Week                @relation(fields: [weekId], references: [id], onDelete: Cascade)
   posts               Post[]
   resources           Resource[]
   submissions         Submission[]
   videoProgresses     VideoProgress[]
+  deadlineExceptions  DeadlineException[]
 }
 
 model Resource {
@@ -174,4 +176,19 @@ model AttendanceSession {
   sheetName String
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
+}
+
+model DeadlineException {
+  id         String   @id @default(cuid())
+  userId     String
+  dayId      String
+  newDueDate DateTime
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  day  Day  @relation(fields: [dayId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dayId])
+  @@index([userId])
+  @@index([dayId])
 }

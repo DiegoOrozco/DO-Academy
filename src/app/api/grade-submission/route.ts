@@ -25,6 +25,38 @@ export async function POST(req: NextRequest) {
 
         console.log(`Grading Request: File="${fileName}", Size=${file.size} bytes, MimeType=${mimeType}`);
 
+        // Fetch day limits and exceptions
+        const day = await prisma.day.findUnique({
+            where: { id: dayId },
+            include: {
+                deadlineExceptions: {
+                    where: { userId: user.id }
+                }
+            }
+        });
+
+        if (!day) {
+            return NextResponse.json({ error: "Tarea no encontrada" }, { status: 404 });
+        }
+
+        // Deadline enforcement
+        if (day.dueDate) {
+            const now = new Date();
+            let effectiveDueDate = new Date(day.dueDate);
+
+            // Check if there is an exception for this user
+            if (day.deadlineExceptions && day.deadlineExceptions.length > 0) {
+                effectiveDueDate = new Date(day.deadlineExceptions[0].newDueDate);
+            }
+
+            if (now > effectiveDueDate) {
+                return NextResponse.json({
+                    error: "El tiempo límite para esta entrega ha expirado.",
+                    code: "DEADLINE_PASSED"
+                }, { status: 403 });
+            }
+        }
+
         // Create initial pending submission
         // For PDFs, we don't store the binary in the text content field
         const dbContent = mimeType === "application/pdf"
@@ -53,11 +85,7 @@ export async function POST(req: NextRequest) {
         });
 
         try {
-            // Fetch day to get grading severity and instructions
-            const day = await prisma.day.findUnique({
-                where: { id: dayId },
-                select: { gradingSeverity: true, exerciseDescription: true }
-            });
+            // Day is already fetched, we can use it directly
 
             // Call Gemini for grading (now supporting buffers, severity, and instructions)
             const gradingResult = await gradeSubmission(

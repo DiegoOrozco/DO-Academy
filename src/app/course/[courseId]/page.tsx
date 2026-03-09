@@ -45,6 +45,10 @@ export default async function CourseViewerPage({ params }: { params: Promise<{ c
                                 where: { userId: studentId },
                                 orderBy: { createdAt: 'desc' },
                                 take: 1
+                            },
+                            deadlineExceptions: {
+                                where: { userId: studentId },
+                                take: 1
                             }
                         }
                     }
