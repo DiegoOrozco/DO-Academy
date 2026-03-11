@@ -79,6 +79,7 @@ model Day {
   gradingSeverity     Int                 @default(1)
   assignmentType      String              @default("LAB")
   dueDate             DateTime?
+  availableFrom       DateTime?
   forumTopics         String?
   codeTemplate        String?
   enablePlagiarism    Boolean             @default(false)

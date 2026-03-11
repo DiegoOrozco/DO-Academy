@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Upload, FileText, CheckCircle2, AlertCircle, Loader2, Download, Code } from "lucide-react";
+import { Upload, FileText, CheckCircle2, AlertCircle, Loader2, Download, Code, Clock, Lock } from "lucide-react";
 import StudentCodeEditor from "./StudentCodeEditor";
 import { submitCodingExercise } from "@/actions/submissions";
 import ReactMarkdown from "react-markdown";
@@ -38,6 +38,22 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
             isLate = true;
         }
     }
+
+    // Check if the submission window hasn't opened yet
+    const isNotAvailableYet = day.availableFrom && new Date() < new Date(day.availableFrom);
+
+    // Helper: format a UTC date string in the browser's local timezone
+    const formatLocalDate = (utcString: string) => {
+        return new Date(utcString).toLocaleString("es-CR", {
+            weekday: "long",
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+        });
+    };
 
     if (!isDeliveryDay) return null;
 
@@ -129,6 +145,29 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                 )}
             </div>
 
+            {/* Deadline and availability info bar */}
+            <div className="flex flex-wrap items-center gap-3">
+                {day.dueDate && (
+                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border ${isLate
+                        ? "bg-red-500/10 border-red-500/30 text-red-400"
+                        : "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                        }`}>
+                        <Clock size={12} />
+                        <span>
+                            {isLate ? "Entrega cerrada" : "Entrega hasta"}: {formatLocalDate(
+                                day.deadlineExceptions?.[0]?.newDueDate || day.dueDate
+                            )}
+                        </span>
+                    </div>
+                )}
+                {isNotAvailableYet && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border bg-slate-500/10 border-slate-500/30 text-slate-400">
+                        <Lock size={12} />
+                        <span>Disponible desde: {formatLocalDate(day.availableFrom)}</span>
+                    </div>
+                )}
+            </div>
+
             {isDeliveryDay ? (
                 <div className="space-y-4">
                     {day.exerciseDescription && (
@@ -161,7 +200,7 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                     ) : !submission ? (
                         <div className="flex flex-col gap-4">
                             <div
-                                className={`relative border-2 border-dashed rounded-xl p-8 transition-all flex flex-col items-center justify-center text-center ${isLate
+                                className={`relative border-2 border-dashed rounded-xl p-8 transition-all flex flex-col items-center justify-center text-center ${isLate || isNotAvailableYet
                                     ? "border-rose-500/30 bg-rose-500/5 cursor-not-allowed opacity-75"
                                     : isDragging
                                         ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 scale-[1.01] cursor-pointer"
@@ -169,10 +208,10 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                                             ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5 cursor-pointer"
                                             : "border-slate-700 hover:border-slate-500 bg-black/20 cursor-pointer"
                                     }`}
-                                onClick={() => !isLate && document.getElementById("file-upload")?.click()}
-                                onDrop={isLate ? undefined : handleDrop}
-                                onDragOver={isLate ? undefined : handleDragOver}
-                                onDragLeave={isLate ? undefined : handleDragLeave}
+                                onClick={() => !(isLate || isNotAvailableYet) && document.getElementById("file-upload")?.click()}
+                                onDrop={(isLate || isNotAvailableYet) ? undefined : handleDrop}
+                                onDragOver={(isLate || isNotAvailableYet) ? undefined : handleDragOver}
+                                onDragLeave={(isLate || isNotAvailableYet) ? undefined : handleDragLeave}
                             >
                                 <input
                                     id="file-upload"
@@ -215,8 +254,8 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
 
                             <button
                                 onClick={handleSubmit}
-                                disabled={!file || isUploading || isLate}
-                                className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95 ${isLate
+                                disabled={!file || isUploading || isLate || !!isNotAvailableYet}
+                                className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95 ${isLate || isNotAvailableYet
                                     ? "bg-slate-800 text-slate-500 cursor-not-allowed"
                                     : "bg-[var(--color-primary, #0066FF)] hover:brightness-110 text-white"
                                     }`}
@@ -225,6 +264,11 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                                     <>
                                         <Loader2 size={18} className="animate-spin" />
                                         Enviando solución...
+                                    </>
+                                ) : isNotAvailableYet ? (
+                                    <>
+                                        <Lock size={18} />
+                                        Aún no disponible
                                     </>
                                 ) : isLate ? (
                                     <>
