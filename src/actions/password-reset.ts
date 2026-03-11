@@ -40,7 +40,7 @@ export async function requestPasswordReset(formData: FormData) {
 
   if (!email) {
     console.log(`[DEBUG-AUTH] Email vacío.`);
-    redirect("/forgot-password?error=missing");
+    return { success: false, error: "missing" };
   }
 
   try {
@@ -49,8 +49,10 @@ export async function requestPasswordReset(formData: FormData) {
 
     if (!user) {
       console.log(`[DEBUG-AUTH] DB: Usuario no existe.`);
+      return { success: true }; // Silent pass for security
     } else if (user.googleId) {
       console.log(`[DEBUG-AUTH] DB: Es cuenta de Google (${user.googleId})`);
+      return { success: true }; // Silent pass for security
     } else {
       console.log(`[DEBUG-AUTH] DB: Usuario encontrado (${user.name}). Generando token...`);
       const token = crypto.randomBytes(32).toString("hex");
@@ -105,15 +107,14 @@ export async function requestPasswordReset(formData: FormData) {
         console.log(`[DEBUG-AUTH] sendEmail RETORNÓ con éxito.`);
       } catch (mailErr: any) {
         console.error(`[DEBUG-AUTH] sendEmail FALLÓ:`, mailErr);
+        return { success: false, error: "fallo-envio" };
       }
     }
+    return { success: true };
   } catch (error: any) {
-    if (error.digest?.includes("NEXT_REDIRECT")) throw error;
     console.error("[DEBUG-AUTH] ERROR FATAL en requestPasswordReset:", error);
+    return { success: false, error: "fatal" };
   }
-
-  console.log(`[DEBUG-AUTH] Redirigiendo a éxito.`);
-  redirect("/forgot-password?sent=true");
 }
 
 export async function resetPassword(formData: FormData) {

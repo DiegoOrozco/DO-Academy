@@ -1,13 +1,36 @@
+"use client";
+
+import { useState, useTransition, Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft, Mail, ArrowRight, CheckCircle, AlertCircle } from "lucide-react";
 import { requestPasswordReset, testEmailConfig, diagnosticSendTestEmail } from "@/actions/password-reset";
+import { useSearchParams } from "next/navigation";
 
-export default async function ForgotPasswordPage({
-    searchParams,
-}: {
-    searchParams: Promise<{ sent?: string; error?: string; debug?: string }>;
-}) {
-    const { sent, error, debug } = await searchParams;
+function ForgotPasswordContent() {
+    const searchParams = useSearchParams();
+    const debug = searchParams.get("debug");
+    const forceExpired = searchParams.get("error") === "expired";
+
+    const [isPending, startTransition] = useTransition();
+    const [status, setStatus] = useState<"idle" | "success" | "error_missing" | "error_send" | "error_fatal">("idle");
+
+    const handleSubmit = (formData: FormData) => {
+        startTransition(async () => {
+            try {
+                const result = await requestPasswordReset(formData);
+                if (result.success) {
+                    setStatus("success");
+                } else {
+                    if (result.error === "missing") setStatus("error_missing");
+                    else if (result.error === "fallo-envio") setStatus("error_send");
+                    else setStatus("error_fatal");
+                }
+            } catch (error) {
+                console.error("Unhanlded client error:", error);
+                setStatus("error_fatal");
+            }
+        });
+    };
 
     return (
         <div className="min-h-screen bg-[var(--background)] flex flex-col items-center justify-center px-4 pt-32 pb-12 relative overflow-hidden">
@@ -32,38 +55,48 @@ export default async function ForgotPasswordPage({
                 </div>
 
                 <div className="glass-effect rounded-2xl p-8 shadow-2xl border border-[var(--color-glass-border)]">
-                    {sent === "true" ? (
-                        <div className="text-center py-6 space-y-6">
+                    {status === "success" ? (
+                        <div className="text-center py-6 space-y-6 animate-in fade-in zoom-in duration-500">
                             <div className="w-20 h-20 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto">
                                 <CheckCircle size={40} className="text-emerald-400" />
                             </div>
                             <div>
                                 <h2 className="text-xl font-black text-white mb-3">¡Email enviado!</h2>
                                 <p className="text-slate-400 text-sm leading-relaxed">
-                                    Si ese correo tiene una cuenta activa, recibirás un enlace de recuperación en los próximos minutos. Revisa también tu carpeta de spam.
+                                    Si ese correo tiene una cuenta activa, recibirás un enlace de recuperación pronto. Revisa tu carpeta de spam o promociones si no lo ves.
                                 </p>
                             </div>
-                            <Link
-                                href="/login"
+                            <button
+                                onClick={() => setStatus("idle")}
                                 className="inline-flex items-center gap-2 text-[var(--color-primary)] font-bold text-sm hover:underline"
                             >
-                                Volver al login <ArrowRight size={14} />
-                            </Link>
+                                <ArrowLeft size={14} /> Intentar con otro correo
+                            </button>
                         </div>
                     ) : (
                         <>
-                            {error === "missing" && (
-                                <div className="mb-4 bg-red-500/10 text-red-400 text-sm p-3 rounded-xl border border-red-500/20 flex items-center gap-2">
-                                    <AlertCircle size={14} /> Por favor ingresa tu correo electrónico.
+                            {status === "error_missing" && (
+                                <div className="mb-4 bg-orange-500/10 text-orange-400 text-sm p-3 rounded-xl border border-orange-500/20 flex items-center gap-2">
+                                    <AlertCircle size={14} className="shrink-0" /> Por favor ingresa tu correo electrónico.
                                 </div>
                             )}
-                            {error === "expired" && (
+                            {status === "error_send" && (
+                                <div className="mb-4 bg-red-500/10 text-red-400 text-sm p-3 rounded-xl border border-red-500/20 flex items-center gap-2">
+                                    <AlertCircle size={14} className="shrink-0" /> Hubo un problema enviando el correo. Activa el modo debug para analizar logs.
+                                </div>
+                            )}
+                            {status === "error_fatal" && (
+                                <div className="mb-4 bg-red-500/10 text-red-400 text-sm p-3 rounded-xl border border-red-500/20 flex items-center gap-2">
+                                    <AlertCircle size={14} className="shrink-0" /> Error de conexión con el servidor. Intenta de nuevo más tarde.
+                                </div>
+                            )}
+                            {forceExpired && status === "idle" && (
                                 <div className="mb-4 bg-orange-500/10 text-orange-400 text-sm p-3 rounded-xl border border-orange-500/20 flex items-center gap-2">
-                                    <AlertCircle size={14} /> El enlace expiró. Solicita uno nuevo.
+                                    <AlertCircle size={14} className="shrink-0" /> El enlace expiró. Solicita uno nuevo.
                                 </div>
                             )}
 
-                            <form action={requestPasswordReset} className="space-y-5">
+                            <form action={handleSubmit} className="space-y-5">
                                 <div className="space-y-2">
                                     <label className="block text-sm font-semibold text-slate-300">
                                         Correo Electrónico
@@ -75,7 +108,8 @@ export default async function ForgotPasswordPage({
                                             name="email"
                                             required
                                             autoComplete="email"
-                                            className="w-full bg-[rgba(0,0,0,0.3)] border border-[var(--color-glass-border)] rounded-lg pl-10 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
+                                            disabled={isPending}
+                                            className="w-full bg-[rgba(0,0,0,0.3)] border border-[var(--color-glass-border)] rounded-lg pl-10 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all disabled:opacity-50"
                                             placeholder="tunombre@ejemplo.com"
                                         />
                                     </div>
@@ -83,10 +117,20 @@ export default async function ForgotPasswordPage({
 
                                 <button
                                     type="submit"
-                                    className="w-full bg-[var(--color-primary)] hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
+                                    disabled={isPending}
+                                    className="w-full bg-[var(--color-primary)] hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Enviar enlace de recuperación
-                                    <ArrowRight size={16} />
+                                    {isPending ? (
+                                        <>
+                                            <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            Enviando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Enviar enlace de recuperación
+                                            <ArrowRight size={16} />
+                                        </>
+                                    )}
                                 </button>
                             </form>
 
@@ -99,34 +143,49 @@ export default async function ForgotPasswordPage({
                         </>
                     )}
                 </div>
+
                 {debug === "true" && (
                     <div className="mt-8 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl space-y-3">
                         <p className="text-yellow-500 text-xs font-bold uppercase mb-2 text-center">Herramienta de Diagnóstico</p>
-                        <form action={async () => {
-                            "use server";
-                            await testEmailConfig();
-                        }}>
-                            <button
-                                type="submit"
-                                className="w-full bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-bold py-2 px-4 rounded-lg transition-all"
-                            >
-                                1. Verificar Entorno (Solo Logs)
-                            </button>
-                        </form>
-                        <form action={async () => {
-                            "use server";
-                            await diagnosticSendTestEmail();
-                        }}>
-                            <button
-                                type="submit"
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 px-4 rounded-lg transition-all"
-                            >
-                                2. Enviar Email de Prueba (Full Flow)
-                            </button>
-                        </form>
+
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                const res = await testEmailConfig();
+                                alert("Verificación de Configuración Completada. Revisa los logs de Vercel.");
+                            }}
+                            className="w-full bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-bold py-2 px-4 rounded-lg transition-all"
+                        >
+                            1. Verificar Entorno (Solo Logs)
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                alert("Enviando correo de prueba. Revisa la consola y tu bandeja de entrada.");
+                                const res = await diagnosticSendTestEmail();
+                                if (!res.success) alert("Error: " + res.error);
+                            }}
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 px-4 rounded-lg transition-all"
+                        >
+                            2. Enviar Email de Prueba (Full Flow)
+                        </button>
+
                     </div>
                 )}
             </div>
         </div>
+    );
+}
+
+export default function ForgotPasswordPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-white/20 border-t-[var(--color-primary)] rounded-full animate-spin"></div>
+            </div>
+        }>
+            <ForgotPasswordContent />
+        </Suspense>
     );
 }
