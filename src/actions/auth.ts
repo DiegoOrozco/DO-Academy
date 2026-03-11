@@ -70,6 +70,10 @@ export async function registerStudent(formData: FormData) {
 export async function loginStudent(formData: FormData) {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
+    const returnUrl = formData.get("returnUrl") as string | null;
+
+    // Validate returnUrl to prevent open redirect attacks
+    const safeReturnUrl = returnUrl && returnUrl.startsWith("/") && !returnUrl.startsWith("//") ? returnUrl : "/";
 
     let loginSuccess = false;
     try {
@@ -109,7 +113,7 @@ export async function loginStudent(formData: FormData) {
     }
 
     if (loginSuccess) {
-        redirect("/");
+        redirect(safeReturnUrl);
     }
 }
 

@@ -3,6 +3,8 @@ import { getStudent } from "@/lib/student-auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { GraduationCap, Calendar, CheckCircle2, FileText, ChevronRight, ArrowLeft, BookOpen, BarChart3 } from "lucide-react";
+import CoursePieChart from "@/components/ui/CoursePieChart";
+import { calculateCourseGrade } from "@/lib/grades-utils";
 
 export default async function GradesPage() {
     const student = await getStudent();
@@ -10,11 +12,26 @@ export default async function GradesPage() {
         redirect("/login");
     }
 
-    // Fetch enrollments to get courses with their weights
+    // Fetch enrollments with full course details for calculation
     const enrollments = await prisma.enrollment.findMany({
         where: { userId: student.id },
         include: {
-            course: true
+            course: {
+                include: {
+                    weeks: {
+                        where: { isVisible: true },
+                        include: {
+                            days: {
+                                where: { isVisible: true },
+                                include: {
+                                    submissions: { where: { userId: student.id } },
+                                    videoProgresses: { where: { userId: student.id } }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     });
 
@@ -32,43 +49,14 @@ export default async function GradesPage() {
         orderBy: { createdAt: "desc" }
     });
 
-    // Helper to calculate student's grade in a specific course
-    const calculateGrade = (course: any) => {
-        const courseSubs = submissions.filter((s: any) => s.day.week.courseId === course.id);
-
-        const calcAvg = (type: string) => {
-            const typeSubs = courseSubs.filter((s: any) => s.day.assignmentType === type);
-            if (typeSubs.length === 0) return 0;
-            const sum = typeSubs.reduce((acc: number, s: any) => acc + (s.grade || 0), 0);
-            return sum / typeSubs.length;
-        };
-
-        const qAvg = calcAvg("QUIZ");
-        const lAvg = calcAvg("LAB");
-        const fAvg = calcAvg("FORUM");
-        const pAvg = calcAvg("PROJECT");
-
-        const total =
-            (qAvg * (course.weightQuiz / 100)) +
-            (lAvg * (course.weightLab / 100)) +
-            (fAvg * (course.weightForum / 100)) +
-            (pAvg * (course.weightProject / 100));
-
+    const courseGrades = enrollments.map(enr => {
+        const gradeData = calculateCourseGrade(enr.course, student.id);
+        const courseSubs = submissions.filter((s: any) => s.day.week.courseId === enr.courseId);
         return {
-            total: Math.round(total),
-            qAvg: Math.round(qAvg),
-            lAvg: Math.round(lAvg),
-            fAvg: Math.round(fAvg),
-            pAvg: Math.round(pAvg),
-            subsCount: courseSubs.length,
-            subs: courseSubs
+            course: enr.course,
+            gradeData: { ...gradeData, subs: courseSubs }
         };
-    };
-
-    const courseGrades = enrollments.map(enr => ({
-        course: enr.course,
-        gradeData: calculateGrade(enr.course)
-    }));
+    });
 
     return (
         <div className="min-h-screen bg-[var(--background)] pt-24 pb-20 px-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -98,43 +86,74 @@ export default async function GradesPage() {
                         {courseGrades.map(({ course, gradeData }) => (
                             <div key={course.id} className="space-y-6">
                                 {/* Course Summary Card */}
-                                <div className="glass-effect rounded-3xl border border-[var(--color-primary)]/30 p-8 shadow-xl relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--color-primary)]/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-                                    <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
-                                        <div className="flex items-start gap-4 flex-grow">
-                                            <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-[var(--color-primary)] flex-shrink-0">
-                                                <BookOpen size={24} />
-                                            </div>
-                                            <div>
-                                                <h2 className="text-2xl font-black text-white mb-2">{course.title}</h2>
-                                                <div className="flex flex-wrap items-center gap-4 text-sm font-semibold text-slate-400">
-                                                    <span className="flex items-center gap-1">
-                                                        <span className="w-2 h-2 rounded-full bg-purple-500"></span> Quices ({(course as any).weightQuiz}%)
-                                                    </span>
-                                                    <span className="flex items-center gap-1">
-                                                        <span className="w-2 h-2 rounded-full bg-blue-500"></span> Labs ({(course as any).weightLab}%)
-                                                    </span>
-                                                    <span className="flex items-center gap-1">
-                                                        <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Foros ({(course as any).weightForum}%)
-                                                    </span>
-                                                    <span className="flex items-center gap-1">
-                                                        <span className="w-2 h-2 rounded-full bg-amber-500"></span> Proyectos ({(course as any).weightProject}%)
-                                                    </span>
+                                <div className="glass-effect rounded-[3rem] border border-[var(--color-primary)]/20 shadow-2xl relative overflow-hidden bg-[#0A0D16]" style={{ WebkitBackdropFilter: 'blur(30px)' }}>
+                                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[var(--color-primary)]/5 rounded-full blur-[100px] -mr-48 -mt-48 pointer-events-none"></div>
+
+                                    <div className="p-8 md:p-12 relative z-10">
+                                        <div className="flex flex-col lg:flex-row items-center gap-12">
+                                            {/* Left: Course Info & Total Score */}
+                                            <div className="flex-1 w-full space-y-10">
+                                                <div className="flex items-start gap-6">
+                                                    <div className="w-16 h-16 rounded-[2rem] bg-gradient-to-br from-[var(--color-primary)] to-blue-500 flex items-center justify-center text-white shadow-2xl shadow-blue-500/30 shrink-0">
+                                                        <BookOpen size={32} />
+                                                    </div>
+                                                    <div>
+                                                        <h2 className="text-3xl md:text-4xl font-black text-white mb-3 tracking-tight leading-tight">{course.title}</h2>
+                                                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                                                            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">En Curso</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-wrap items-center justify-between lg:justify-start lg:gap-20 bg-white/[0.02] rounded-3xl p-8 border border-white/[0.05] backdrop-blur-sm" style={{ WebkitBackdropFilter: 'blur(10px)' }}>
+                                                    <div className="space-y-1 shrink-0">
+                                                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">Nota Final</p>
+                                                        <div className="flex items-baseline gap-3">
+                                                            <span className={`text-5xl md:text-7xl font-black tabular-nums tracking-tighter ${gradeData.total >= 70 ? 'text-emerald-400 drop-shadow-[0_0_20px_rgba(52,211,153,0.3)]' : 'text-amber-400'}`}>
+                                                                {gradeData.total}
+                                                            </span>
+                                                            <span className="text-xl md:text-2xl text-slate-700 font-black">/100</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="hidden sm:block w-px h-16 bg-white/10 shrink-0"></div>
+
+                                                    <div className="space-y-1 shrink-0">
+                                                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">Entregas</p>
+                                                        <div className="flex items-baseline gap-2">
+                                                            <span className="text-4xl md:text-5xl font-black text-white tabular-nums tracking-tighter">{gradeData.subsCount}</span>
+                                                            <span className="text-sm text-slate-600 font-bold uppercase tracking-widest">Tots</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <div className="flex items-center gap-8 bg-black/20 p-5 rounded-2xl border border-white/5 flex-shrink-0">
-                                            <div className="text-center">
-                                                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mb-1">Entregas</p>
-                                                <p className="text-2xl font-black text-white">{gradeData.subsCount}</p>
-                                            </div>
-                                            <div className="w-px h-12 bg-white/10"></div>
-                                            <div className="text-center">
-                                                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mb-1">Nota Final</p>
-                                                <p className={`text-4xl font-black ${gradeData.total >= 70 ? 'text-emerald-400 text-shadow-glow' : 'text-amber-400'}`}>
-                                                    {gradeData.total}
-                                                </p>
+                                            {/* Right: Interactive Visualization */}
+                                            <div className="lg:w-[480px] w-full bg-[#0D121F]/80 rounded-[2.5rem] p-8 border border-white/5 shadow-2xl relative backdrop-blur-xl" style={{ WebkitBackdropFilter: 'blur(40px)' }}>
+                                                <div className="flex items-center justify-between mb-8">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
+                                                            <BarChart3 size={18} />
+                                                        </div>
+                                                        <span className="text-xs font-black text-white uppercase tracking-[0.15em]">Rendimiento</span>
+                                                    </div>
+                                                </div>
+                                                <CoursePieChart
+                                                    data={{
+                                                        LAB: gradeData.lAvg,
+                                                        QUIZ: gradeData.qAvg,
+                                                        FORUM: gradeData.fAvg,
+                                                        PROJECT: gradeData.pAvg
+                                                    }}
+                                                    weights={{
+                                                        LAB: (course as any).weightLab,
+                                                        QUIZ: (course as any).weightQuiz,
+                                                        FORUM: (course as any).weightForum,
+                                                        PROJECT: (course as any).weightProject
+                                                    }}
+                                                    size={160}
+                                                />
                                             </div>
                                         </div>
                                     </div>
