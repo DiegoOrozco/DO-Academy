@@ -3,6 +3,10 @@
         {
             "path": "/api/admin/cron/backup",
             "schedule": "0 23 * * *"
+        },
+        {
+            "path": "/api/admin/cron/grading",
+            "schedule": "*/5 * * * *"
         }
     ]
 }

@@ -84,48 +84,7 @@ export async function POST(req: NextRequest) {
             }
         });
 
-        try {
-            // Day is already fetched, we can use it directly
-
-            // Call Gemini for grading (now supporting buffers, severity, and instructions)
-            const gradingResult = await gradeSubmission(
-                fileName,
-                buffer,
-                mimeType,
-                day?.gradingSeverity || 1,
-                day?.exerciseDescription || undefined
-            );
-
-            // Update submission with results
-            const updatedSubmission = await prisma.submission.update({
-                where: { id: submission.id },
-                data: {
-                    status: "GRADED",
-                    grade: gradingResult.nota,
-                    feedback: gradingResult,
-                    // If Gemini extracted a summary of the code/logic, store it as content
-                    // BUT ONLY if the original submission was a PDF. If it was raw code, keep the raw code for accurate plagiarism detection.
-                    ...(gradingResult.resumen_codigo && mimeType === "application/pdf" && { content: gradingResult.resumen_codigo })
-                }
-            });
-
-            return NextResponse.json(updatedSubmission);
-        } catch (gradingError: any) {
-            console.error("CRITICAL: Grading failed for", fileName, gradingError);
-            console.error("Error Stack:", gradingError.stack);
-
-            await prisma.submission.update({
-                where: { id: submission.id },
-                data: {
-                    status: "FAILED",
-                    feedback: { error: gradingError.message || "Unknown grading error" }
-                }
-            });
-
-            return NextResponse.json({
-                error: `Grading failed: ${gradingError.message || 'Check logs'}`
-            }, { status: 500 });
-        }
+        return NextResponse.json(submission);
 
     } catch (error) {
         console.error("Submission API error:", error);

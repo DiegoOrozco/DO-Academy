@@ -162,12 +162,12 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                         <div className="flex flex-col gap-4">
                             <div
                                 className={`relative border-2 border-dashed rounded-xl p-8 transition-all flex flex-col items-center justify-center text-center ${isLate
-                                        ? "border-rose-500/30 bg-rose-500/5 cursor-not-allowed opacity-75"
-                                        : isDragging
-                                            ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 scale-[1.01] cursor-pointer"
-                                            : file
-                                                ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5 cursor-pointer"
-                                                : "border-slate-700 hover:border-slate-500 bg-black/20 cursor-pointer"
+                                    ? "border-rose-500/30 bg-rose-500/5 cursor-not-allowed opacity-75"
+                                    : isDragging
+                                        ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 scale-[1.01] cursor-pointer"
+                                        : file
+                                            ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5 cursor-pointer"
+                                            : "border-slate-700 hover:border-slate-500 bg-black/20 cursor-pointer"
                                     }`}
                                 onClick={() => !isLate && document.getElementById("file-upload")?.click()}
                                 onDrop={isLate ? undefined : handleDrop}
@@ -217,8 +217,8 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                                 onClick={handleSubmit}
                                 disabled={!file || isUploading || isLate}
                                 className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95 ${isLate
-                                        ? "bg-slate-800 text-slate-500 cursor-not-allowed"
-                                        : "bg-[var(--color-primary, #0066FF)] hover:brightness-110 text-white"
+                                    ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                                    : "bg-[var(--color-primary, #0066FF)] hover:brightness-110 text-white"
                                     }`}
                             >
                                 {isUploading ? (
