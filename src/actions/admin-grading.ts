@@ -136,17 +136,31 @@ export async function processAllPendingSubmissions() {
     console.log("[GRADING BATCH] Started processing ALL pending submissions manually...");
 
     let processedCount = 0;
+    let failedCount = 0;
     try {
-        while (true) {
+        // Get ALL pending submissions upfront so we have a concrete list
+        const pendingSubmissions = await prisma.submission.findMany({
+            where: { status: "PENDING" },
+            select: { id: true }
+        });
+
+        console.log(`[GRADING BATCH] Found ${pendingSubmissions.length} pending submissions.`);
+
+        for (const _sub of pendingSubmissions) {
             const result = await processNextPendingSubmission();
-            if (!result.success || !result.processed) {
-                break; // Queue is empty or an error occurred
+            if (result.processed) {
+                processedCount++;
+            } else if (!result.success) {
+                failedCount++;
+                console.warn(`[GRADING BATCH] One submission failed to grade, continuing with next...`);
+            } else {
+                // Queue is now empty
+                break;
             }
-            processedCount++;
         }
 
-        console.log(`[GRADING BATCH] Finished. Processed ${processedCount} submissions.`);
-        return { success: true, processedCount };
+        console.log(`[GRADING BATCH] Finished. Processed ${processedCount}, Failed ${failedCount}.`);
+        return { success: true, processedCount, failedCount };
     } catch (error: any) {
         console.error("[GRADING BATCH] Error:", error);
         return { success: false, error: error.message };

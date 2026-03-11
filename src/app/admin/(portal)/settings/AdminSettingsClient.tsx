@@ -17,7 +17,8 @@ export default function AdminSettingsClient({ initialConfigs }: { initialConfigs
         try {
             const res: any = await processAllPendingSubmissions();
             if (res.success) {
-                alert(`¡Proceso completado! Se han calificado ${res.processedCount} entregas pendientes y se han enviado sus correos.`);
+                const failedMsg = res.failedCount > 0 ? ` (${res.failedCount} fallaron al conectar con la IA)` : '';
+                alert(`¡Proceso completado! Se han calificado ${res.processedCount} entregas pendientes${failedMsg} y se han enviado sus correos.`);
             } else {
                 alert("Hubo un error al procesar las calificaciones: " + res.error);
             }
