@@ -3,52 +3,58 @@
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { sendEmail, transporter } from "@/lib/email";
+import { sendEmail } from "@/lib/email";
 import { redirect } from "next/navigation";
 
 console.log(`[INIT] Módulo password-reset.ts cargado correctamente.`);
 
 export async function testEmailConfig() {
-  console.log(`[DIAGNOSTIC] Verificando configuración de correo...`);
+  console.log(`[DIAGNOSTIC] Verificando entorno...`);
   const emailUser = process.env.EMAIL_USER;
-  const emailPass = process.env.EMAIL_PASS ? "CONFIGURADA (SI)" : "NOT FOUND (NO)";
-  console.log(`[DIAGNOSTIC] EMAIL_USER: ${emailUser ? emailUser.substring(0, 3) + '...' : 'MISSING'}`);
+  const emailPass = process.env.EMAIL_PASS ? "EXISTE" : "NO EXISTE";
+  console.log(`[DIAGNOSTIC] EMAIL_USER: ${emailUser ? emailUser : 'VACIO'}`);
   console.log(`[DIAGNOSTIC] EMAIL_PASS: ${emailPass}`);
 
+  return { success: true };
+}
+
+export async function diagnosticSendTestEmail() {
+  console.log(`[DIAGNOSTIC] Intentando enviar CORREO DE PRUEBA...`);
   try {
-    await transporter.verify();
-    console.log(`[DIAGNOSTIC] Conexión SMTP verificada con éxito.`);
-    return { success: true, message: "SMTP connection OK" };
+    await sendEmail({
+      to: process.env.EMAIL_USER || "admin@example.com",
+      subject: "PRUEBA DE DIAGNÓSTICO - DO ACADEMY",
+      html: "<b>Esta es una prueba de envío desde el servidor de producción.</b>"
+    });
+    console.log(`[DIAGNOSTIC] Envío de prueba completado.`);
+    return { success: true };
   } catch (error: any) {
-    console.error(`[DIAGNOSTIC] Fallo en verificación SMTP:`, error);
+    console.error(`[DIAGNOSTIC] Fallo en envío de prueba:`, error);
     return { success: false, error: error.message };
   }
 }
 
 export async function requestPasswordReset(formData: FormData) {
   const email = (formData.get("email") as string)?.toLowerCase().trim();
-  console.log(`[DEBUG-AUTH] Solicitud RECIBIDA para restablecer contraseña de: ${email}`);
+  console.log(`[DEBUG-AUTH] >>> INICIO PROCESO para: ${email}`);
 
   if (!email) {
-    console.warn(`[DEBUG-AUTH] Email no proporcionado en el formulario.`);
+    console.log(`[DEBUG-AUTH] Email vacío.`);
     redirect("/forgot-password?error=missing");
   }
 
-  // Always show success to prevent email enumeration attacks
   try {
+    console.log(`[DEBUG-AUTH] Buscando en DB...`);
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      console.log(`[DEBUG-AUTH] Usuario NO encontrado en la base de datos: ${email}`);
-      // No hacemos nada más, dejamos que redirija a "sent=true" por seguridad
+      console.log(`[DEBUG-AUTH] DB: Usuario no existe.`);
     } else if (user.googleId) {
-      console.log(`[DEBUG-AUTH] El usuario ${email} utiliza Google Auth (GoogleID: ${user.googleId}). No se envía enlace de reset.`);
-      // No enviamos reset para cuentas de Google
+      console.log(`[DEBUG-AUTH] DB: Es cuenta de Google (${user.googleId})`);
     } else {
-      console.log(`[DEBUG-AUTH] Usuario encontrado: ${user.name} (ID: ${user.id}). Generando token...`);
-
+      console.log(`[DEBUG-AUTH] DB: Usuario encontrado (${user.name}). Generando token...`);
       const token = crypto.randomBytes(32).toString("hex");
-      const expiry = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
+      const expiry = new Date(Date.now() + 1000 * 60 * 60);
 
       await prisma.user.update({
         where: { id: user.id },
@@ -57,11 +63,12 @@ export async function requestPasswordReset(formData: FormData) {
           resetTokenExpiry: expiry,
         },
       });
+      console.log(`[DEBUG-AUTH] DB: Token guardado.`);
 
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
       const resetLink = `${baseUrl}/reset-password?token=${token}`;
 
-      console.log(`[DEBUG-AUTH] Token guardado. Iniciando envío de correo vía sendEmail...`);
+      console.log(`[DEBUG-AUTH] Llamando a sendEmail...`);
 
       const htmlContent = `
             <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; background-color: #ffffff;">
@@ -81,11 +88,6 @@ export async function requestPasswordReset(formData: FormData) {
                   <span style="word-break: break-all; color: #3b82f6;">${resetLink}</span>
                 </p>
               </div>
-              <div style="padding: 10px; border-radius: 6px; background-color: #fff7ed; border: 1px solid #ffedd5;">
-                <p style="margin: 0; font-size: 12px; color: #9a3412;">
-                  Este enlace expirará en 1 hora por seguridad. Si no solicitaste este cambio, puedes ignorar este mensaje.
-                </p>
-              </div>
               <hr style="margin-top: 30px; border: 0; border-top: 1px solid #eee;">
               <p style="font-size: 11px; color: #9ca3af; text-align: center; margin-top: 20px;">
                 &copy; ${new Date().getFullYear()} DO Academy - Todos los derechos reservados.
@@ -93,20 +95,24 @@ export async function requestPasswordReset(formData: FormData) {
             </div>
           `;
 
-      await sendEmail({
-        to: user.email,
-        subject: "Recupera tu contraseña — DO Academy",
-        html: htmlContent,
-        replyTo: "no-reply@do-academy.com"
-      });
-      console.log(`[DEBUG-AUTH] Correo ENVIADO correctamente a ${user.email}`);
+      try {
+        await sendEmail({
+          to: user.email,
+          subject: "Recupera tu contraseña — DO Academy",
+          html: htmlContent,
+          replyTo: "no-reply@do-academy.com"
+        });
+        console.log(`[DEBUG-AUTH] sendEmail RETORNÓ con éxito.`);
+      } catch (mailErr: any) {
+        console.error(`[DEBUG-AUTH] sendEmail FALLÓ:`, mailErr);
+      }
     }
   } catch (error: any) {
     if (error.digest?.includes("NEXT_REDIRECT")) throw error;
     console.error("[DEBUG-AUTH] ERROR FATAL en requestPasswordReset:", error);
   }
 
-  console.log(`[DEBUG-AUTH] Finalizando proceso, redirigiendo a éxito.`);
+  console.log(`[DEBUG-AUTH] Redirigiendo a éxito.`);
   redirect("/forgot-password?sent=true");
 }
 
