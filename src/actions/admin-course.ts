@@ -212,10 +212,23 @@ export async function saveCourseData(courseId: string, rawData: any) {
 
         await Promise.all(weekPromises);
 
+        // Re-fetch the saved course to return to client for state sync
+        const savedCourse = await prisma.course.findUnique({
+            where: { id: courseId },
+            include: {
+                weeks: {
+                    orderBy: { order: 'asc' },
+                    include: {
+                        days: { orderBy: { order: 'asc' } }
+                    }
+                }
+            }
+        });
+
         revalidatePath(`/admin/courses/${courseId}`);
         revalidatePath(`/admin/courses`);
         revalidatePath(`/course/${courseId}`);
-        return { success: true };
+        return { success: true, course: JSON.parse(JSON.stringify(savedCourse)) };
 
     } catch (error: any) {
         console.error("Save Course Error:", error);
