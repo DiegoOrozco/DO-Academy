@@ -19,6 +19,7 @@ export default function DayForum({ day, studentId, courseId, userRole, onPostCre
     const [selectedTopic, setSelectedTopic] = useState("");
     const [isPosting, setIsPosting] = useState(false);
     const [timeLeft, setTimeLeft] = useState<string>("");
+    const [isMounted, setIsMounted] = useState(false);
 
     // Reply state - now supports replying to any post or reply
     const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -33,6 +34,7 @@ export default function DayForum({ day, studentId, courseId, userRole, onPostCre
 
     // Auto-expand all topics on mount
     useEffect(() => {
+        setIsMounted(true);
         setExpandedTopics(topics.map((_: string, i: number) => `topic-${i}`));
     }, [day.forumTopics]);
 
@@ -145,7 +147,7 @@ export default function DayForum({ day, studentId, courseId, userRole, onPostCre
     };
 
     const formatDate = (date: any) => {
-        if (!date) return "...";
+        if (!isMounted || !date) return "...";
         try {
             return new Date(date).toLocaleDateString() + " " + new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         } catch {
