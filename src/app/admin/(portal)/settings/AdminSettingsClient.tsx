@@ -2,13 +2,31 @@
 
 import { useState, useRef } from "react";
 import { updateSiteConfig } from "@/actions/admin-settings";
-import { Save, User, Home, Share2, Award, Mail, MessageCircle, X, Github, Linkedin, Twitter, Instagram, Link as LinkIcon, Info } from "lucide-react";
+import { Save, User, Home, Share2, Award, Mail, MessageCircle, X, Github, Linkedin, Twitter, Instagram, Link as LinkIcon, Info, Settings, Cpu, Loader2 } from "lucide-react";
+import { processAllPendingSubmissions } from "@/actions/admin-grading";
 
 export default function AdminSettingsClient({ initialConfigs }: { initialConfigs: any }) {
     const [configs, setConfigs] = useState(initialConfigs);
     const [isSaving, setIsSaving] = useState(false);
+    const [isGrading, setIsGrading] = useState(false);
     const [activeTab, setActiveTab] = useState("home");
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+    const handleManualGrading = async () => {
+        setIsGrading(true);
+        try {
+            const res: any = await processAllPendingSubmissions();
+            if (res.success) {
+                alert(`¡Proceso completado! Se han calificado ${res.processedCount} entregas pendientes y se han enviado sus correos.`);
+            } else {
+                alert("Hubo un error al procesar las calificaciones: " + res.error);
+            }
+        } catch (error) {
+            alert("Error de conexión al procesar.");
+        } finally {
+            setIsGrading(false);
+        }
+    };
 
     const home = Object.keys(configs.home || {}).length > 0 ? configs.home : {
         heroTitle: "Domina la Tecnología con DO Academy",
@@ -80,7 +98,54 @@ export default function AdminSettingsClient({ initialConfigs }: { initialConfigs
                     icon={<User size={18} />}
                     label="Sobre Mí"
                 />
+                <TabButton
+                    active={activeTab === "system"}
+                    onClick={() => setActiveTab("system")}
+                    icon={<Settings size={18} />}
+                    label="Sistema & IA"
+                />
             </div>
+
+            {activeTab === "system" && (
+                <div className="glass-effect rounded-3xl border border-rose-500/20 p-8 space-y-6 animate-in fade-in slide-in-from-bottom-4">
+                    <div className="flex items-center gap-3 pb-6 border-b border-white/5">
+                        <Cpu className="text-rose-400" />
+                        <h2 className="text-xl font-bold text-white">Sistema & Inteligencia Artificial</h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-black/20 p-6 rounded-2xl border border-white/5 space-y-4">
+                            <div>
+                                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                    <Cpu size={18} className="text-emerald-400" />
+                                    Cola de Calificación AI
+                                </h3>
+                                <p className="text-sm text-slate-400 mt-2">
+                                    La calificación de entregas (PDFs y SQL) ocurre asíncronamente para prevenir caídas. Puedes disparar la validación y el envío de correos manualmente aquí, o esperar a que el Cron Job lo haga todos los días a la 1:00 PM.
+                                </p>
+                            </div>
+
+                            <button
+                                onClick={handleManualGrading}
+                                disabled={isGrading}
+                                className="w-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 font-bold py-3 px-6 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                {isGrading ? (
+                                    <>
+                                        <Loader2 size={18} className="animate-spin" />
+                                        Calificando Entregas... (No cierres)
+                                    </>
+                                ) : (
+                                    <>
+                                        <Cpu size={18} />
+                                        Forzar Revisión Inmediata de Pendientes
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {activeTab === "home" && (
                 <div className="glass-effect rounded-3xl border border-white/10 p-8 space-y-6 animate-in fade-in slide-in-from-bottom-4">
