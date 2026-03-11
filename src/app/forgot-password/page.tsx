@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { ArrowLeft, Mail, ArrowRight, CheckCircle, AlertCircle } from "lucide-react";
-import { requestPasswordReset } from "@/actions/password-reset";
+import { requestPasswordReset, testEmailConfig } from "@/actions/password-reset";
 
 export default async function ForgotPasswordPage({
     searchParams,
 }: {
-    searchParams: Promise<{ sent?: string; error?: string }>;
+    searchParams: Promise<{ sent?: string; error?: string; debug?: string }>;
 }) {
-    const { sent, error } = await searchParams;
+    const { sent, error, debug } = await searchParams;
 
     return (
         <div className="min-h-screen bg-[var(--background)] flex flex-col items-center justify-center px-4 pt-32 pb-12 relative overflow-hidden">
@@ -99,6 +99,22 @@ export default async function ForgotPasswordPage({
                         </>
                     )}
                 </div>
+                {debug === "true" && (
+                    <div className="mt-8 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+                        <p className="text-yellow-500 text-xs font-bold uppercase mb-2 text-center">Herramienta de Diagnóstico</p>
+                        <form action={async () => {
+                            "use server";
+                            await testEmailConfig();
+                        }}>
+                            <button
+                                type="submit"
+                                className="w-full bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-bold py-2 px-4 rounded-lg transition-all"
+                            >
+                                Verificar Conexión SMTP (Check Logs)
+                            </button>
+                        </form>
+                    </div>
+                )}
             </div>
         </div>
     );
