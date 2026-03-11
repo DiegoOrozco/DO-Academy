@@ -12,8 +12,8 @@ export async function sendMassEmail(formData: FormData) {
     const content = formData.get("content") as string;
     const targetCourseId = formData.get("courseId") as string; // Optional filtering
 
-    if (!subject || !content) {
-        throw new Error("Asunto y contenido son obligatorios");
+    if (!subject || !content || content === "<p><br></p>" || content.trim() === "") {
+        return { success: false, message: "El asunto y el contenido del correo son obligatorios." };
     }
 
     // Fetch target student emails
@@ -93,7 +93,7 @@ export async function sendMassEmail(formData: FormData) {
         return { success: true, count: emails.length };
     } catch (error: any) {
         console.error("Error sending mass email:", error);
-        throw new Error("Error al enviar los correos: " + error.message);
+        return { success: false, message: "Error al enviar los correos revisa los logs: " + error.message };
     }
 }
 
