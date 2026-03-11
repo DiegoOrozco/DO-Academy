@@ -16,6 +16,9 @@ export default function VideoQA({ day, studentId, courseId, userRole, onPostCrea
     const isAdmin = userRole === "ADMIN";
     const [newQuestion, setNewQuestion] = useState("");
     const [isPosting, setIsPosting] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+
+    React.useEffect(() => { setIsMounted(true); }, []);
 
     // Reply state
     const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -90,7 +93,7 @@ export default function VideoQA({ day, studentId, courseId, userRole, onPostCrea
     };
 
     const formatDate = (date: any) => {
-        if (!date) return "...";
+        if (!isMounted || !date) return "...";
         try {
             return new Date(date).toLocaleDateString() + " " + new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         } catch {
