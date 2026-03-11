@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Save, Settings, List, Plus, Trash2, GripVertical, Video, Link2, Loader2, FileText, Upload, ChevronDown, ChevronRight, Tags, Calendar, Code, Lock, ShieldAlert, Copy, Eye, EyeOff } from "lucide-react";
 import { saveCourseData } from "@/actions/admin-course";
@@ -98,27 +98,35 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
     };
 
     // Initial state setup mapping Prisma format to Component format if necessary
-    const [course, setCourse] = useState(() => ({
-        id: initialCourse.id,
-        title: initialCourse.title,
-        description: initialCourse.description || "",
-        status: initialCourse.status || "published",
-        password: initialCourse.password || "doacademy",
-        thumbnail: initialCourse.thumbnail || "",
-        weightQuiz: initialCourse.weightQuiz || 20,
-        weightLab: initialCourse.weightLab || 30,
-        weightForum: initialCourse.weightForum || 10,
-        weightProject: initialCourse.weightProject || 40,
-        weeks: initialCourse.weeks?.length > 0 ? initialCourse.weeks.map((w: any) => ({
+    const buildCourseState = (ic: any) => ({
+        id: ic.id,
+        title: ic.title,
+        description: ic.description || "",
+        status: ic.status || "published",
+        password: ic.password || "doacademy",
+        thumbnail: ic.thumbnail || "",
+        weightQuiz: ic.weightQuiz || 20,
+        weightLab: ic.weightLab || 30,
+        weightForum: ic.weightForum || 10,
+        weightProject: ic.weightProject || 40,
+        weeks: ic.weeks?.length > 0 ? ic.weeks.map((w: any) => ({
             ...w,
             days: w.days?.length > 0 ? w.days.map((d: any) => ({ ...d })) : []
         })) : []
-    }));
+    });
+
+    const [course, setCourse] = useState(() => buildCourseState(initialCourse));
+
+    // Re-sync state when server refreshes props (e.g. after save + router.refresh())
+    useEffect(() => {
+        setCourse(buildCourseState(initialCourse));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initialCourse.id]);
 
     // --- Curriculum State Handlers ---
     const handleAddWeek = () => {
         const newWeek = {
-            id: `w${Date.now()}`,
+            id: `new-week-${Date.now()}`,
             title: `Semana ${course.weeks.length + 1}: Nueva Semana`,
             days: []
         };
@@ -149,13 +157,14 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
     };
 
     const handleDuplicateWeek = (week: any) => {
+        const timestamp = Date.now();
         const newWeek = {
             ...week,
-            id: `w${Date.now()}`,
+            id: `new-week-${timestamp}`,
             title: `${week.title} (Copia)`,
             days: week.days.map((day: any, index: number) => ({
                 ...day,
-                id: `d${Date.now()}-${index}`,
+                id: `new-day-${timestamp}-${index}`,
             }))
         };
         setCourse({ ...course, weeks: [...course.weeks, newWeek] });
@@ -168,7 +177,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
             weeks: course.weeks.map((w: any) => {
                 if (w.id === weekId) {
                     const newDay = {
-                        id: `d${Date.now()}`,
+                        id: `new-day-${Date.now()}`,
                         title: `Día ${w.days.length + 1}: Nuevo Tema`,
                         videoId: "",
                         materialUrl: "",
@@ -314,9 +323,9 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
         setIsSaving(true);
         try {
             const res = await saveCourseData(course.id, course);
-            if (res.success) {
-                alert("Cambios guardados correctamente en la Base de Datos!");
-                router.refresh();
+            if (res.success && res.course) {
+                setCourse(buildCourseState(res.course));
+                alert("Cambios guardados correctamente!");
             } else {
                 alert("Error al guardar: " + res.error);
             }
