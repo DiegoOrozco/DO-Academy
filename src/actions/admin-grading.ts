@@ -82,7 +82,7 @@ export async function processNextPendingSubmission() {
               <h2 style="color: #10b981; margin-bottom: 20px;">¡Tu tarea ha sido calificada!</h2>
               <div style="line-height: 1.6; color: #333; font-size: 16px; margin-bottom: 30px;">
                 Hola <strong>${submission.user.name}</strong>,<br><br>
-                El Profesor Virtual ha terminado de revisar tu entrega para la actividad <strong>"${submission.day.title}"</strong>.
+                Hemos terminado de revisar tu entrega para la actividad <strong>"${submission.day.title}"</strong>.
               </div>
               
               <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 30px;">

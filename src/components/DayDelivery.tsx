@@ -240,11 +240,11 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                             </button>
                         </div>
                     ) : submission.status === "PENDING" ? (
-                        <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-8 text-center animate-in fade-in duration-500">
-                            <Loader2 className="w-12 h-12 text-orange-400 mx-auto mb-4 animate-spin" />
-                            <h4 className="text-xl font-bold text-orange-400 mb-2">Entregado Exitosamente</h4>
+                        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-8 text-center animate-in fade-in duration-500">
+                            <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
+                            <h4 className="text-xl font-bold text-emerald-400 mb-2">Entregado Exitosamente</h4>
                             <p className="text-slate-400 text-sm max-w-md mx-auto">
-                                Tu entrega ha sido guardada en el sistema de manera segura. Se ha enviado a la cola de revisión automática. Recibirás un correo electrónico cuando la calificación esté lista.
+                                Tu entrega ha sido guardada en el sistema de manera segura. Recibirás un correo electrónico cuando la calificación esté lista.
                             </p>
                         </div>
                     ) : (
