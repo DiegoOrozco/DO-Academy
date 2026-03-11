@@ -131,3 +131,24 @@ export async function processNextPendingSubmission() {
         return { success: false, error: error.message };
     }
 }
+
+export async function processAllPendingSubmissions() {
+    console.log("[GRADING BATCH] Started processing ALL pending submissions manually...");
+
+    let processedCount = 0;
+    try {
+        while (true) {
+            const result = await processNextPendingSubmission();
+            if (!result.success || !result.processed) {
+                break; // Queue is empty or an error occurred
+            }
+            processedCount++;
+        }
+
+        console.log(`[GRADING BATCH] Finished. Processed ${processedCount} submissions.`);
+        return { success: true, processedCount };
+    } catch (error: any) {
+        console.error("[GRADING BATCH] Error:", error);
+        return { success: false, error: error.message };
+    }
+}

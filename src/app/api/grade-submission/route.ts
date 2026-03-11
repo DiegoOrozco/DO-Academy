@@ -74,6 +74,8 @@ export async function POST(req: NextRequest) {
                 content: dbContent,
                 fileName: fileName,
                 status: "PENDING",
+                grade: null,
+                feedback: {},
             },
             create: {
                 userId: user.id,
