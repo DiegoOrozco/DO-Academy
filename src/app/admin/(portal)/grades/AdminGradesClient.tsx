@@ -1,7 +1,60 @@
 "use client";
 
-import React, { useState } from "react";
-import { GraduationCap, Search, Filter, Download, User, ChevronRight, BookOpen, ChevronDown } from "lucide-react";
+import React, { useState, useTransition } from "react";
+import { GraduationCap, Search, Filter, Download, User, ChevronRight, BookOpen, ChevronDown, Check, Edit2 } from "lucide-react";
+import { updateManualGrade } from "../../../../actions/admin-grades";
+
+function GradeEditor({ initialGrade, userId, dayId }: { initialGrade: number | null, userId: string, dayId: string }) {
+    const [isEditing, setIsEditing] = useState(false);
+    const [grade, setGrade] = useState(initialGrade !== null ? String(initialGrade) : "");
+    const [isPending, startTransition] = useTransition();
+
+    const handleSave = () => {
+        const numGrade = Number(grade);
+        if (isNaN(numGrade) || numGrade < 0 || numGrade > 100) return;
+
+        startTransition(async () => {
+            await updateManualGrade(userId, dayId, numGrade);
+            setIsEditing(false);
+        });
+    };
+
+    if (isEditing) {
+        return (
+            <div className="flex items-center gap-2">
+                <input
+                    type="number"
+                    min="0" max="100"
+                    value={grade}
+                    onChange={(e) => setGrade(e.target.value)}
+                    className="w-16 bg-black/40 border border-[var(--color-primary)]/50 rounded-lg px-2 py-1 text-sm font-black text-white focus:outline-none"
+                    autoFocus
+                />
+                <button
+                    onClick={handleSave}
+                    disabled={isPending}
+                    className="p-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors disabled:opacity-50"
+                >
+                    <Check size={14} />
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex items-center gap-2 group/edit">
+            <span className={`text-sm font-black ${initialGrade !== null && initialGrade >= 70 ? 'text-emerald-400' : initialGrade !== null ? 'text-rose-400' : 'text-slate-500'}`}>
+                {initialGrade !== null ? `${initialGrade}/100` : "-/100"}
+            </span>
+            <button
+                onClick={() => setIsEditing(true)}
+                className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-all opacity-50 hover:opacity-100"
+            >
+                <Edit2 size={14} />
+            </button>
+        </div>
+    );
+}
 
 export default function AdminGradesClient({
     tableData,
@@ -164,12 +217,17 @@ export default function AdminGradesClient({
                                                                             `}>
                                                                                 {sub.assignmentType === 'PRACTICE' ? 'PRÁCTICA' : sub.assignmentType}
                                                                             </span>
-                                                                            <span className={`text-sm font-black ${sub.grade >= 70 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                                                                {sub.grade}/100
-                                                                            </span>
+                                                                            <GradeEditor
+                                                                                initialGrade={sub.grade}
+                                                                                userId={row.studentId}
+                                                                                dayId={sub.dayId}
+                                                                            />
                                                                         </div>
                                                                         <p className="text-sm font-medium text-white line-clamp-1" title={sub.title}>{sub.title}</p>
-                                                                        <p className="text-xs text-slate-400 mt-1 line-clamp-2" title={
+                                                                        <p className="text-[10px] uppercase font-bold text-slate-500 mt-1 mb-1">
+                                                                            {sub.grade === null ? "Sin Entrega" : "Entregado"}
+                                                                        </p>
+                                                                        <p className="text-xs text-slate-400 line-clamp-2" title={
                                                                             typeof sub.feedback === 'object' && sub.feedback?.text ? sub.feedback.text :
                                                                                 (typeof sub.feedback === 'string' ? sub.feedback : "Sin feedback")
                                                                         }>

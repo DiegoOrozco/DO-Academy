@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, PlayCircle, FileText, Download, MessageSquare, Send, User, Menu, X, BookOpen, ChevronDown, ChevronRight } from "lucide-react";
 import { createPost } from "@/actions/forum";
@@ -9,12 +10,30 @@ import DayForum from "@/components/DayForum";
 import VideoQA from "@/components/VideoQA";
 
 export default function CourseViewerClient({ course, studentId, userRole }: { course: any, studentId: string, userRole?: string }) {
+    const searchParams = useSearchParams();
+    const dayId = searchParams.get("dayId");
+
     // If course has no weeks, safely fallback so UI doesn't crash
     const initialWeek = course.weeks?.[0] || { id: "0", title: "No content", days: [] };
     const initialDay = initialWeek.days?.[0] || { id: "0", title: "No content", videoId: "", materialUrl: "", posts: [], replies: [] };
 
     const [activeWeek, setActiveWeek] = useState(initialWeek);
     const [activeDay, setActiveDay] = useState(initialDay);
+
+    // Deep-link effect: if dayId is in URL, find and set it
+    useEffect(() => {
+        if (dayId && course.weeks) {
+            for (const week of course.weeks) {
+                const day = week.days.find((d: any) => d.id === dayId);
+                if (day) {
+                    setActiveWeek(week);
+                    setActiveDay(day);
+                    break;
+                }
+            }
+        }
+    }, [dayId, course.weeks]);
+
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     // Sync active day with fresh server props to update comments automatically
     const dayFromCourse = course.weeks?.find((w: any) => w.id === activeWeek.id)?.days?.find((d: any) => d.id === activeDay.id);
