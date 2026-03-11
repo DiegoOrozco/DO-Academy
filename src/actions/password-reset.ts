@@ -8,8 +8,10 @@ import { redirect } from "next/navigation";
 
 export async function requestPasswordReset(formData: FormData) {
   const email = (formData.get("email") as string)?.toLowerCase().trim();
+  console.log(`[DEBUG-AUTH] Solicitud RECIBIDA para restablecer contraseña de: ${email}`);
 
   if (!email) {
+    console.warn(`[DEBUG-AUTH] Email no proporcionado en el formulario.`);
     redirect("/forgot-password?error=missing");
   }
 
@@ -17,7 +19,15 @@ export async function requestPasswordReset(formData: FormData) {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
 
-    if (user && !user.googleId) {
+    if (!user) {
+      console.log(`[DEBUG-AUTH] Usuario NO encontrado en la base de datos: ${email}`);
+      // No hacemos nada más, dejamos que redirija a "sent=true" por seguridad
+    } else if (user.googleId) {
+      console.log(`[DEBUG-AUTH] El usuario ${email} utiliza Google Auth (GoogleID: ${user.googleId}). No se envía enlace de reset.`);
+      // No enviamos reset para cuentas de Google
+    } else {
+      console.log(`[DEBUG-AUTH] Usuario encontrado: ${user.name} (ID: ${user.id}). Generando token...`);
+
       const token = crypto.randomBytes(32).toString("hex");
       const expiry = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
 
@@ -32,7 +42,7 @@ export async function requestPasswordReset(formData: FormData) {
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
       const resetLink = `${baseUrl}/reset-password?token=${token}`;
 
-      console.log(`[AUTH] Iniciando envío de correo de recuperación para: ${user.email}`);
+      console.log(`[DEBUG-AUTH] Token guardado. Iniciando envío de correo vía sendEmail...`);
 
       const htmlContent = `
             <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; background-color: #ffffff;">
@@ -70,13 +80,14 @@ export async function requestPasswordReset(formData: FormData) {
         html: htmlContent,
         replyTo: "no-reply@do-academy.com"
       });
-      console.log(`[AUTH] Correo de recuperación enviado con éxito a: ${user.email}`);
+      console.log(`[DEBUG-AUTH] Correo ENVIADO correctamente a ${user.email}`);
     }
   } catch (error: any) {
     if (error.digest?.includes("NEXT_REDIRECT")) throw error;
-    console.error("Password reset request error:", error);
+    console.error("[DEBUG-AUTH] ERROR FATAL en requestPasswordReset:", error);
   }
 
+  console.log(`[DEBUG-AUTH] Finalizando proceso, redirigiendo a éxito.`);
   redirect("/forgot-password?sent=true");
 }
 
