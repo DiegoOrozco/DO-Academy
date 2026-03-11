@@ -3,8 +3,8 @@ import { PrismaClient } from '@prisma/client';
 const prodDbUrl = "postgres://9de4b14967f7bb8ff2a53a7e79fc866df02c0005f602dd2d35d26c1a426a0981:sk_deU_eiwpYv4ypObAOgTjv@db.prisma.io:5432/postgres?sslmode=require";
 const devDbUrl = process.env.DATABASE_URL;
 
-const prodPrisma = new PrismaClient({ datasources: { db: { url: prodDbUrl } } });
-const devPrisma = new PrismaClient({ datasources: { db: { url: devDbUrl } } });
+const prodPrisma = new PrismaClient({ datasourceUrl: prodDbUrl });
+const devPrisma = new PrismaClient({ datasourceUrl: devDbUrl });
 
 async function main() {
     console.log("Fixing Admin roles in DEV...");
