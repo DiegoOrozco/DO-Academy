@@ -17,8 +17,12 @@ export default function AdminSettingsClient({ initialConfigs }: { initialConfigs
         try {
             const res: any = await processAllPendingSubmissions();
             if (res.success) {
-                const failedMsg = res.failedCount > 0 ? ` (${res.failedCount} fallaron al conectar con la IA)` : '';
-                alert(`¡Proceso completado! Se han calificado ${res.processedCount} entregas pendientes${failedMsg} y se han enviado sus correos.`);
+                if (res.quotaExceeded) {
+                    alert(`Se han calificado ${res.processedCount} entregas. \u26a0\ufe0f La cuota de IA de hoy se agot\u00f3. Las entregas restantes est\u00e1n en cola y se procesar\u00e1n autom\u00e1ticamente ma\u00f1ana.`);
+                } else {
+                    const failedMsg = res.failedCount > 0 ? ` (${res.failedCount} tuvieron error)` : '';
+                    alert(`\u00a1Proceso completado! Se han calificado ${res.processedCount} entregas${failedMsg} y se han enviado los correos.`);
+                }
             } else {
                 alert("Hubo un error al procesar las calificaciones: " + res.error);
             }
