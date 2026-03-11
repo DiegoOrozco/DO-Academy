@@ -3,8 +3,27 @@
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, transporter } from "@/lib/email";
 import { redirect } from "next/navigation";
+
+console.log(`[INIT] Módulo password-reset.ts cargado correctamente.`);
+
+export async function testEmailConfig() {
+  console.log(`[DIAGNOSTIC] Verificando configuración de correo...`);
+  const emailUser = process.env.EMAIL_USER;
+  const emailPass = process.env.EMAIL_PASS ? "CONFIGURADA (SI)" : "NOT FOUND (NO)";
+  console.log(`[DIAGNOSTIC] EMAIL_USER: ${emailUser ? emailUser.substring(0, 3) + '...' : 'MISSING'}`);
+  console.log(`[DIAGNOSTIC] EMAIL_PASS: ${emailPass}`);
+
+  try {
+    await transporter.verify();
+    console.log(`[DIAGNOSTIC] Conexión SMTP verificada con éxito.`);
+    return { success: true, message: "SMTP connection OK" };
+  } catch (error: any) {
+    console.error(`[DIAGNOSTIC] Fallo en verificación SMTP:`, error);
+    return { success: false, error: error.message };
+  }
+}
 
 export async function requestPasswordReset(formData: FormData) {
   const email = (formData.get("email") as string)?.toLowerCase().trim();
