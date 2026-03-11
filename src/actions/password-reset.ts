@@ -49,10 +49,10 @@ export async function requestPasswordReset(formData: FormData) {
 
     if (!user) {
       console.log(`[DEBUG-AUTH] DB: Usuario no existe.`);
-      return { success: true }; // Silent pass for security
+      return { success: true }; // Silent pass for security (unregistered email)
     } else if (user.googleId) {
       console.log(`[DEBUG-AUTH] DB: Es cuenta de Google (${user.googleId})`);
-      return { success: true }; // Silent pass for security
+      return { success: false, error: "google_account" }; // Explicit error for better UX
     } else {
       console.log(`[DEBUG-AUTH] DB: Usuario encontrado (${user.name}). Generando token...`);
       const token = crypto.randomBytes(32).toString("hex");

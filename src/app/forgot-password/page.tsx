@@ -12,7 +12,7 @@ function ForgotPasswordContent() {
     const forceExpired = searchParams.get("error") === "expired";
 
     const [isPending, startTransition] = useTransition();
-    const [status, setStatus] = useState<"idle" | "success" | "error_missing" | "error_send" | "error_fatal">("idle");
+    const [status, setStatus] = useState<"idle" | "success" | "error_missing" | "error_send" | "error_fatal" | "error_google">("idle");
 
     const handleSubmit = (formData: FormData) => {
         startTransition(async () => {
@@ -22,6 +22,7 @@ function ForgotPasswordContent() {
                     setStatus("success");
                 } else {
                     if (result.error === "missing") setStatus("error_missing");
+                    else if (result.error === "google_account") setStatus("error_google");
                     else if (result.error === "fallo-envio") setStatus("error_send");
                     else setStatus("error_fatal");
                 }
@@ -88,6 +89,15 @@ function ForgotPasswordContent() {
                             {status === "error_fatal" && (
                                 <div className="mb-4 bg-red-500/10 text-red-400 text-sm p-3 rounded-xl border border-red-500/20 flex items-center gap-2">
                                     <AlertCircle size={14} className="shrink-0" /> Error de conexión con el servidor. Intenta de nuevo más tarde.
+                                </div>
+                            )}
+                            {status === "error_google" && (
+                                <div className="mb-4 bg-blue-500/10 text-blue-400 text-sm p-3 rounded-xl border border-blue-500/20 flex items-start gap-2 text-left">
+                                    <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                                    <div>
+                                        <strong>Cuenta vinculada a Google.</strong><br />
+                                        Por favor regresa al login y presiona el botón de &quot;Continuar con Google&quot; para iniciar sesión o recuperar tu acceso a través de ellos.
+                                    </div>
                                 </div>
                             )}
                             {forceExpired && status === "idle" && (
