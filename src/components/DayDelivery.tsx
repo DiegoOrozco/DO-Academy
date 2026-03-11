@@ -19,6 +19,9 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
     const [submission, setSubmission] = useState<any>(initialSubmission);
     const [error, setError] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => { setIsMounted(true); }, []);
 
     useEffect(() => {
         setSubmission(initialSubmission);
@@ -28,19 +31,23 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
 
     const isDeliveryDay = !!day.isDeliveryDay;
 
+    // These are date-dependent — only compute after mounting to avoid SSR/client hydration mismatch
     let isLate = false;
-    if (day.dueDate) {
-        let effectiveDate = new Date(day.dueDate);
-        if (day.deadlineExceptions && day.deadlineExceptions.length > 0) {
-            effectiveDate = new Date(day.deadlineExceptions[0].newDueDate);
+    let isNotAvailableYet: boolean | null = null;
+    if (isMounted) {
+        if (day.dueDate) {
+            let effectiveDate = new Date(day.dueDate);
+            if (day.deadlineExceptions && day.deadlineExceptions.length > 0) {
+                effectiveDate = new Date(day.deadlineExceptions[0].newDueDate);
+            }
+            if (new Date() > effectiveDate) {
+                isLate = true;
+            }
         }
-        if (new Date() > effectiveDate) {
-            isLate = true;
+        if (day.availableFrom && new Date() < new Date(day.availableFrom)) {
+            isNotAvailableYet = true;
         }
     }
-
-    // Check if the submission window hasn't opened yet
-    const isNotAvailableYet = day.availableFrom && new Date() < new Date(day.availableFrom);
 
     // Helper: format a UTC date string in the browser's local timezone
     const formatLocalDate = (utcString: string) => {
