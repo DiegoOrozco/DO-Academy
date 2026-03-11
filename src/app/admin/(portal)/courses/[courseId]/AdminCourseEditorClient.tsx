@@ -6,6 +6,15 @@ import { ArrowLeft, Save, Settings, List, Plus, Trash2, GripVertical, Video, Lin
 import { saveCourseData } from "@/actions/admin-course";
 import { useRouter } from "next/navigation";
 
+// Converts a UTC date string from DB to a local time string for datetime-local input
+// e.g. "2026-03-11T17:00:00.000Z" (UTC) → "2026-03-11T11:00" (Costa Rica UTC-6)
+function toLocalDatetimeInput(utcDateString: string): string {
+    const date = new Date(utcDateString);
+    const offsetMs = date.getTimezoneOffset() * 60000; // getTimezoneOffset() returns minutes
+    const localDate = new Date(date.getTime() - offsetMs);
+    return localDate.toISOString().slice(0, 16);
+}
+
 // DnD Kit Imports
 import {
     DndContext,
@@ -739,7 +748,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                                         </div>
                                                                                         <input
                                                                                             type="datetime-local"
-                                                                                            value={day.dueDate ? new Date(day.dueDate).toISOString().slice(0, 16) : ""}
+                                                                                            value={day.dueDate ? toLocalDatetimeInput(day.dueDate) : ""}
                                                                                             onChange={(e) => handleUpdateDay(week.id, day.id, "dueDate", e.target.value ? new Date(e.target.value).toISOString() : null)}
                                                                                             className="w-full bg-[rgba(255,255,255,0.05)] border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-rose-500 transition-all font-sans"
                                                                                         />
