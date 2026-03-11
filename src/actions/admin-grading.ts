@@ -118,17 +118,25 @@ export async function processNextPendingSubmission() {
         return { success: true, message: `Submission ${submission.id} graded.`, processed: true };
 
     } catch (error: any) {
-        console.error("[GRADING PROCESSOR] CRITICAL ERROR during grading:", error);
+        const isQuotaError = error.status === 429 || error.message?.includes("429") || error.message?.includes("quota");
 
+        if (isQuotaError) {
+            // Leave submission as PENDING so the cron picks it up tomorrow
+            console.warn("[GRADING PROCESSOR] Quota exceeded. Submission left as PENDING for tomorrow.");
+            return { success: false, processed: false, quotaExceeded: true, error: "Quota exceeded" };
+        }
+
+        // Real error: mark as FAILED so the student knows something went wrong
+        console.error("[GRADING PROCESSOR] CRITICAL ERROR during grading:", error);
         await prisma.submission.update({
             where: { id: submission.id },
             data: {
                 status: "FAILED",
-                feedback: { error: error.message || "Unknown grading error during chron action" }
+                feedback: { error: error.message || "Unknown grading error" }
             }
         });
 
-        return { success: false, error: error.message };
+        return { success: false, processed: false, error: error.message };
     }
 }
 
@@ -137,8 +145,8 @@ export async function processAllPendingSubmissions() {
 
     let processedCount = 0;
     let failedCount = 0;
+    let quotaExceeded = false;
     try {
-        // Get ALL pending submissions upfront so we have a concrete list
         const pendingSubmissions = await prisma.submission.findMany({
             where: { status: "PENDING" },
             select: { id: true }
@@ -147,20 +155,25 @@ export async function processAllPendingSubmissions() {
         console.log(`[GRADING BATCH] Found ${pendingSubmissions.length} pending submissions.`);
 
         for (const _sub of pendingSubmissions) {
-            const result = await processNextPendingSubmission();
-            if (result.processed) {
+            const result: any = await processNextPendingSubmission();
+
+            if (result.quotaExceeded) {
+                // Quota exhausted — stop immediately, leave rest as PENDING for tomorrow
+                quotaExceeded = true;
+                console.warn("[GRADING BATCH] Quota exceeded. Stopping for today. Remaining submissions stay PENDING.");
+                break;
+            } else if (result.processed) {
                 processedCount++;
             } else if (!result.success) {
                 failedCount++;
-                console.warn(`[GRADING BATCH] One submission failed to grade, continuing with next...`);
+                console.warn(`[GRADING BATCH] One submission had a real error, continuing...`);
             } else {
-                // Queue is now empty
-                break;
+                break; // Queue empty
             }
         }
 
-        console.log(`[GRADING BATCH] Finished. Processed ${processedCount}, Failed ${failedCount}.`);
-        return { success: true, processedCount, failedCount };
+        console.log(`[GRADING BATCH] Finished. Processed: ${processedCount}, Failed: ${failedCount}, Quota stopped: ${quotaExceeded}.`);
+        return { success: true, processedCount, failedCount, quotaExceeded };
     } catch (error: any) {
         console.error("[GRADING BATCH] Error:", error);
         return { success: false, error: error.message };
