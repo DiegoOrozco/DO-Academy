@@ -722,7 +722,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
 
                                                                         {day.isDeliveryDay && (
                                                                             <div className="flex-1 w-full animate-in fade-in slide-in-from-left-2 duration-300 space-y-6">
-                                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                                                                     <div className="space-y-2">
                                                                                         <div className="flex items-center gap-2">
                                                                                             <Tags size={12} className="text-purple-400" />
@@ -743,6 +743,20 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
 
                                                                                     <div className="space-y-2">
                                                                                         <div className="flex items-center gap-2">
+                                                                                            <Calendar size={12} className="text-emerald-400" />
+                                                                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Disponible Desde</label>
+                                                                                        </div>
+                                                                                        <input
+                                                                                            type="datetime-local"
+                                                                                            value={day.availableFrom ? toLocalDatetimeInput(day.availableFrom) : ""}
+                                                                                            onChange={(e) => handleUpdateDay(week.id, day.id, "availableFrom", e.target.value ? new Date(e.target.value).toISOString() : null)}
+                                                                                            className="w-full bg-[rgba(255,255,255,0.05)] border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all font-sans"
+                                                                                        />
+                                                                                        <p className="text-[9px] text-slate-600">Si se deja vacío, disponible de inmediato.</p>
+                                                                                    </div>
+
+                                                                                    <div className="space-y-2">
+                                                                                        <div className="flex items-center gap-2">
                                                                                             <Calendar size={12} className="text-rose-400" />
                                                                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Fecha Límite (Deadline)</label>
                                                                                         </div>
@@ -752,6 +766,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                                             onChange={(e) => handleUpdateDay(week.id, day.id, "dueDate", e.target.value ? new Date(e.target.value).toISOString() : null)}
                                                                                             className="w-full bg-[rgba(255,255,255,0.05)] border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-rose-500 transition-all font-sans"
                                                                                         />
+                                                                                        <p className="text-[9px] text-slate-600">Los estudiantes verán esta hora como límite.</p>
                                                                                     </div>
                                                                                 </div>
 

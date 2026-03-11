@@ -39,6 +39,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Tarea no encontrada" }, { status: 404 });
         }
 
+        // AvailableFrom enforcement: submission window hasn't opened yet
+        if (day.availableFrom && new Date() < new Date(day.availableFrom)) {
+            return NextResponse.json({
+                error: "La ventana de entrega aún no ha abierto.",
+                code: "NOT_AVAILABLE_YET"
+            }, { status: 403 });
+        }
+
         // Deadline enforcement
         if (day.dueDate) {
             const now = new Date();
