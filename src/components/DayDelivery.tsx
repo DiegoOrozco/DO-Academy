@@ -161,16 +161,16 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                         }`}>
                         <Clock size={12} />
                         <span>
-                            {isLate ? "Entrega cerrada" : "Entrega hasta"}: {formatLocalDate(
+                            {isLate ? "Entrega cerrada" : "Entrega hasta"}: {isMounted ? formatLocalDate(
                                 day.deadlineExceptions?.[0]?.newDueDate || day.dueDate
-                            )}
+                            ) : "..."}
                         </span>
                     </div>
                 )}
                 {isNotAvailableYet && (
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border bg-slate-500/10 border-slate-500/30 text-slate-400">
                         <Lock size={12} />
-                        <span>Disponible desde: {formatLocalDate(day.availableFrom)}</span>
+                        <span>Disponible desde: {isMounted ? formatLocalDate(day.availableFrom) : "..."}</span>
                     </div>
                 )}
             </div>
@@ -312,7 +312,7 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                                         <p className="text-xs text-slate-400">
                                             {submission.status === "FAILED"
                                                 ? "Hubo un problema procesando tu entrega. Intenta nuevamente o usa otro formato."
-                                                : `Entregado el ${new Date(submission.createdAt).toLocaleDateString()}`}
+                                                : `Entregado el ${isMounted ? new Date(submission.createdAt).toLocaleDateString() : "..."}`}
                                         </p>
                                     </div>
                                 </div>
