@@ -74,8 +74,24 @@ export async function saveCourseData(courseId: string, rawData: any) {
         const incomingWeekIds = data.weeks.map((w: any) => w.id);
         const weeksToDelete = existingWeeks.filter((w: any) => !incomingWeekIds.includes(w.id)).map((w: any) => w.id);
 
-        // Delete removed weeks (Days will cascade if schema has onDelete: Cascade)
+        // Delete removed weeks (Days and their relations will be handled below or by cascade)
         if (weeksToDelete.length > 0) {
+            // Find all days belonging to these weeks to clean them up thoroughly
+            const daysInDeletedWeeks = await prisma.day.findMany({
+                where: { weekId: { in: weeksToDelete } },
+                select: { id: true }
+            });
+            const daysInDeletedWeeksIds = daysInDeletedWeeks.map(d => d.id);
+
+            if (daysInDeletedWeeksIds.length > 0) {
+                await prisma.submission.deleteMany({ where: { dayId: { in: daysInDeletedWeeksIds } } });
+                await prisma.videoProgress.deleteMany({ where: { dayId: { in: daysInDeletedWeeksIds } } });
+                await prisma.reply.deleteMany({ where: { post: { dayId: { in: daysInDeletedWeeksIds } } } });
+                await prisma.post.deleteMany({ where: { dayId: { in: daysInDeletedWeeksIds } } });
+                await prisma.deadlineException.deleteMany({ where: { dayId: { in: daysInDeletedWeeksIds } } });
+                await prisma.resource.deleteMany({ where: { dayId: { in: daysInDeletedWeeksIds } } });
+            }
+
             await prisma.week.deleteMany({
                 where: { id: { in: weeksToDelete } }
             });
@@ -99,6 +115,14 @@ export async function saveCourseData(courseId: string, rawData: any) {
             .map((d: any) => d.id);
 
         if (daysToDeleteGlobal.length > 0) {
+            // Explicitly delete ALL related records to ensure NO trace remains
+            await prisma.submission.deleteMany({ where: { dayId: { in: daysToDeleteGlobal } } });
+            await prisma.videoProgress.deleteMany({ where: { dayId: { in: daysToDeleteGlobal } } });
+            await prisma.reply.deleteMany({ where: { post: { dayId: { in: daysToDeleteGlobal } } } });
+            await prisma.post.deleteMany({ where: { dayId: { in: daysToDeleteGlobal } } });
+            await prisma.deadlineException.deleteMany({ where: { dayId: { in: daysToDeleteGlobal } } });
+            await prisma.resource.deleteMany({ where: { dayId: { in: daysToDeleteGlobal } } });
+
             await prisma.day.deleteMany({
                 where: { id: { in: daysToDeleteGlobal } }
             });
