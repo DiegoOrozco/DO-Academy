@@ -253,3 +253,82 @@ export async function triggerIndividualAiGrading(submissionId: string) {
         return { success: false, error: error.message };
     }
 }
+
+/**
+ * SURGICAL DEBUG: Grades a submission DIRECTLY skipping all queues
+ */
+export async function gradeIndividualSubmissionAction(submissionId: string) {
+    console.log(`[SURGICAL] Starting direct grade for ${submissionId}`);
+    try {
+        const submission = await prisma.submission.findUnique({
+            where: { id: submissionId },
+            include: {
+                user: { select: { email: true, name: true } },
+                day: {
+                    select: {
+                        id: true,
+                        title: true,
+                        gradingSeverity: true,
+                        exerciseDescription: true
+                    }
+                }
+            }
+        });
+
+        if (!submission) return { success: false, error: "Entrega no encontrada." };
+
+        let contentToGrade = submission.content;
+        let mimeType = "text/plain";
+        let buffer: Buffer;
+
+        if (contentToGrade.startsWith("http")) {
+            const response = await fetch(contentToGrade);
+            const arrayBuffer = await response.arrayBuffer();
+            buffer = Buffer.from(arrayBuffer);
+            if (submission.fileName.endsWith(".pdf")) mimeType = "application/pdf";
+            else if (submission.fileName.endsWith(".py")) mimeType = "text/x-python";
+        } else {
+            buffer = Buffer.from(contentToGrade, "utf-8");
+            if (submission.fileName.endsWith(".py")) mimeType = "text/x-python";
+        }
+
+        const gradingResult = await gradeSubmission(
+            submission.fileName,
+            buffer,
+            mimeType,
+            submission.day.gradingSeverity || 1,
+            submission.day.exerciseDescription || undefined
+        );
+
+        await prisma.submission.update({
+            where: { id: submission.id },
+            data: {
+                status: "GRADED",
+                grade: typeof gradingResult.nota === 'number' ? gradingResult.nota : undefined,
+                feedback: gradingResult
+            }
+        });
+
+        return { success: true, message: "Calificado con éxito.", studentName: submission.user.name };
+    } catch (error: any) {
+        console.error("[SURGICAL ERROR]", error);
+        return { success: false, error: error.message || "Error desconocido" };
+    }
+}
+
+export async function testAiConnection() {
+    try {
+        const apiKey = process.env.GOOGLE_AI_API_KEY;
+        if (!apiKey) return { success: false, error: "API KEY NO ENCONTRADA EN SERVER" };
+        
+        // Simple test call
+        const { GoogleGenerativeAI } = require("@google/generative-ai");
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const result = await model.generateContent("Hola, responde 'OK'.");
+        const response = await result.response;
+        return { success: true, message: response.text() };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}

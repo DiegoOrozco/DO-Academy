@@ -3,7 +3,7 @@
 import React, { useState, useTransition } from "react";
 import { ArrowLeft, Download, FileDown, Search, User, CheckCircle2, Clock, XCircle, Cpu, Loader2, Edit2, Check } from "lucide-react";
 import Link from "next/link";
-import { triggerAiGradingForDay, processNextPendingSubmission, triggerIndividualAiGrading } from "@/actions/admin-grading";
+import { triggerAiGradingForDay, processNextPendingSubmission, triggerIndividualAiGrading, gradeIndividualSubmissionAction, testAiConnection } from "@/actions/admin-grading";
 import { updateManualGrade, deleteSubmission } from "@/actions/admin-grades";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -182,17 +182,27 @@ export default function DaySubmissionsClient({
     const handleIndividualAiGrading = async (subId: string) => {
         setIndividualLoading(subId);
         try {
-            const res: any = await triggerIndividualAiGrading(subId);
-            if (res.processed) {
+            // SURGICAL: Use the direct action instead of the trigger/queue
+            const res: any = await gradeIndividualSubmissionAction(subId);
+            if (res.success) {
                 router.refresh();
             } else {
-                alert("Error: " + (res.error || "No se pudo calificar."));
+                alert("Error Directo: " + (res.error || "No se pudo calificar."));
             }
         } catch (error) {
             console.error(error);
-            alert("Error de conexión.");
+            alert("Error de conexión al servidor.");
         } finally {
             setIndividualLoading(null);
+        }
+    };
+
+    const handleTestAi = async () => {
+        try {
+            const res = await testAiConnection();
+            alert("Test IA: " + (res.success ? "CONECTADO (" + res.message + ")" : "FALLÓ: " + res.error));
+        } catch (e: any) {
+            alert("Error Test: " + e.message);
         }
     };
 
@@ -289,6 +299,14 @@ export default function DaySubmissionsClient({
                                 Revisión IA (Cola)
                             </>
                         )}
+                    </button>
+
+                    <button
+                        onClick={handleTestAi}
+                        className="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 font-bold py-2.5 px-4 rounded-xl transition-all"
+                        title="Probar Conexión"
+                    >
+                        Test IA
                     </button>
 
                     <button
