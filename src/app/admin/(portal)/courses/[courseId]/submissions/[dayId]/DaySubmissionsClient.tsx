@@ -7,6 +7,7 @@ import { triggerAiGradingForDay, processNextPendingSubmission, triggerIndividual
 import { updateManualGrade, deleteSubmission } from "@/actions/admin-grades";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import FeedbackModal from "@/components/FeedbackModal";
 
 interface StudentSubmission {
     studentId: string;
@@ -95,6 +96,7 @@ export default function DaySubmissionsClient({
     const [search, setSearch] = useState("");
     const [isAiGrading, setIsAiGrading] = useState(false);
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
+    const [selectedFeedback, setSelectedFeedback] = useState<{ submission: StudentSubmission; dayTitle: string } | null>(null);
 
     const filteredData = initialData.filter(s =>
         s.studentName.toLowerCase().includes(search.toLowerCase())
@@ -385,17 +387,22 @@ export default function DaySubmissionsClient({
                                         />
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="flex flex-col gap-1 max-w-xs mx-auto">
+                                        <div 
+                                            className="flex flex-col gap-1 max-w-xs mx-auto cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors group/feedback"
+                                            onClick={() => setSelectedFeedback({ submission: row, dayTitle: dayTitle })}
+                                            title="Click para ver feedback completo"
+                                        >
                                             {typeof row.feedback === 'object' ? (
                                                 <div className="text-[10px] leading-tight text-slate-400">
                                                     {row.feedback.text ? (
-                                                        <p className="line-clamp-2" title={row.feedback.text}>{row.feedback.text}</p>
+                                                        <p className="line-clamp-2">{row.feedback.text}</p>
                                                     ) : (
                                                         <>
                                                             {row.feedback.feedback_positivo && <p className="line-clamp-1"><span className="text-emerald-500 font-bold">+</span> {Array.isArray(row.feedback.feedback_positivo) ? row.feedback.feedback_positivo[0] : row.feedback.feedback_positivo}</p>}
                                                             {row.feedback.mejoras && <p className="line-clamp-1"><span className="text-amber-500 font-bold">-</span> {Array.isArray(row.feedback.mejoras) ? row.feedback.mejoras[0] : row.feedback.mejoras}</p>}
                                                         </>
                                                     )}
+                                                    <div className="text-[9px] text-[var(--color-primary)] font-bold mt-1 opacity-0 group-hover/feedback:opacity-100 transition-opacity">VER DETALLE →</div>
                                                 </div>
                                             ) : (
                                                 <span className="text-[10px] text-slate-600 italic">No feedback</span>
@@ -457,6 +464,16 @@ export default function DaySubmissionsClient({
                         No se encontraron estudiantes registrados.
                     </div>
                 )}
+            {selectedFeedback && (
+                <FeedbackModal
+                    isOpen={!!selectedFeedback}
+                    onClose={() => setSelectedFeedback(null)}
+                    studentName={selectedFeedback.submission.studentName}
+                    dayTitle={selectedFeedback.dayTitle}
+                    feedback={selectedFeedback.submission.feedback}
+                    grade={selectedFeedback.submission.grade}
+                />
+            )}
             </div>
         </div>
     );

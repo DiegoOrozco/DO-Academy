@@ -3,6 +3,7 @@
 import React, { useState, useTransition } from "react";
 import { GraduationCap, Search, Filter, Download, User, ChevronRight, BookOpen, ChevronDown, Check, Edit2, FileDown } from "lucide-react";
 import { updateManualGrade } from "../../../../actions/admin-grades";
+import FeedbackModal from "@/components/FeedbackModal";
 
 function GradeEditor({ initialGrade, userId, dayId }: { initialGrade: number | null, userId: string, dayId: string }) {
     const [isEditing, setIsEditing] = useState(false);
@@ -69,6 +70,7 @@ export default function AdminGradesClient({
 }) {
     const [searchTerm, setSearchTerm] = useState("");
     const [expandedRows, setExpandedRows] = useState<string[]>([]);
+    const [selectedFeedback, setSelectedFeedback] = useState<{ sub: any; name: string } | null>(null);
 
     // Simplistic filter just for demonstration or actual basic filtering
     // You can expand this to filter by course or status
@@ -281,14 +283,21 @@ export default function AdminGradesClient({
                                                                                 </button>
                                                                             )}
                                                                         </div>
-                                                                        <div className="text-[10px] text-slate-400 mt-1 line-clamp-3">
+                                                                        <div 
+                                            className="text-[10px] text-slate-400 mt-1 line-clamp-3 cursor-pointer hover:bg-white/5 p-1 rounded transition-colors group/f"
+                                            onClick={(e) => { e.stopPropagation(); setSelectedFeedback({ sub, name: row.name }); }}
+                                            title="Click para ver feedback completo"
+                                        >
                                                                             {typeof sub.feedback === 'object' ? (
-                                                                                sub.feedback.text || (
-                                                                                    <>
-                                                                                        {sub.feedback.feedback_positivo && <p><span className="text-emerald-400 font-bold">+</span> {Array.isArray(sub.feedback.feedback_positivo) ? sub.feedback.feedback_positivo[0] : sub.feedback.feedback_positivo}</p>}
-                                                                                        {sub.feedback.mejoras && <p><span className="text-amber-400 font-bold">-</span> {Array.isArray(sub.feedback.mejoras) ? sub.feedback.mejoras[0] : sub.feedback.mejoras}</p>}
-                                                                                    </>
-                                                                                )
+                                                                                <>
+                                                                                    {sub.feedback.text ? sub.feedback.text : (
+                                                                                        <>
+                                                                                            {sub.feedback.feedback_positivo && <p><span className="text-emerald-400 font-bold">+</span> {Array.isArray(sub.feedback.feedback_positivo) ? sub.feedback.feedback_positivo[0] : sub.feedback.feedback_positivo}</p>}
+                                                                                            {sub.feedback.mejoras && <p><span className="text-amber-400 font-bold">-</span> {Array.isArray(sub.feedback.mejoras) ? sub.feedback.mejoras[0] : sub.feedback.mejoras}</p>}
+                                                                                        </>
+                                                                                    )}
+                                                                                    <div className="text-[9px] text-[var(--color-primary)] font-bold mt-1 opacity-0 group-hover/f:opacity-100 transition-opacity">VER DETALLE →</div>
+                                                                                </>
                                                                             ) : (
                                                                                 sub.feedback || "Sin feedback asociado a esta entrega."
                                                                             )}
@@ -319,6 +328,17 @@ export default function AdminGradesClient({
                     </div>
                 )}
             </div>
+
+            {selectedFeedback && (
+                <FeedbackModal
+                    isOpen={!!selectedFeedback}
+                    onClose={() => setSelectedFeedback(null)}
+                    studentName={selectedFeedback.name}
+                    dayTitle={selectedFeedback.sub.title}
+                    feedback={selectedFeedback.sub.feedback}
+                    grade={selectedFeedback.sub.grade}
+                />
+            )}
         </div>
     );
 }
