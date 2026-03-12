@@ -4,12 +4,15 @@ import prisma from "@/lib/prisma";
 import { gradeSubmission } from "@/lib/gemini";
 import { sendEmail } from "@/lib/email";
 
-export async function processNextPendingSubmission() {
-    console.log("[GRADING PROCESSOR] Fetching oldest PENDING submission...");
+export async function processNextPendingSubmission(dayId?: string) {
+    console.log(`[GRADING PROCESSOR] Fetching oldest PENDING submission ${dayId ? `for day ${dayId}` : "globally"}...`);
 
-    // Find the oldest pending submission
+    // Find the oldest pending submission, optionally scoped by day
     const submission = await prisma.submission.findFirst({
-        where: { status: "PENDING" },
+        where: {
+            status: "PENDING",
+            ...(dayId && { dayId })
+        },
         orderBy: { createdAt: "asc" },
         include: {
             user: { select: { email: true, name: true } },
@@ -207,9 +210,18 @@ export async function triggerAiGradingForDay(dayId: string) {
 
         console.log(`[AI GRADING TRIGGER] Marked ${updateResult.count} submissions as PENDING.`);
 
+        // Get TOTAL pending count for this day (including those already pending)
+        const totalPending = await prisma.submission.count({
+            where: {
+                dayId,
+                status: "PENDING"
+            }
+        });
+
         return {
             success: true,
-            updateCount: updateResult.count
+            updateCount: updateResult.count,
+            totalPending
         };
     } catch (error: any) {
         console.error("[AI GRADING TRIGGER] Error:", error);

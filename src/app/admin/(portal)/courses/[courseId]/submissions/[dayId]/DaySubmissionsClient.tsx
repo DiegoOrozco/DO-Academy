@@ -121,25 +121,30 @@ export default function DaySubmissionsClient({
 
     const router = useRouter();
 
+    const [processingUser, setProcessingUser] = useState<string | null>(null);
+
     const handleAiGrading = async () => {
         if (!confirm("¿Deseas iniciar la revisión con IA para todas las entregas de este día? El proceso se ejecutará estudiante por estudiante para asegurar la calidad.")) {
             return;
         }
 
         setIsAiGrading(true);
+        setProcessingUser("Iniciando cola...");
         try {
             // 1. Mark as PENDING
             const triggerRes: any = await triggerAiGradingForDay(dayId);
             if (!triggerRes.success) {
                 alert("Error al iniciar: " + triggerRes.error);
                 setIsAiGrading(false);
+                setProcessingUser(null);
                 return;
             }
 
-            const count = triggerRes.updateCount;
-            if (count === 0) {
-                alert("No hay entregas adicionales para calificar hoy (todas ya están calificadas o en cola).");
+            const pendingCount = triggerRes.totalPending || 0;
+            if (pendingCount === 0) {
+                alert("No hay entregas para calificar en este día.");
                 setIsAiGrading(false);
+                setProcessingUser(null);
                 return;
             }
 
@@ -148,9 +153,13 @@ export default function DaySubmissionsClient({
             let finished = false;
 
             while (!finished) {
-                const res: any = await processNextPendingSubmission();
+                setProcessingUser(`Buscando siguiente entrega (${processed + 1}/${pendingCount})...`);
+                const res: any = await processNextPendingSubmission(dayId);
+
                 if (res.processed) {
                     processed++;
+                    // Try to find the student name if returned (need to update action if possible)
+                    setProcessingUser(`Calificando entrega ${processed}...`);
                     router.refresh(); // Refresh UI to show the new grade in table
                 } else {
                     finished = true;
@@ -160,12 +169,13 @@ export default function DaySubmissionsClient({
                 }
             }
 
-            alert(`Proceso finalizado. Se han calificado las entregas pendientes.`);
+            alert(`Proceso finalizado. Se han procesado las entregas de este día.`);
         } catch (error) {
             console.error("AI Grading failed:", error);
             alert("Error de conexión durante el proceso.");
         } finally {
             setIsAiGrading(false);
+            setProcessingUser(null);
             router.refresh();
         }
     };
@@ -250,12 +260,12 @@ export default function DaySubmissionsClient({
                     <button
                         onClick={handleAiGrading}
                         disabled={isAiGrading}
-                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-bold py-2.5 px-6 rounded-xl transition-all disabled:opacity-50"
+                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-bold py-2.5 px-6 rounded-xl transition-all disabled:opacity-50 min-w-[200px]"
                     >
                         {isAiGrading ? (
                             <>
                                 <Loader2 size={18} className="animate-spin" />
-                                Procesando IA...
+                                {processingUser || "Procesando..."}
                             </>
                         ) : (
                             <>
