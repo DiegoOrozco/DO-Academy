@@ -161,7 +161,8 @@ export async function submitStudentAttendance(studentName: string, code: string)
                     studentName,
                     dateText,
                     sheetName: session.sheetName,
-                    checkIns: 1
+                    checkIns: 1,
+                    firstSessionId: session.id
                 }
             });
 
@@ -174,6 +175,14 @@ export async function submitStudentAttendance(studentName: string, code: string)
 
         if (existingLog.checkIns === 1) {
             // STEP 2: Second check-in
+            // BUG FIX: Ensure the student isn't reusing the SAME session code
+            if (existingLog.firstSessionId === session.id) {
+                return {
+                    success: false,
+                    error: "Ya realizaste el primer check-in con este código. Para el segundo check-in debes esperar al siguiente código (ciclo de 5 min)."
+                };
+            }
+
             // Overwrite studentName with the one securely locked in DB to avoid switching
             const verifiedStudentName = existingLog.studentName;
 

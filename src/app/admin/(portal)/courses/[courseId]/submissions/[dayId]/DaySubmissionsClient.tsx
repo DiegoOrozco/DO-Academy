@@ -3,8 +3,10 @@
 import React, { useState, useTransition } from "react";
 import { ArrowLeft, Download, FileDown, Search, User, CheckCircle2, Clock, XCircle, Cpu, Loader2, Edit2, Check } from "lucide-react";
 import Link from "next/link";
-import { triggerAiGradingForDay } from "@/actions/admin-grading";
-import { updateManualGrade } from "@/actions/admin-grades";
+import { triggerAiGradingForDay, processNextPendingSubmission } from "@/actions/admin-grading";
+import { updateManualGrade, deleteSubmission } from "@/actions/admin-grades";
+import { Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface StudentSubmission {
     studentId: string;
@@ -91,32 +93,80 @@ export default function DaySubmissionsClient({
 }) {
     const [search, setSearch] = useState("");
     const [isAiGrading, setIsAiGrading] = useState(false);
+    const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
     const filteredData = initialData.filter(s =>
         s.studentName.toLowerCase().includes(search.toLowerCase())
     );
 
+    const handleDeleteSubmission = async (studentId: string) => {
+        if (!confirm("¿Seguro que deseas ELIMINAR la entrega de este estudiante? El archivo se borrará permanentemente de la nube y el estudiante podrá volver a subir su tarea.")) {
+            return;
+        }
+
+        setIsDeleting(studentId);
+        try {
+            const res = await deleteSubmission(studentId, dayId);
+            if (res.success) {
+                // Success: revalidation will update the UI
+            } else {
+                alert("Error al eliminar: " + res.error);
+            }
+        } catch (error) {
+            alert("Error de conexión.");
+        } finally {
+            setIsDeleting(null);
+        }
+    };
+
+    const router = useRouter();
+
     const handleAiGrading = async () => {
-        if (!confirm("¿Deseas iniciar la revisión con IA para todas las entregas de este día? Esto marcará las entregas como pendientes y comenzará el proceso en cola.")) {
+        if (!confirm("¿Deseas iniciar la revisión con IA para todas las entregas de este día? El proceso se ejecutará estudiante por estudiante para asegurar la calidad.")) {
             return;
         }
 
         setIsAiGrading(true);
         try {
-            const res: any = await triggerAiGradingForDay(dayId);
-            if (res.success) {
-                if (res.quotaExceeded) {
-                    alert(`Se han empezado a calificar las entregas. \u26a0\ufe0f La cuota de IA para hoy se agotó. Las ${res.updateCount - res.processedCount} entregas restantes se procesarán automáticamente mañana.`);
-                } else {
-                    alert(`¡Proceso de revisión IA iniciado! Se están procesando ${res.updateCount} entregas. Recibirás/recibirán los correos conforme se complete cada una.`);
-                }
-            } else {
-                alert("Error al iniciar revisión IA: " + res.error);
+            // 1. Mark as PENDING
+            const triggerRes: any = await triggerAiGradingForDay(dayId);
+            if (!triggerRes.success) {
+                alert("Error al iniciar: " + triggerRes.error);
+                setIsAiGrading(false);
+                return;
             }
+
+            const count = triggerRes.updateCount;
+            if (count === 0) {
+                alert("No hay entregas adicionales para calificar hoy (todas ya están calificadas o en cola).");
+                setIsAiGrading(false);
+                return;
+            }
+
+            // 2. Process one-by-one on the client to avoid timeouts
+            let processed = 0;
+            let finished = false;
+
+            while (!finished) {
+                const res: any = await processNextPendingSubmission();
+                if (res.processed) {
+                    processed++;
+                    router.refresh(); // Refresh UI to show the new grade in table
+                } else {
+                    finished = true;
+                    if (res.quotaExceeded) {
+                        alert("Cuota de IA excedida. El proceso se detendrá, pero las entregas restantes siguen en cola.");
+                    }
+                }
+            }
+
+            alert(`Proceso finalizado. Se han calificado las entregas pendientes.`);
         } catch (error) {
-            alert("Error de conexión al procesar.");
+            console.error("AI Grading failed:", error);
+            alert("Error de conexión durante el proceso.");
         } finally {
             setIsAiGrading(false);
+            router.refresh();
         }
     };
 
@@ -289,14 +339,31 @@ export default function DaySubmissionsClient({
                                         {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "-"}
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        {row.content && (
-                                            <button
-                                                onClick={() => handleDownload(row)}
-                                                className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase text-[var(--color-primary)] hover:text-white transition-colors bg-blue-500/5 px-3 py-1.5 rounded-lg border border-blue-500/10 hover:border-blue-500/30"
-                                            >
-                                                <Download size={14} /> Descargar
-                                            </button>
-                                        )}
+                                        <div className="flex items-center justify-end gap-2">
+                                            {row.content && (
+                                                <button
+                                                    onClick={() => handleDownload(row)}
+                                                    className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase text-[var(--color-primary)] hover:text-white transition-colors bg-blue-500/5 px-3 py-1.5 rounded-lg border border-blue-500/10 hover:border-blue-500/30"
+                                                >
+                                                    <Download size={14} /> Descargar
+                                                </button>
+                                            )}
+
+                                            {row.submissionId && (
+                                                <button
+                                                    onClick={() => handleDeleteSubmission(row.studentId)}
+                                                    disabled={isDeleting === row.studentId}
+                                                    className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase text-rose-400 hover:text-white transition-colors bg-rose-500/5 px-3 py-1.5 rounded-lg border border-rose-500/10 hover:border-rose-500/30 disabled:opacity-50"
+                                                    title="Eliminar entrega"
+                                                >
+                                                    {isDeleting === row.studentId ? (
+                                                        <Loader2 size={14} className="animate-spin" />
+                                                    ) : (
+                                                        <Trash2 size={14} />
+                                                    )}
+                                                </button>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

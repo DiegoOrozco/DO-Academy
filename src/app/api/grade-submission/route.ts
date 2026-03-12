@@ -71,8 +71,28 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Store blob URL in content
         const dbContent = blob.url;
+
+        // Cleanup: If there's an existing submission with a blob URL, delete the old blob
+        try {
+            const existingSubmission = await prisma.submission.findUnique({
+                where: {
+                    userId_dayId: {
+                        userId: user.id,
+                        dayId: dayId
+                    }
+                }
+            });
+
+            if (existingSubmission?.content && existingSubmission.content.includes("vercel-storage.com")) {
+                const { del } = await import("@vercel/blob");
+                await del(existingSubmission.content);
+                console.log(`[CLEANUP] Deleted old blob: ${existingSubmission.content}`);
+            }
+        } catch (cleanupError) {
+            console.error("[CLEANUP] Error deleting old blob:", cleanupError);
+            // Non-blocking: continue with the submission even if cleanup fails
+        }
 
         const submission = await prisma.submission.upsert({
             where: {

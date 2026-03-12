@@ -207,12 +207,9 @@ export async function triggerAiGradingForDay(dayId: string) {
 
         console.log(`[AI GRADING TRIGGER] Marked ${updateResult.count} submissions as PENDING.`);
 
-        // Trigger the batch processor
-        const batchResult: any = await processAllPendingSubmissions();
-
         return {
-            updateCount: updateResult.count,
-            ...batchResult
+            success: true,
+            updateCount: updateResult.count
         };
     } catch (error: any) {
         console.error("[AI GRADING TRIGGER] Error:", error);
