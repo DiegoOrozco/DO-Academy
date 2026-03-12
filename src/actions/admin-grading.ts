@@ -324,13 +324,12 @@ export async function testAiConnection() {
     const { GoogleGenerativeAI } = require("@google/generative-ai");
     const genAI = new GoogleGenerativeAI(apiKey);
     
-    // Test combinations
+    // Test combinations from the DISCOVERED list
     const tests = [
-        { model: "gemini-1.5-flash", version: "v1" },
-        { model: "gemini-1.5-flash", version: "v1beta" },
-        { model: "gemini-1.5-pro", version: "v1" },
-        { model: "gemini-pro", version: "v1" },
-        { model: "gemini-2.0-flash", version: "v1" }
+        { model: "gemini-2.0-flash", version: "v1beta" },
+        { model: "gemini-2.0-flash", version: "v1" },
+        { model: "gemini-1.5-flash", version: "v1" }, // Check if it's really missing
+        { model: "gemini-2.5-flash", version: "v1beta" }
     ];
 
     for (const test of tests) {

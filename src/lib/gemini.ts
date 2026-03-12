@@ -87,13 +87,13 @@ Feedback general: Implacable, puramente técnico y matemático.`
         const currentSeverityPrompt = severityPrompts[severity as keyof typeof severityPrompts] || severityPrompts[0];
 
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash", // Use 1.5-flash as it is more stable and widely available
+            model: "gemini-2.0-flash", // Verified as available in ListModels
             systemInstruction: SYSTEM_PROMPT + "\nCRITERIO DE EVALUACIÓN ACTUAL:\n" + currentSeverityPrompt,
             generationConfig: {
                 responseMimeType: "application/json",
                 temperature: 0.0,
             }
-        }, { apiVersion: "v1" });
+        }, { apiVersion: "v1beta" });
 
         let prompt = `Archivo a evaluar: ${fileName}\nPor favor, califica la entrega del estudiante basándote en el nivel de exigencia indicado.`;
 
