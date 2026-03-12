@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/auth-utils";
 import prisma from "@/lib/prisma";
+import { put } from "@vercel/blob";
 import { gradeSubmission } from "@/lib/gemini";
 
 export async function POST(req: NextRequest) {
@@ -25,6 +26,12 @@ export async function POST(req: NextRequest) {
 
         console.log(`Grading Request: File="${fileName}", Size=${file.size} bytes, MimeType=${mimeType}`);
 
+        // Upload to Vercel Blob
+        const blob = await put(`submissions/${user.id}/${dayId}/${fileName}`, buffer, {
+            access: "public",
+            addRandomSuffix: true, // Use random suffix to avoid collisions if multiple attempts
+        });
+
         // Fetch day limits and exceptions
         const day = await prisma.day.findUnique({
             where: { id: dayId },
@@ -39,7 +46,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Tarea no encontrada" }, { status: 404 });
         }
 
-        // AvailableFrom enforcement: submission window hasn't opened yet
+        // AvailableFrom enforcement
         if (day.availableFrom && new Date() < new Date(day.availableFrom)) {
             return NextResponse.json({
                 error: "La ventana de entrega aún no ha abierto.",
@@ -52,7 +59,6 @@ export async function POST(req: NextRequest) {
             const now = new Date();
             let effectiveDueDate = new Date(day.dueDate);
 
-            // Check if there is an exception for this user
             if (day.deadlineExceptions && day.deadlineExceptions.length > 0) {
                 effectiveDueDate = new Date(day.deadlineExceptions[0].newDueDate);
             }
@@ -65,11 +71,8 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Create initial pending submission
-        // For PDFs, we don't store the binary in the text content field
-        const dbContent = mimeType === "application/pdf"
-            ? `[PDF Document: ${fileName}]`
-            : buffer.toString("utf-8");
+        // Store blob URL in content
+        const dbContent = blob.url;
 
         const submission = await prisma.submission.upsert({
             where: {

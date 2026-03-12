@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { GraduationCap, Search, Filter, Download, User, ChevronRight, BookOpen, ChevronDown, Check, Edit2 } from "lucide-react";
+import { GraduationCap, Search, Filter, Download, User, ChevronRight, BookOpen, ChevronDown, Check, Edit2, FileDown } from "lucide-react";
 import { updateManualGrade } from "../../../../actions/admin-grades";
 
 function GradeEditor({ initialGrade, userId, dayId }: { initialGrade: number | null, userId: string, dayId: string }) {
@@ -73,6 +73,42 @@ export default function AdminGradesClient({
     // Simplistic filter just for demonstration or actual basic filtering
     // You can expand this to filter by course or status
     const [activeFilter, setActiveFilter] = useState<string | null>(null);
+
+    const handleDownload = (content: string, fileName: string) => {
+        if (!content) return;
+
+        if (content.startsWith("http")) {
+            // It's a URL (Blob storage)
+            // Add ?download=1 for Vercel Blob if it's a direct link, or just open it
+            const downloadUrl = content.includes('vercel-storage.com') ? `${content}?download=1` : content;
+            window.open(downloadUrl, "_blank");
+        } else {
+            // It's raw content (Old data or coding exercise)
+            const blob = new Blob([content], { type: "text/plain" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = fileName || "download.txt";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    };
+
+    const downloadAll = (submissions: any[]) => {
+        const validSubs = (submissions || []).filter(s => s.content);
+        if (validSubs.length === 0) {
+            alert("No hay archivos para descargar.");
+            return;
+        }
+
+        validSubs.forEach((sub, index) => {
+            setTimeout(() => {
+                handleDownload(sub.content, sub.fileName || `entrega-${index}.txt`);
+            }, index * 400); // 400ms delay between downloads
+        });
+    };
 
     const toggleRow = (id: string) => {
         setExpandedRows(prev =>
@@ -200,8 +236,15 @@ export default function AdminGradesClient({
                                             <tr className="bg-black/40 border-t-0 shadow-inner">
                                                 <td colSpan={5} className="px-6 py-6 border-b border-slate-800">
                                                     <div className="animate-in slide-in-from-top-2 fade-in duration-300">
-                                                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">
-                                                            Detalle de Entregas
+                                                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2 flex justify-between items-center">
+                                                            <span>Detalle de Entregas</span>
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); downloadAll(row.submissions); }}
+                                                                className="flex items-center gap-1.5 text-[var(--color-primary)] hover:text-blue-400 transition-colors bg-blue-500/10 px-3 py-1.5 rounded-lg border border-blue-500/20"
+                                                            >
+                                                                <FileDown size={14} />
+                                                                <span className="text-[10px] font-black uppercase">Descargar Todo</span>
+                                                            </button>
                                                         </h4>
                                                         {(row.submissions || []).length > 0 ? (
                                                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -224,10 +267,21 @@ export default function AdminGradesClient({
                                                                             />
                                                                         </div>
                                                                         <p className="text-sm font-medium text-white line-clamp-1" title={sub.title}>{sub.title}</p>
-                                                                        <p className="text-[10px] uppercase font-bold text-slate-500 mt-1 mb-1">
-                                                                            {sub.grade === null ? "Sin Entrega" : "Entregado"}
-                                                                        </p>
-                                                                        <p className="text-xs text-slate-400 line-clamp-2" title={
+                                                                        <div className="flex justify-between items-center mt-1">
+                                                                            <p className="text-[10px] uppercase font-bold text-slate-500">
+                                                                                {sub.grade === null ? "Sin Entrega" : "Entregado"}
+                                                                            </p>
+                                                                            {sub.content && (
+                                                                                <button
+                                                                                    onClick={() => handleDownload(sub.content, sub.fileName)}
+                                                                                    className="flex items-center gap-1.5 text-[10px] font-black uppercase text-[var(--color-primary)] hover:text-white transition-colors"
+                                                                                >
+                                                                                    <Download size={12} />
+                                                                                    Descargar
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
+                                                                        <p className="text-xs text-slate-400 line-clamp-2 mt-1" title={
                                                                             typeof sub.feedback === 'object' && sub.feedback?.text ? sub.feedback.text :
                                                                                 (typeof sub.feedback === 'string' ? sub.feedback : "Sin feedback")
                                                                         }>
