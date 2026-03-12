@@ -199,10 +199,14 @@ export default function DaySubmissionsClient({
 
     const handleTestAi = async () => {
         try {
-            const res = await testAiConnection();
-            alert("Test IA: " + (res.success ? "CONECTADO (" + res.message + ")" : "FALLÓ: " + res.error));
+            const res: any = await testAiConnection();
+            if (res.success) {
+                alert("Test IA: " + res.message);
+            } else {
+                alert("Test IA FALLÓ.\n\nDetalles:\n" + res.details);
+            }
         } catch (e: any) {
-            alert("Error Test: " + e.message);
+            alert("Error Test Crítico: " + e.message);
         }
     };
 

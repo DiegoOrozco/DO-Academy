@@ -317,20 +317,43 @@ export async function gradeIndividualSubmissionAction(submissionId: string) {
 }
 
 export async function testAiConnection() {
-    try {
-        const apiKey = process.env.GOOGLE_AI_API_KEY;
-        if (!apiKey) return { success: false, error: "API KEY NO ENCONTRADA EN SERVER" };
-        
-        // Simple test call
-        const { GoogleGenerativeAI } = require("@google/generative-ai");
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
-        const result = await model.generateContent("Hola, responde 'OK'.");
-        const response = await result.response;
-        return { success: true, message: response.text() };
-    } catch (error: any) {
-        return { success: false, error: error.message };
+    const results: string[] = [];
+    const apiKey = process.env.GOOGLE_AI_API_KEY;
+    if (!apiKey) return { success: false, error: "API KEY NO ENCONTRADA" };
+
+    const { GoogleGenerativeAI } = require("@google/generative-ai");
+    const genAI = new GoogleGenerativeAI(apiKey);
+    
+    // Test combinations
+    const tests = [
+        { model: "gemini-1.5-flash", version: "v1" },
+        { model: "gemini-1.5-flash", version: "v1beta" },
+        { model: "gemini-1.5-pro", version: "v1" },
+        { model: "gemini-pro", version: "v1" },
+        { model: "gemini-2.0-flash", version: "v1" }
+    ];
+
+    for (const test of tests) {
+        try {
+            const model = genAI.getGenerativeModel({ model: test.model }, { apiVersion: test.version });
+            const result = await model.generateContent("Respond 'OK'");
+            const response = await result.response;
+            return { 
+                success: true, 
+                message: `EXITO con ${test.model} en ${test.version}. Respuesta: ${response.text()}`,
+                workingModel: test.model,
+                workingVersion: test.version
+            };
+        } catch (e: any) {
+            results.push(`${test.model} (${test.version}): ${e.message}`);
+        }
     }
+
+    return { 
+        success: false, 
+        error: "Ningún modelo funcionó.", 
+        details: results.join(" | ") 
+    };
 }
 
 export async function listAvailableModels() {
