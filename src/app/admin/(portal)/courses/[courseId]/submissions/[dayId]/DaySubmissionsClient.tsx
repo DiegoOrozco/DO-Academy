@@ -3,7 +3,7 @@
 import React, { useState, useTransition } from "react";
 import { ArrowLeft, Download, FileDown, Search, User, CheckCircle2, Clock, XCircle, Cpu, Loader2, Edit2, Check } from "lucide-react";
 import Link from "next/link";
-import { triggerAiGradingForDay, processNextPendingSubmission } from "@/actions/admin-grading";
+import { triggerAiGradingForDay, processNextPendingSubmission, triggerIndividualAiGrading } from "@/actions/admin-grading";
 import { updateManualGrade, deleteSubmission } from "@/actions/admin-grades";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -173,10 +173,26 @@ export default function DaySubmissionsClient({
         } catch (error) {
             console.error("AI Grading failed:", error);
             alert("Error de conexión durante el proceso.");
-        } finally {
-            setIsAiGrading(false);
-            setProcessingUser(null);
             router.refresh();
+        }
+    };
+
+    const [individualLoading, setIndividualLoading] = useState<string | null>(null);
+
+    const handleIndividualAiGrading = async (subId: string) => {
+        setIndividualLoading(subId);
+        try {
+            const res: any = await triggerIndividualAiGrading(subId);
+            if (res.processed) {
+                router.refresh();
+            } else {
+                alert("Error: " + (res.error || "No se pudo calificar."));
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Error de conexión.");
+        } finally {
+            setIndividualLoading(null);
         }
     };
 
@@ -350,13 +366,28 @@ export default function DaySubmissionsClient({
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
-                                            {row.content && (
-                                                <button
-                                                    onClick={() => handleDownload(row)}
-                                                    className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase text-[var(--color-primary)] hover:text-white transition-colors bg-blue-500/5 px-3 py-1.5 rounded-lg border border-blue-500/10 hover:border-blue-500/30"
-                                                >
-                                                    <Download size={14} /> Descargar
-                                                </button>
+                                            {row.submissionId && (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleIndividualAiGrading(row.submissionId!)}
+                                                        disabled={!!individualLoading || isAiGrading}
+                                                        title="Calificar ahora con IA"
+                                                        className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase text-rose-400 hover:text-white transition-colors bg-rose-500/5 px-3 py-1.5 rounded-lg border border-rose-500/10 hover:border-rose-500/30 disabled:opacity-50"
+                                                    >
+                                                        {individualLoading === row.submissionId ? (
+                                                            <Loader2 size={14} className="animate-spin" />
+                                                        ) : (
+                                                            <Cpu size={14} />
+                                                        )}
+                                                        {individualLoading === row.submissionId ? "Calificando..." : "IA"}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDownload(row)}
+                                                        className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase text-[var(--color-primary)] hover:text-white transition-colors bg-blue-500/5 px-3 py-1.5 rounded-lg border border-blue-500/10 hover:border-blue-500/30"
+                                                    >
+                                                        <Download size={14} /> Descargar
+                                                    </button>
+                                                </>
                                             )}
 
                                             {row.submissionId && (

@@ -210,19 +210,17 @@ export async function triggerAiGradingForDay(dayId: string) {
         console.log(`[AI GRADING TRIGGER] Starting for day ${dayId}`);
 
         // Update all submissions for this day to PENDING status
+        // FORCE: We remove the 'not PENDING' check to allow RE-TRIGGERING if it got stuck
         const updateResult = await prisma.submission.updateMany({
             where: {
-                dayId,
-                status: {
-                    not: "PENDING"
-                }
+                dayId
             },
             data: {
                 status: "PENDING"
             }
         });
 
-        console.log(`[AI GRADING TRIGGER] Marked ${updateResult.count} submissions as PENDING.`);
+        console.log(`[AI GRADING TRIGGER] Force-marked ${updateResult.count} submissions as PENDING.`);
 
         // Get TOTAL pending count for this day (including those already pending)
         const totalPending = await prisma.submission.count({
@@ -239,6 +237,19 @@ export async function triggerAiGradingForDay(dayId: string) {
         };
     } catch (error: any) {
         console.error("[AI GRADING TRIGGER] Error:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function triggerIndividualAiGrading(submissionId: string) {
+    try {
+        await prisma.submission.update({
+            where: { id: submissionId },
+            data: { status: "PENDING" }
+        });
+        const sub = await prisma.submission.findUnique({ where: { id: submissionId }, select: { dayId: true } });
+        return await processNextPendingSubmission(sub?.dayId);
+    } catch (error: any) {
         return { success: false, error: error.message };
     }
 }
