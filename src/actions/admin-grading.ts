@@ -72,16 +72,20 @@ export async function processNextPendingSubmission(dayId?: string) {
             submission.day.exerciseDescription || undefined
         );
 
+        console.log(`[GRADING PROCESSOR] Gemini Result for ${submission.user.email}:`, JSON.stringify(gradingResult, null, 2));
+
         // Update submission with results
         const updatedSubmission = await prisma.submission.update({
             where: { id: submission.id },
             data: {
                 status: "GRADED",
-                grade: gradingResult.nota,
+                grade: typeof gradingResult.nota === 'number' ? gradingResult.nota : undefined,
                 feedback: gradingResult,
                 ...(gradingResult.resumen_codigo && contentToGrade.startsWith("[PDF Document:") && { content: gradingResult.resumen_codigo })
             }
         });
+
+        console.log(`[GRADING PROCESSOR] DB Updated for ${submission.user.email}. Status: ${updatedSubmission.status}, Grade: ${updatedSubmission.grade}`);
 
         // SEND EMAIL NOTIFICATION
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://doacademy.vercel.app";
