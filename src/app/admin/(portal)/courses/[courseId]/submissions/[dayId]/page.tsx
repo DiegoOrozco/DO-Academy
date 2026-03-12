@@ -5,9 +5,9 @@ import { notFound } from "next/navigation";
 export default async function DaySubmissionsPage({
     params
 }: {
-    params: { courseId: string; dayId: string }
+    params: Promise<{ courseId: string; dayId: string }>
 }) {
-    const { courseId, dayId } = params;
+    const { courseId, dayId } = await params;
 
     const course = await prisma.course.findUnique({
         where: { id: courseId },
