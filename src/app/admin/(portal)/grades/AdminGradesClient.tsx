@@ -285,8 +285,8 @@ export default function AdminGradesClient({
                                                                             {typeof sub.feedback === 'object' ? (
                                                                                 sub.feedback.text || (
                                                                                     <>
-                                                                                        {sub.feedback.aspectos_positivos && <p><span className="text-emerald-400 font-bold">+</span> {Array.isArray(sub.feedback.aspectos_positivos) ? sub.feedback.aspectos_positivos[0] : sub.feedback.aspectos_positivos}</p>}
-                                                                                        {sub.feedback.aspectos_mejora && <p><span className="text-amber-400 font-bold">-</span> {Array.isArray(sub.feedback.aspectos_mejora) ? sub.feedback.aspectos_mejora[0] : sub.feedback.aspectos_mejora}</p>}
+                                                                                        {sub.feedback.feedback_positivo && <p><span className="text-emerald-400 font-bold">+</span> {Array.isArray(sub.feedback.feedback_positivo) ? sub.feedback.feedback_positivo[0] : sub.feedback.feedback_positivo}</p>}
+                                                                                        {sub.feedback.mejoras && <p><span className="text-amber-400 font-bold">-</span> {Array.isArray(sub.feedback.mejoras) ? sub.feedback.mejoras[0] : sub.feedback.mejoras}</p>}
                                                                                     </>
                                                                                 )
                                                                             ) : (
