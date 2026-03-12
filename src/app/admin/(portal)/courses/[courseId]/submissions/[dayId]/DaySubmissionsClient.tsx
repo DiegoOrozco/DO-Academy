@@ -392,8 +392,8 @@ export default function DaySubmissionsClient({
                                                         <p className="line-clamp-2" title={row.feedback.text}>{row.feedback.text}</p>
                                                     ) : (
                                                         <>
-                                                            {row.feedback.aspectos_positivos && <p className="line-clamp-1"><span className="text-emerald-500 font-bold">+</span> {Array.isArray(row.feedback.aspectos_positivos) ? row.feedback.aspectos_positivos[0] : row.feedback.aspectos_positivos}</p>}
-                                                            {row.feedback.aspectos_mejora && <p className="line-clamp-1"><span className="text-amber-500 font-bold">-</span> {Array.isArray(row.feedback.aspectos_mejora) ? row.feedback.aspectos_mejora[0] : row.feedback.aspectos_mejora}</p>}
+                                                            {row.feedback.feedback_positivo && <p className="line-clamp-1"><span className="text-emerald-500 font-bold">+</span> {Array.isArray(row.feedback.feedback_positivo) ? row.feedback.feedback_positivo[0] : row.feedback.feedback_positivo}</p>}
+                                                            {row.feedback.mejoras && <p className="line-clamp-1"><span className="text-amber-500 font-bold">-</span> {Array.isArray(row.feedback.mejoras) ? row.feedback.mejoras[0] : row.feedback.mejoras}</p>}
                                                         </>
                                                     )}
                                                 </div>

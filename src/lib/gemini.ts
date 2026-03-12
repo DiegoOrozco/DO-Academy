@@ -153,9 +153,10 @@ Feedback general: Implacable, puramente técnico y matemático.`
             const parsed = JSON.parse(text);
             
             if (parsed && !parsed.text) {
-                const positives = Array.isArray(parsed.aspectos_positivos) ? parsed.aspectos_positivos.join(" ") : "";
-                const improvements = Array.isArray(parsed.aspectos_mejora) ? parsed.aspectos_mejora.join(" ") : "";
-                parsed.text = `Aspectos Positivos: ${positives}\n\nAspectos de Mejora: ${improvements}`;
+                const positives = Array.isArray(parsed.feedback_positivo) ? parsed.feedback_positivo.join(" ") : "";
+                const improvements = Array.isArray(parsed.mejoras) ? parsed.mejoras.join(" ") : "";
+                const comment = parsed.comentario || "";
+                parsed.text = `${comment}\n\nAspectos Positivos: ${positives}\n\nAspectos de Mejora: ${improvements}`.trim();
             }
             
             return parsed;
@@ -173,9 +174,10 @@ Feedback general: Implacable, puramente técnico y matemático.`
                 
                 // BACKWARDS COMPATIBILITY: Ensure 'text' exists for simpler UI components
                 if (!parsed.text) {
-                    const positives = Array.isArray(parsed.aspectos_positivos) ? parsed.aspectos_positivos.join(" ") : "";
-                    const improvements = Array.isArray(parsed.aspectos_mejora) ? parsed.aspectos_mejora.join(" ") : "";
-                    parsed.text = `Aspectos Positivos: ${positives}\n\nAspectos de Mejora: ${improvements}`;
+                    const positives = Array.isArray(parsed.feedback_positivo) ? parsed.feedback_positivo.join(" ") : "";
+                    const improvements = Array.isArray(parsed.mejoras) ? parsed.mejoras.join(" ") : "";
+                    const comment = parsed.comentario || "";
+                    parsed.text = `${comment}\n\nAspectos Positivos: ${positives}\n\nAspectos de Mejora: ${improvements}`.trim();
                 }
                 
                 return parsed;
