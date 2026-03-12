@@ -326,10 +326,9 @@ export async function testAiConnection() {
     
     // Test combinations from the DISCOVERED list
     const tests = [
+        { model: "gemini-2.5-flash", version: "v1beta" },
         { model: "gemini-2.0-flash", version: "v1beta" },
-        { model: "gemini-2.0-flash", version: "v1" },
-        { model: "gemini-1.5-flash", version: "v1" }, // Check if it's really missing
-        { model: "gemini-2.5-flash", version: "v1beta" }
+        { model: "gemini-2.0-flash", version: "v1" }
     ];
 
     for (const test of tests) {
