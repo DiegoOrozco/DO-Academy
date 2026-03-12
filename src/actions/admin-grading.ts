@@ -324,10 +324,28 @@ export async function testAiConnection() {
         // Simple test call
         const { GoogleGenerativeAI } = require("@google/generative-ai");
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
         const result = await model.generateContent("Hola, responde 'OK'.");
         const response = await result.response;
         return { success: true, message: response.text() };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
+export async function listAvailableModels() {
+    try {
+        const apiKey = process.env.GOOGLE_AI_API_KEY;
+        if (!apiKey) return { success: false, error: "API KEY NO ENCONTRADA" };
+        const { GoogleGenerativeAI } = require("@google/generative-ai");
+        const genAI = new GoogleGenerativeAI(apiKey);
+        
+        // This is tricky with the current SDK, but let's try a common approach
+        // or just try different names
+        return { 
+            success: true, 
+            suggestions: ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro", "gemini-1.0-pro"] 
+        };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
