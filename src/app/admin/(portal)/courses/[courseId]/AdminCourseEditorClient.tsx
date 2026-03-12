@@ -1000,35 +1000,35 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                             )}
                                                                         </div>
                                                                     )}
-                                                                </div>
-                                                            </SortableItem> 
-                                                        ))}
-                                                        <button
-                                                            onClick={() => handleAddDay(week.id)}
-                                                            className="w-full border-2 border-dashed border-slate-700 hover:border-[var(--color-primary)] hover:bg-[var(--color-primary)]/5 text-slate-400 hover:text-[var(--color-primary)] font-medium py-3 rounded-xl transition-all flex items-center justify-center gap-2 mt-2"
-                                                        >
-                                                            <Plus size={16} /> Agregar Día a {week.title}
-                                                        </button>
-                                                    </SortableContext>
-                                                </div>
-                                        )}
-                                    </SortableItem>
-                                    ))}
+                                                                </SortableItem>
+                                                            ))}
+                                                            <button
+                                                                onClick={() => handleAddDay(week.id)}
+                                                                className="w-full border-2 border-dashed border-slate-700 hover:border-[var(--color-primary)] hover:bg-[var(--color-primary)]/5 text-slate-400 hover:text-[var(--color-primary)] font-medium py-3 rounded-xl transition-all flex items-center justify-center gap-2 mt-2"
+                                                            >
+                                                                <Plus size={16} /> Agregar Día a {week.title}
+                                                            </button>
+                                                        </SortableContext>
+                                                    </div>
+                                                )}
+                                            </SortableItem>
+                                        ))}
 
-                                    {course.weeks.length === 0 && (
-                                        <div className="p-10 border border-dashed border-slate-700 rounded-2xl flex flex-col items-center justify-center text-center">
-                                            <List className="w-12 h-12 text-slate-600 mb-4" />
-                                            <h3 className="text-lg font-bold text-slate-300 mb-2">Currículo Vacío</h3>
-                                            <p className="text-slate-500 max-w-sm mb-6">Comienza construyendo tu temario agregando una nueva semana.</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </SortableContext>
-                        </DndContext>
-                    </div>
-                )}
+
+                                        {course.weeks.length === 0 && (
+                                            <div className="p-10 border border-dashed border-slate-700 rounded-2xl flex flex-col items-center justify-center text-center">
+                                                <List className="w-12 h-12 text-slate-600 mb-4" />
+                                                <h3 className="text-lg font-bold text-slate-300 mb-2">Currículo Vacío</h3>
+                                                <p className="text-slate-500 max-w-sm mb-6">Comienza construyendo tu temario agregando una nueva semana.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </SortableContext>
+                            </DndContext>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
-    </div >
     );
 }
