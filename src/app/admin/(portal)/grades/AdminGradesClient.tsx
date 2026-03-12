@@ -281,13 +281,18 @@ export default function AdminGradesClient({
                                                                                 </button>
                                                                             )}
                                                                         </div>
-                                                                        <p className="text-xs text-slate-400 line-clamp-2 mt-1" title={
-                                                                            typeof sub.feedback === 'object' && sub.feedback?.text ? sub.feedback.text :
-                                                                                (typeof sub.feedback === 'string' ? sub.feedback : "Sin feedback")
-                                                                        }>
-                                                                            {typeof sub.feedback === 'object' && sub.feedback?.text ? sub.feedback.text :
-                                                                                (typeof sub.feedback === 'string' ? sub.feedback : "Sin feedback asociado a esta entrega.")}
-                                                                        </p>
+                                                                        <div className="text-[10px] text-slate-400 mt-1 line-clamp-3">
+                                                                            {typeof sub.feedback === 'object' ? (
+                                                                                sub.feedback.text || (
+                                                                                    <>
+                                                                                        {sub.feedback.aspectos_positivos && <p><span className="text-emerald-400 font-bold">+</span> {Array.isArray(sub.feedback.aspectos_positivos) ? sub.feedback.aspectos_positivos[0] : sub.feedback.aspectos_positivos}</p>}
+                                                                                        {sub.feedback.aspectos_mejora && <p><span className="text-amber-400 font-bold">-</span> {Array.isArray(sub.feedback.aspectos_mejora) ? sub.feedback.aspectos_mejora[0] : sub.feedback.aspectos_mejora}</p>}
+                                                                                    </>
+                                                                                )
+                                                                            ) : (
+                                                                                sub.feedback || "Sin feedback asociado a esta entrega."
+                                                                            )}
+                                                                        </div>
                                                                     </div>
                                                                 ))}
                                                             </div>
