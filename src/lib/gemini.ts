@@ -150,7 +150,15 @@ Feedback general: Implacable, puramente técnico y matemático.`
         // Robust JSON extraction
         try {
             // First try direct parse
-            return JSON.parse(text);
+            const parsed = JSON.parse(text);
+            
+            if (parsed && !parsed.text) {
+                const positives = Array.isArray(parsed.aspectos_positivos) ? parsed.aspectos_positivos.join(" ") : "";
+                const improvements = Array.isArray(parsed.aspectos_mejora) ? parsed.aspectos_mejora.join(" ") : "";
+                parsed.text = `Aspectos Positivos: ${positives}\n\nAspectos de Mejora: ${improvements}`;
+            }
+            
+            return parsed;
         } catch (e) {
             // If it fails, try to extract from code blocks
             console.log("Direct JSON parse failed, attempting extraction...");
@@ -161,7 +169,16 @@ Feedback general: Implacable, puramente técnico y matemático.`
             }
 
             try {
-                return JSON.parse(text);
+                const parsed = JSON.parse(text);
+                
+                // BACKWARDS COMPATIBILITY: Ensure 'text' exists for simpler UI components
+                if (!parsed.text) {
+                    const positives = Array.isArray(parsed.aspectos_positivos) ? parsed.aspectos_positivos.join(" ") : "";
+                    const improvements = Array.isArray(parsed.aspectos_mejora) ? parsed.aspectos_mejora.join(" ") : "";
+                    parsed.text = `Aspectos Positivos: ${positives}\n\nAspectos de Mejora: ${improvements}`;
+                }
+                
+                return parsed;
             } catch (innerError) {
                 console.error("JSON Extraction failed. Text was:", text);
                 throw innerError;

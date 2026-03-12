@@ -17,6 +17,7 @@ interface StudentSubmission {
     status: string;
     grade: number | null | undefined;
     createdAt: Date | null;
+    feedback?: any;
 }
 
 function GradeEditor({ initialGrade, userId, dayId }: { initialGrade: number | null | undefined, userId: string, dayId: string }) {
@@ -343,7 +344,7 @@ export default function DaySubmissionsClient({
                             <tr className="bg-white/5 border-b border-white/10 uppercase tracking-widest text-[10px] font-black text-slate-400">
                                 <th className="px-6 py-4">Estudiante</th>
                                 <th className="px-6 py-4 text-center">Estado</th>
-                                <th className="px-6 py-4 text-center">Nota</th>
+                                <th className="px-6 py-4 text-center text-[10px] font-black text-rose-400">Feedback IA</th>
                                 <th className="px-6 py-4 text-center">Fecha</th>
                                 <th className="px-6 py-4 text-right">Acciones</th>
                             </tr>
@@ -382,6 +383,24 @@ export default function DaySubmissionsClient({
                                             userId={row.studentId}
                                             dayId={dayId}
                                         />
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col gap-1 max-w-xs mx-auto">
+                                            {typeof row.feedback === 'object' ? (
+                                                <div className="text-[10px] leading-tight text-slate-400">
+                                                    {row.feedback.text ? (
+                                                        <p className="line-clamp-2" title={row.feedback.text}>{row.feedback.text}</p>
+                                                    ) : (
+                                                        <>
+                                                            {row.feedback.aspectos_positivos && <p className="line-clamp-1"><span className="text-emerald-500 font-bold">+</span> {Array.isArray(row.feedback.aspectos_positivos) ? row.feedback.aspectos_positivos[0] : row.feedback.aspectos_positivos}</p>}
+                                                            {row.feedback.aspectos_mejora && <p className="line-clamp-1"><span className="text-amber-500 font-bold">-</span> {Array.isArray(row.feedback.aspectos_mejora) ? row.feedback.aspectos_mejora[0] : row.feedback.aspectos_mejora}</p>}
+                                                        </>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <span className="text-[10px] text-slate-600 italic">No feedback</span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4 text-center text-xs text-slate-400 font-mono">
                                         {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "-"}
