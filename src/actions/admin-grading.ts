@@ -187,3 +187,35 @@ export async function processAllPendingSubmissions() {
         return { success: false, error: error.message };
     }
 }
+
+export async function triggerAiGradingForDay(dayId: string) {
+    try {
+        console.log(`[AI GRADING TRIGGER] Starting for day ${dayId}`);
+
+        // Update all submissions for this day to PENDING status
+        const updateResult = await prisma.submission.updateMany({
+            where: {
+                dayId,
+                status: {
+                    not: "PENDING"
+                }
+            },
+            data: {
+                status: "PENDING"
+            }
+        });
+
+        console.log(`[AI GRADING TRIGGER] Marked ${updateResult.count} submissions as PENDING.`);
+
+        // Trigger the batch processor
+        const batchResult: any = await processAllPendingSubmissions();
+
+        return {
+            updateCount: updateResult.count,
+            ...batchResult
+        };
+    } catch (error: any) {
+        console.error("[AI GRADING TRIGGER] Error:", error);
+        return { success: false, error: error.message };
+    }
+}

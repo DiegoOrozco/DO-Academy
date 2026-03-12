@@ -37,6 +37,7 @@ export async function updateManualGrade(userId: string, dayId: string, grade: nu
         });
 
         revalidatePath("/admin/grades");
+        revalidatePath("/admin/(portal)/courses/[courseId]/submissions/[dayId]", "page");
         revalidatePath("/");
 
         return { success: true };

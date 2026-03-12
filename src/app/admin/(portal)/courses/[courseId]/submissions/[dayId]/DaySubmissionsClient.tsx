@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
-import { ArrowLeft, Download, FileDown, Search, User, CheckCircle2, Clock, XCircle } from "lucide-react";
+import React, { useState, useTransition } from "react";
+import { ArrowLeft, Download, FileDown, Search, User, CheckCircle2, Clock, XCircle, Cpu, Loader2, Edit2, Check } from "lucide-react";
 import Link from "next/link";
+import { triggerAiGradingForDay } from "@/actions/admin-grading";
+import { updateManualGrade } from "@/actions/admin-grades";
 
 interface StudentSubmission {
     studentId: string;
@@ -13,6 +15,65 @@ interface StudentSubmission {
     status: string;
     grade: number | null | undefined;
     createdAt: Date | null;
+}
+
+function GradeEditor({ initialGrade, userId, dayId }: { initialGrade: number | null | undefined, userId: string, dayId: string }) {
+    const [isEditing, setIsEditing] = useState(false);
+    const [grade, setGrade] = useState(initialGrade !== null && initialGrade !== undefined ? String(initialGrade) : "");
+    const [isPending, startTransition] = useTransition();
+
+    const handleSave = () => {
+        const numGrade = Number(grade);
+        if (isNaN(numGrade) || numGrade < 0 || numGrade > 100) return;
+
+        startTransition(async () => {
+            const res = await updateManualGrade(userId, dayId, numGrade);
+            if (res.success) {
+                setIsEditing(false);
+            } else {
+                alert("Error al guardar nota: " + res.error);
+            }
+        });
+    };
+
+    if (isEditing) {
+        return (
+            <div className="flex items-center justify-center gap-2">
+                <input
+                    type="number"
+                    min="0" max="100"
+                    value={grade}
+                    onChange={(e) => setGrade(e.target.value)}
+                    className="w-14 bg-black/40 border border-[var(--color-primary)]/50 rounded-lg px-2 py-1 text-xs font-bold text-white focus:outline-none focus:border-[var(--color-primary)]"
+                    disabled={isPending}
+                    autoFocus
+                    onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                />
+                <button
+                    onClick={handleSave}
+                    disabled={isPending}
+                    className="p-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-md transition-colors disabled:opacity-50"
+                >
+                    {isPending ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex items-center justify-center gap-2 group/edit">
+            <span className={`text-sm font-mono font-bold ${initialGrade !== null && initialGrade !== undefined ? 'text-white' : 'text-slate-500'}`}>
+                {initialGrade !== null && initialGrade !== undefined ? `${initialGrade}/100` : "-/100"}
+            </span>
+            <button
+                onClick={() => setIsEditing(true)}
+                className="p-1 rounded-md text-slate-500 hover:text-[var(--color-primary)] hover:bg-white/5 transition-all opacity-0 group-hover/edit:opacity-100"
+                title="Editar Nota"
+            >
+                <Edit2 size={12} />
+            </button>
+        </div>
+    );
 }
 
 export default function DaySubmissionsClient({
@@ -29,10 +90,35 @@ export default function DaySubmissionsClient({
     initialData: StudentSubmission[];
 }) {
     const [search, setSearch] = useState("");
+    const [isAiGrading, setIsAiGrading] = useState(false);
 
     const filteredData = initialData.filter(s =>
         s.studentName.toLowerCase().includes(search.toLowerCase())
     );
+
+    const handleAiGrading = async () => {
+        if (!confirm("¿Deseas iniciar la revisión con IA para todas las entregas de este día? Esto marcará las entregas como pendientes y comenzará el proceso en cola.")) {
+            return;
+        }
+
+        setIsAiGrading(true);
+        try {
+            const res: any = await triggerAiGradingForDay(dayId);
+            if (res.success) {
+                if (res.quotaExceeded) {
+                    alert(`Se han empezado a calificar las entregas. \u26a0\ufe0f La cuota de IA para hoy se agotó. Las ${res.updateCount - res.processedCount} entregas restantes se procesarán automáticamente mañana.`);
+                } else {
+                    alert(`¡Proceso de revisión IA iniciado! Se están procesando ${res.updateCount} entregas. Recibirás/recibirán los correos conforme se complete cada una.`);
+                }
+            } else {
+                alert("Error al iniciar revisión IA: " + res.error);
+            }
+        } catch (error) {
+            alert("Error de conexión al procesar.");
+        } finally {
+            setIsAiGrading(false);
+        }
+    };
 
     const handleDownload = (sub: StudentSubmission) => {
         if (!sub.content) return;
@@ -51,10 +137,6 @@ export default function DaySubmissionsClient({
         const newFileName = `${studentCleanName}_${dayCleanTitle}.${extension}`;
 
         if (sub.content.startsWith("http")) {
-            // Vercel Blob o URL externa
-            // Para forzar la descarga con nombre personalizado desde el navegador con una URL externa
-            // a veces necesitamos usar un fetch si el CORS lo permite, o simplemente abrirlo.
-            // Pero como queremos el nombre específico:
             fetch(sub.content)
                 .then(resp => resp.blob())
                 .then(blob => {
@@ -68,11 +150,9 @@ export default function DaySubmissionsClient({
                     window.URL.revokeObjectURL(url);
                 })
                 .catch(() => {
-                    // Fallback si falla fetch (CORS)
                     window.open(sub.content!, "_blank");
                 });
         } else {
-            // Contenido de texto (Código)
             const blob = new Blob([sub.content], { type: "text/plain" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -96,7 +176,7 @@ export default function DaySubmissionsClient({
             submissions.forEach((sub, index) => {
                 setTimeout(() => {
                     handleDownload(sub);
-                }, index * 500); // 500ms delay to avoid browser blocking
+                }, index * 500);
             });
         }
     };
@@ -104,7 +184,7 @@ export default function DaySubmissionsClient({
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                 <div>
                     <Link
                         href={`/admin/courses/${courseId}`}
@@ -115,13 +195,34 @@ export default function DaySubmissionsClient({
                     <h1 className="text-2xl font-bold text-white mb-1">Entregas: {dayTitle}</h1>
                     <p className="text-sm text-slate-400">{courseTitle}</p>
                 </div>
-                <button
-                    onClick={downloadAll}
-                    className="flex items-center gap-2 bg-[var(--color-primary)] hover:bg-blue-600 text-white font-bold py-2.5 px-6 rounded-xl transition-all glow-accent mt-2 sm:mt-0"
-                >
-                    <FileDown size={18} />
-                    Descargar Todo ({filteredData.filter(s => s.content).length})
-                </button>
+
+                <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+                    <button
+                        onClick={handleAiGrading}
+                        disabled={isAiGrading}
+                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-bold py-2.5 px-6 rounded-xl transition-all disabled:opacity-50"
+                    >
+                        {isAiGrading ? (
+                            <>
+                                <Loader2 size={18} className="animate-spin" />
+                                Procesando IA...
+                            </>
+                        ) : (
+                            <>
+                                <Cpu size={18} />
+                                Revisión IA (Cola)
+                            </>
+                        )}
+                    </button>
+
+                    <button
+                        onClick={downloadAll}
+                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-[var(--color-primary)] hover:bg-blue-600 text-white font-bold py-2.5 px-6 rounded-xl transition-all glow-accent"
+                    >
+                        <FileDown size={18} />
+                        Descargar Todo ({initialData.filter(s => s.content).length})
+                    </button>
+                </div>
             </div>
 
             {/* Search */}
@@ -138,65 +239,73 @@ export default function DaySubmissionsClient({
 
             {/* Table */}
             <div className="glass-effect rounded-2xl border border-[var(--color-glass-border)] overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="bg-white/5 border-b border-white/10 uppercase tracking-widest text-[10px] font-black text-slate-400">
-                            <th className="px-6 py-4">Estudiante</th>
-                            <th className="px-6 py-4 text-center">Estado</th>
-                            <th className="px-6 py-4 text-center">Nota</th>
-                            <th className="px-6 py-4 text-center">Fecha</th>
-                            <th className="px-6 py-4 text-right">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                        {filteredData.map((row) => (
-                            <tr key={row.studentId} className="group hover:bg-white/[0.02] transition-colors">
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-[var(--color-primary)]/20 group-hover:text-[var(--color-primary)] transition-all">
-                                            <User size={16} />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-semibold text-white">{row.studentName}</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 text-center">
-                                    {row.content ? (
-                                        <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20 uppercase tracking-wider">
-                                            <CheckCircle2 size={12} /> Entregado
-                                        </span>
-                                    ) : (
-                                        <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-500 bg-slate-500/10 px-2.5 py-1 rounded-full border border-slate-500/10 uppercase tracking-wider">
-                                            <XCircle size={12} /> Pendiente
-                                        </span>
-                                    )}
-                                </td>
-                                <td className="px-6 py-4 text-center">
-                                    <span className="text-sm font-mono font-bold text-white">
-                                        {row.grade !== null && row.grade !== undefined ? `${row.grade}/100` : "-"}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-center text-xs text-slate-400">
-                                    {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "-"}
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    {row.content && (
-                                        <button
-                                            onClick={() => handleDownload(row)}
-                                            className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase text-[var(--color-primary)] hover:text-white transition-colors bg-blue-500/5 px-3 py-1.5 rounded-lg border border-blue-500/10 hover:border-blue-500/30"
-                                        >
-                                            <Download size={14} /> Descargar
-                                        </button>
-                                    )}
-                                </td>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-white/5 border-b border-white/10 uppercase tracking-widest text-[10px] font-black text-slate-400">
+                                <th className="px-6 py-4">Estudiante</th>
+                                <th className="px-6 py-4 text-center">Estado</th>
+                                <th className="px-6 py-4 text-center">Nota</th>
+                                <th className="px-6 py-4 text-center">Fecha</th>
+                                <th className="px-6 py-4 text-right">Acciones</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                            {filteredData.map((row) => (
+                                <tr key={row.studentId} className="group hover:bg-white/[0.02] transition-colors">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-[var(--color-primary)]/20 group-hover:text-[var(--color-primary)] transition-all">
+                                                <User size={16} />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-semibold text-white">{row.studentName}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        {row.status === "PENDING" ? (
+                                            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20 uppercase tracking-wider animate-pulse">
+                                                <Clock size={12} /> Pendiente IA
+                                            </span>
+                                        ) : row.content ? (
+                                            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20 uppercase tracking-wider">
+                                                <CheckCircle2 size={12} /> Entregado
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-500 bg-slate-500/10 px-2.5 py-1 rounded-full border border-slate-500/10 uppercase tracking-wider">
+                                                <XCircle size={12} /> No Entrega
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <GradeEditor
+                                            initialGrade={row.grade}
+                                            userId={row.studentId}
+                                            dayId={dayId}
+                                        />
+                                    </td>
+                                    <td className="px-6 py-4 text-center text-xs text-slate-400 font-mono">
+                                        {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "-"}
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        {row.content && (
+                                            <button
+                                                onClick={() => handleDownload(row)}
+                                                className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase text-[var(--color-primary)] hover:text-white transition-colors bg-blue-500/5 px-3 py-1.5 rounded-lg border border-blue-500/10 hover:border-blue-500/30"
+                                            >
+                                                <Download size={14} /> Descargar
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
                 {filteredData.length === 0 && (
                     <div className="p-10 text-center text-slate-500 italic">
-                        No se encontraron estudiantes.
+                        No se encontraron estudiantes registrados.
                     </div>
                 )}
             </div>
