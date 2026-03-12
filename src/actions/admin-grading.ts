@@ -42,9 +42,17 @@ export async function processNextPendingSubmission() {
         let mimeType = "text/plain";
         let buffer: Buffer;
 
-        if (contentToGrade.startsWith("[PDF Document:")) {
-            // FALLBACK: If we lost the PDF binary because we made it async without blob storage, we will evaluate based on text or throw an error to the user indicating it's not supported in async mode yet.
-            // For now, let's pass a dummy buffer and text to Gemini so it doesn't crash, but note this limitation.
+        if (contentToGrade.startsWith("http")) {
+            // New logic: fetch content from blob storage
+            const response = await fetch(contentToGrade);
+            const arrayBuffer = await response.arrayBuffer();
+            buffer = Buffer.from(arrayBuffer);
+
+            if (submission.fileName.endsWith(".pdf")) mimeType = "application/pdf";
+            else if (submission.fileName.endsWith(".sql")) mimeType = "application/sql";
+            else if (submission.fileName.endsWith(".py")) mimeType = "text/x-python";
+        } else if (contentToGrade.startsWith("[PDF Document:")) {
+            // FALLBACK: If we lost the PDF binary because we made it async without blob storage (OLD DATA)
             buffer = Buffer.from("Por favor califica el contenido basado en los metadatos disponibles. El estudiante subió un PDF que ya no está en memoria.");
         } else {
             buffer = Buffer.from(contentToGrade, "utf-8");

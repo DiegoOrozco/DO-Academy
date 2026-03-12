@@ -50,7 +50,9 @@ export default async function AdminGradesPage() {
                     feedback: sub?.feedback,
                     createdAt: sub?.createdAt || null,
                     assignmentType: d.assignmentType,
-                    title: d.title
+                    title: d.title,
+                    content: sub?.content || null,
+                    fileName: sub?.fileName || null
                 });
 
                 if (sub?.grade !== null && sub?.grade !== undefined) {
