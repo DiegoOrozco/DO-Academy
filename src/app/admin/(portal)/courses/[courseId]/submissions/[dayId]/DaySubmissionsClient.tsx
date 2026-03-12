@@ -158,8 +158,8 @@ export default function DaySubmissionsClient({
 
                 if (res.processed) {
                     processed++;
-                    // Try to find the student name if returned (need to update action if possible)
-                    setProcessingUser(`Calificando entrega ${processed}...`);
+                    const studentInfo = res.studentName ? ` a ${res.studentName}` : "";
+                    setProcessingUser(`Calificando entrega ${processed}/${pendingCount}${studentInfo}...`);
                     router.refresh(); // Refresh UI to show the new grade in table
                 } else {
                     finished = true;

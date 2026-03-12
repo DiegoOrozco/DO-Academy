@@ -126,7 +126,12 @@ export async function processNextPendingSubmission(dayId?: string) {
             console.error(`[GRADING PROCESSOR] Email failed to send, but grading succeeded:`, mailErr);
         }
 
-        return { success: true, message: `Submission ${submission.id} graded.`, processed: true };
+        return { 
+            success: true, 
+            message: `Submission ${submission.id} graded.`, 
+            processed: true,
+            studentName: submission.user.name
+        };
 
     } catch (error: any) {
         const isQuotaError = error.status === 429 || error.message?.includes("429") || error.message?.includes("quota");
@@ -147,7 +152,12 @@ export async function processNextPendingSubmission(dayId?: string) {
             }
         });
 
-        return { success: false, processed: false, error: error.message };
+        return { 
+            success: false, 
+            processed: true, // Mark as processed so the loop continues to the NEXT one
+            error: error.message,
+            studentName: submission.user.name 
+        };
     }
 }
 
