@@ -43,6 +43,8 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
     const [isMounted, setIsMounted] = useState(false);
     useEffect(() => { setIsMounted(true); }, []);
 
+    const isNotAvailableYet = isMounted && userRole !== "ADMIN" && activeDay.availableFrom && new Date() < new Date(activeDay.availableFrom);
+
     const formatDate = (date: any) => {
         if (!isMounted || !date) return "...";
         try {
@@ -50,6 +52,19 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
         } catch {
             return "...";
         }
+    };
+
+    const formatFullDate = (utcString: string) => {
+        if (!isMounted || !utcString) return "...";
+        return new Date(utcString).toLocaleString("es-CR", {
+            weekday: "long",
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+        });
     };
 
     // Accurate video progress via YouTube IFrame API
@@ -92,7 +107,7 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
 
     // Load YT script and instantiate player per active day
     useEffect(() => {
-        if (!activeDay.videoId) return;
+        if (!activeDay.videoId || isNotAvailableYet) return;
         let cancelled = false;
 
         const ensureYT = () => new Promise<void>((resolve) => {
@@ -303,6 +318,20 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
                     <div className="w-full aspect-video rounded-2xl overflow-hidden glass-effect border border-[var(--border-color)] shadow-2xl relative bg-black/5">
                         {!isMounted ? (
                             <div className="absolute top-0 left-0 w-full h-full bg-black/20 animate-pulse" />
+                        ) : isNotAvailableYet ? (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-slate-950/80 backdrop-blur-xl border border-white/10 rounded-2xl">
+                                <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mb-6 border border-amber-500/20 shadow-[0_0_30px_rgba(245,158,11,0.2)] animate-pulse-subtle">
+                                    <Lock size={40} className="text-amber-500" />
+                                </div>
+                                <h3 className="text-2xl md:text-3xl font-black text-white mb-2 tracking-tight uppercase">Contenido Bloqueado</h3>
+                                <p className="text-slate-400 text-sm md:text-base max-w-md mx-auto leading-relaxed">
+                                    Esta clase todavía no está disponible para estudiantes. Por favor, regresa en la fecha y hora indicada.
+                                </p>
+                                <div className="mt-8 px-6 py-3 bg-white/5 rounded-2xl border border-white/10">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Disponible desde:</p>
+                                    <p className="text-sm font-black text-amber-400 font-mono">{formatFullDate(activeDay.availableFrom)}</p>
+                                </div>
+                            </div>
                         ) : activeDay.videoId ? (
                             usePlainIframe ? (
                                 <iframe
@@ -336,7 +365,15 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
                         )}
                     </div>
                     {/* Delivery / Forum Section */}
-                    {activeDayData.assignmentType === "FORUM" ? (
+                    {isNotAvailableYet ? (
+                        <div className="p-10 glass-effect rounded-2xl border border-white/5 bg-black/20 flex flex-col items-center gap-4 text-center">
+                            <Clock size={48} className="text-slate-600" />
+                            <div className="space-y-1">
+                                <h4 className="text-lg font-bold text-slate-400">Entrega y Foro Desactivados</h4>
+                                <p className="text-sm text-slate-500 max-w-sm">Los materiales y actividades de este día se habilitarán automáticamente en la fecha indicada arriba.</p>
+                            </div>
+                        </div>
+                    ) : activeDayData.assignmentType === "FORUM" ? (
                         <DayForum
                             day={activeDayData}
                             studentId={studentId}
@@ -374,7 +411,7 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
                                 Materiales del Día
                             </h3>
 
-                            {activeDay.summaryUrl || activeDay.materialUrl ? (
+                            {!isNotAvailableYet && (activeDay.summaryUrl || activeDay.materialUrl) ? (
                                 <div className="flex flex-col gap-3">
                                     {activeDay.summaryUrl && (
                                         <a
@@ -411,7 +448,7 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
                                 </div>
                             ) : (
                                 <div className="text-sm text-[var(--text-muted)] italic p-4 text-center border border-dashed border-[var(--border-color)] rounded-xl">
-                                    No hay recursos adicionales.
+                                    {isNotAvailableYet ? "Material restringido hasta el desbloqueo." : "No hay recursos adicionales."}
                                 </div>
                             )}
                         </div>
