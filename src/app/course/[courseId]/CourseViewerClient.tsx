@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, PlayCircle, FileText, Download, MessageSquare, Send, User, Menu, X, BookOpen, ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronLeft, PlayCircle, FileText, Download, MessageSquare, Send, User, Menu, X, BookOpen, ChevronDown, ChevronRight, Lock, Clock } from "lucide-react";
 import { createPost } from "@/actions/forum";
 import DayDelivery from "@/components/DayDelivery";
 import DayForum from "@/components/DayForum";
