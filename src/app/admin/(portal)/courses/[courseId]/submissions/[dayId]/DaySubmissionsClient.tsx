@@ -392,7 +392,7 @@ export default function DaySubmissionsClient({
                                             onClick={() => setSelectedFeedback({ submission: row, dayTitle: dayTitle })}
                                             title="Click para ver feedback completo"
                                         >
-                                            {typeof row.feedback === 'object' ? (
+                                            {row.feedback && typeof row.feedback === 'object' ? (
                                                 <div className="text-[10px] leading-tight text-slate-400">
                                                     {row.feedback.text ? (
                                                         <p className="line-clamp-2">{row.feedback.text}</p>

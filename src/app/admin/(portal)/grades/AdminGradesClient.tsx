@@ -288,7 +288,7 @@ export default function AdminGradesClient({
                                             onClick={(e) => { e.stopPropagation(); setSelectedFeedback({ sub, name: row.name }); }}
                                             title="Click para ver feedback completo"
                                         >
-                                                                            {typeof sub.feedback === 'object' ? (
+                                                                            {sub.feedback && typeof sub.feedback === 'object' ? (
                                                                                 <>
                                                                                     {sub.feedback.text ? sub.feedback.text : (
                                                                                         <>
