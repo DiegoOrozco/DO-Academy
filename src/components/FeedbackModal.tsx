@@ -44,9 +44,23 @@ export default function FeedbackModal({
     if (!isOpen || !mounted) return null;
 
     const isObject = typeof feedback === 'object' && feedback !== null;
-    const comment = isObject ? feedback.comentario || feedback.text : feedback;
-    const positives = isObject ? (Array.isArray(feedback.feedback_positivo) ? feedback.feedback_positivo : []) : [];
-    const improvements = isObject ? (Array.isArray(feedback.mejoras) ? feedback.mejoras : []) : [];
+    
+    // Normalizar comentario general
+    const comment = isObject ? (feedback.comentario || feedback.text || "") : (typeof feedback === 'string' ? feedback : "");
+
+    // Normalizar puntos positivos (pueden venir como array o string)
+    let positives: string[] = [];
+    if (isObject && feedback.feedback_positivo) {
+        if (Array.isArray(feedback.feedback_positivo)) positives = feedback.feedback_positivo;
+        else if (typeof feedback.feedback_positivo === 'string') positives = [feedback.feedback_positivo];
+    }
+
+    // Normalizar mejoras (pueden venir como array o string)
+    let improvements: string[] = [];
+    if (isObject && feedback.mejoras) {
+        if (Array.isArray(feedback.mejoras)) improvements = feedback.mejoras;
+        else if (typeof feedback.mejoras === 'string') improvements = [feedback.mejoras];
+    }
 
     const modalContent = (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
