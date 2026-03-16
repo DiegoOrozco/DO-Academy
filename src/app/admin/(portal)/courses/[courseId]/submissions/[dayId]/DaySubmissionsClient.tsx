@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { ArrowLeft, Download, FileDown, Search, User, CheckCircle2, Clock, XCircle, Cpu, Loader2, Edit2, Check } from "lucide-react";
+import { ArrowLeft, Download, FileDown, Search, User, CheckCircle2, Clock, XCircle, Cpu, Loader2, Edit2, Check, FileArchive } from "lucide-react";
+import JSZip from "jszip";
 import Link from "next/link";
 import { triggerAiGradingForDay, processNextPendingSubmission, triggerIndividualAiGrading, gradeIndividualSubmissionAction, testAiConnection } from "@/actions/admin-grading";
 import { updateManualGrade, deleteSubmission } from "@/actions/admin-grades";
@@ -96,6 +97,7 @@ export default function DaySubmissionsClient({
     const [search, setSearch] = useState("");
     const [isAiGrading, setIsAiGrading] = useState(false);
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
+    const [isZipping, setIsZipping] = useState(false);
     const [selectedFeedback, setSelectedFeedback] = useState<{ submission: StudentSubmission; dayTitle: string } | null>(null);
 
     const filteredData = initialData.filter(s =>
@@ -213,21 +215,23 @@ export default function DaySubmissionsClient({
         }
     };
 
-    const handleDownload = (sub: StudentSubmission) => {
-        if (!sub.content) return;
-
+    const getFormattedFileName = (sub: StudentSubmission) => {
+        if (!sub.content) return "";
         const studentCleanName = sub.studentName.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
         const dayCleanTitle = dayTitle.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
 
-        // Determinar extensión
         let extension = "txt";
         if (sub.fileName?.includes(".")) {
             extension = sub.fileName.split(".").pop() || "txt";
         } else if (sub.content.startsWith("http") && sub.content.includes(".pdf")) {
             extension = "pdf";
         }
+        return `${studentCleanName}_${dayCleanTitle}.${extension}`;
+    };
 
-        const newFileName = `${studentCleanName}_${dayCleanTitle}.${extension}`;
+    const handleDownload = (sub: StudentSubmission) => {
+        if (!sub.content) return;
+        const newFileName = getFormattedFileName(sub);
 
         if (sub.content.startsWith("http")) {
             fetch(sub.content)
@@ -258,19 +262,47 @@ export default function DaySubmissionsClient({
         }
     };
 
-    const downloadAll = () => {
+    const downloadAll = async () => {
         const submissions = filteredData.filter(s => s.content);
         if (submissions.length === 0) {
             alert("No hay entregas para descargar.");
             return;
         }
 
-        if (confirm(`¿Descargar ${submissions.length} entregas? El navegador puede pedirte permiso para descargas múltiples.`)) {
-            submissions.forEach((sub, index) => {
-                setTimeout(() => {
-                    handleDownload(sub);
-                }, index * 500);
-            });
+        if (!confirm(`¿Descargar las ${submissions.length} entregas en un solo archivo .ZIP?`)) {
+            return;
+        }
+
+        setIsZipping(true);
+        const zip = new JSZip();
+
+        try {
+            for (const sub of submissions) {
+                const fileName = getFormattedFileName(sub);
+                if (sub.content!.startsWith("http")) {
+                    const response = await fetch(sub.content!);
+                    const blob = await response.blob();
+                    zip.file(fileName, blob);
+                } else {
+                    zip.file(fileName, sub.content!);
+                }
+            }
+
+            const content = await zip.generateAsync({ type: "blob" });
+            const url = URL.createObjectURL(content);
+            const a = document.createElement("a");
+            a.href = url;
+            const dayCleanTitle = dayTitle.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
+            a.download = `entregas_${dayCleanTitle}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Error creating ZIP:", error);
+            alert("Error al crear el archivo ZIP.");
+        } finally {
+            setIsZipping(false);
         }
     };
 
@@ -318,10 +350,20 @@ export default function DaySubmissionsClient({
 
                     <button
                         onClick={downloadAll}
-                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-[var(--color-primary)] hover:bg-blue-600 text-white font-bold py-2.5 px-6 rounded-xl transition-all glow-accent"
+                        disabled={isZipping}
+                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-[var(--color-primary)] hover:bg-blue-600 text-white font-bold py-2.5 px-6 rounded-xl transition-all glow-accent disabled:opacity-50"
                     >
-                        <FileDown size={18} />
-                        Descargar Todo ({initialData.filter(s => s.content).length})
+                        {isZipping ? (
+                            <>
+                                <Loader2 size={18} className="animate-spin" />
+                                Creando ZIP...
+                            </>
+                        ) : (
+                            <>
+                                <FileArchive size={18} />
+                                Descargar Todo .ZIP ({initialData.filter(s => s.content).length})
+                            </>
+                        )}
                     </button>
                 </div>
             </div>
