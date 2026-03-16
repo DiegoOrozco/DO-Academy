@@ -213,7 +213,8 @@ export async function triggerAiGradingForDay(dayId: string) {
         // FORCE: We remove the 'not PENDING' check to allow RE-TRIGGERING if it got stuck
         const updateResult = await prisma.submission.updateMany({
             where: {
-                dayId
+                dayId,
+                status: { not: "GRADED" }
             },
             data: {
                 status: "PENDING"
