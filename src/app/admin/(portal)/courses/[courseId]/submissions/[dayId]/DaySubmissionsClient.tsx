@@ -434,15 +434,21 @@ export default function DaySubmissionsClient({
                                             onClick={() => setSelectedFeedback({ submission: row, dayTitle: dayTitle })}
                                             title="Click para ver feedback completo"
                                         >
-                                            {row.feedback && typeof row.feedback === 'object' ? (
+                                            {row.feedback ? (
                                                 <div className="text-[10px] leading-tight text-slate-400">
-                                                    {row.feedback.text ? (
-                                                        <p className="line-clamp-2">{row.feedback.text}</p>
-                                                    ) : (
+                                                    {typeof row.feedback === 'object' ? (
                                                         <>
-                                                            {row.feedback.feedback_positivo && <p className="line-clamp-1"><span className="text-emerald-500 font-bold">+</span> {Array.isArray(row.feedback.feedback_positivo) ? row.feedback.feedback_positivo[0] : row.feedback.feedback_positivo}</p>}
-                                                            {row.feedback.mejoras && <p className="line-clamp-1"><span className="text-amber-500 font-bold">-</span> {Array.isArray(row.feedback.mejoras) ? row.feedback.mejoras[0] : row.feedback.mejoras}</p>}
+                                                            {row.feedback.text ? (
+                                                                <p className="line-clamp-2">{row.feedback.text}</p>
+                                                            ) : (
+                                                                <>
+                                                                    {row.feedback.feedback_positivo && <p className="line-clamp-1"><span className="text-emerald-500 font-bold">+</span> {Array.isArray(row.feedback.feedback_positivo) ? row.feedback.feedback_positivo[0] : row.feedback.feedback_positivo}</p>}
+                                                                    {row.feedback.mejoras && <p className="line-clamp-1"><span className="text-amber-500 font-bold">-</span> {Array.isArray(row.feedback.mejoras) ? row.feedback.mejoras[0] : row.feedback.mejoras}</p>}
+                                                                </>
+                                                            )}
                                                         </>
+                                                    ) : (
+                                                        <p className="line-clamp-2">{String(row.feedback)}</p>
                                                     )}
                                                     <div className="text-[9px] text-[var(--color-primary)] font-bold mt-1 opacity-0 group-hover/feedback:opacity-100 transition-opacity">VER DETALLE →</div>
                                                 </div>

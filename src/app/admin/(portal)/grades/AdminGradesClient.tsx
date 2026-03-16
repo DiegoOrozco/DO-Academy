@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { GraduationCap, Search, Filter, Download, User, ChevronRight, BookOpen, ChevronDown, Check, Edit2, FileDown } from "lucide-react";
+import { GraduationCap, Search, Filter, Download, User, ChevronRight, BookOpen, ChevronDown, Check, Edit2, FileDown, Loader2 } from "lucide-react";
+import JSZip from "jszip";
 import { updateManualGrade } from "../../../../actions/admin-grades";
+
 import FeedbackModal from "@/components/FeedbackModal";
 
 function GradeEditor({ initialGrade, userId, dayId }: { initialGrade: number | null, userId: string, dayId: string }) {
@@ -98,18 +100,61 @@ export default function AdminGradesClient({
         }
     };
 
-    const downloadAll = (submissions: any[]) => {
+    const [isZipping, setIsZipping] = useState(false);
+
+    const downloadAll = async (submissions: any[], studentName: string) => {
         const validSubs = (submissions || []).filter(s => s.content);
         if (validSubs.length === 0) {
             alert("No hay archivos para descargar.");
             return;
         }
 
-        validSubs.forEach((sub, index) => {
-            setTimeout(() => {
-                handleDownload(sub.content, sub.fileName || `entrega-${index}.txt`);
-            }, index * 400); // 400ms delay between downloads
-        });
+        if (!confirm(`¿Descargar las ${validSubs.length} entregas de ${studentName} en un solo archivo .ZIP?`)) {
+            return;
+        }
+
+        setIsZipping(true);
+        const zip = new JSZip();
+
+        try {
+            for (const sub of validSubs) {
+                const dayCleanTitle = sub.title.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
+                const studentCleanName = studentName.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
+                
+                let extension = "txt";
+                if (sub.fileName?.includes(".")) {
+                    extension = sub.fileName.split(".").pop() || "txt";
+                } else if (sub.content.startsWith("http") && sub.content.includes(".pdf")) {
+                    extension = "pdf";
+                }
+                
+                const fileName = `${studentCleanName}_${dayCleanTitle}.${extension}`;
+
+                if (sub.content.startsWith("http")) {
+                    const response = await fetch(sub.content);
+                    const blob = await response.blob();
+                    zip.file(fileName, blob);
+                } else {
+                    zip.file(fileName, sub.content);
+                }
+            }
+
+            const content = await zip.generateAsync({ type: "blob" });
+            const url = URL.createObjectURL(content);
+            const a = document.createElement("a");
+            a.href = url;
+            const studentCleanName = studentName.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
+            a.download = `entregas_${studentCleanName}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Error creating ZIP:", error);
+            alert("Error al crear el archivo ZIP.");
+        } finally {
+            setIsZipping(false);
+        }
     };
 
     const toggleRow = (id: string) => {
@@ -241,11 +286,12 @@ export default function AdminGradesClient({
                                                         <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2 flex justify-between items-center">
                                                             <span>Detalle de Entregas</span>
                                                             <button
-                                                                onClick={(e) => { e.stopPropagation(); downloadAll(row.submissions); }}
-                                                                className="flex items-center gap-1.5 text-[var(--color-primary)] hover:text-blue-400 transition-colors bg-blue-500/10 px-3 py-1.5 rounded-lg border border-blue-500/20"
+                                                                onClick={(e) => { e.stopPropagation(); downloadAll(row.submissions, row.name); }}
+                                                                disabled={isZipping}
+                                                                className="flex items-center gap-1.5 text-[var(--color-primary)] hover:text-blue-400 transition-colors bg-blue-500/10 px-3 py-1.5 rounded-lg border border-blue-500/20 disabled:opacity-50"
                                                             >
-                                                                <FileDown size={14} />
-                                                                <span className="text-[10px] font-black uppercase">Descargar Todo</span>
+                                                                {isZipping ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />}
+                                                                <span className="text-[10px] font-black uppercase">{isZipping ? "Procesando..." : "Descargar Todo (.ZIP)"}</span>
                                                             </button>
                                                         </h4>
                                                         {(row.submissions || []).length > 0 ? (
