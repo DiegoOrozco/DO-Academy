@@ -261,10 +261,13 @@ export default function AdminGradesClient({
                                             </td>
                                             <td className="px-6 py-5 text-center">
                                                 <div className="flex items-center justify-center gap-2 text-xs font-mono text-slate-400">
-                                                    <span title="Quices" className={row.gradeData.qAvg > 0 ? "text-purple-400" : ""}>{row.gradeData.qAvg}</span>/
-                                                    <span title="Labs" className={row.gradeData.lAvg > 0 ? "text-blue-400" : ""}>{row.gradeData.lAvg}</span>/
-                                                    <span title="Foros" className={row.gradeData.fAvg > 0 ? "text-emerald-400" : ""}>{row.gradeData.fAvg}</span>/
-                                                    <span title="Proyectos" className={row.gradeData.pAvg > 0 ? "text-amber-400" : ""}>{row.gradeData.pAvg}</span>
+                                                    {row.gradeData.weights.QUIZ > 0 && <span title="Quices" className={row.gradeData.qAvg > 0 ? "text-purple-400" : ""}>{row.gradeData.qAvg}</span>}
+                                                    {row.gradeData.weights.QUIZ > 0 && (row.gradeData.weights.LAB > 0 || row.gradeData.weights.FORUM > 0 || row.gradeData.weights.PROJECT > 0) && "/"}
+                                                    {row.gradeData.weights.LAB > 0 && <span title="Labs" className={row.gradeData.lAvg > 0 ? "text-blue-400" : ""}>{row.gradeData.lAvg}</span>}
+                                                    {row.gradeData.weights.LAB > 0 && (row.gradeData.weights.FORUM > 0 || row.gradeData.weights.PROJECT > 0) && "/"}
+                                                    {row.gradeData.weights.FORUM > 0 && <span title="Foros" className={row.gradeData.fAvg > 0 ? "text-emerald-400" : ""}>{row.gradeData.fAvg}</span>}
+                                                    {row.gradeData.weights.FORUM > 0 && row.gradeData.weights.PROJECT > 0 && "/"}
+                                                    {row.gradeData.weights.PROJECT > 0 && <span title="Proyectos" className={row.gradeData.pAvg > 0 ? "text-amber-400" : ""}>{row.gradeData.pAvg}</span>}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-5 text-center">

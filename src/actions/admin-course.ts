@@ -58,10 +58,10 @@ export async function saveCourseData(courseId: string, rawData: any) {
                 status: data.status,
                 password: data.password?.trim() || "",
                 thumbnail: data.thumbnail,
-                weightQuiz: parseInt(data.weightQuiz.toString()) || 20,
-                weightLab: parseInt(data.weightLab.toString()) || 30,
-                weightForum: parseInt(data.weightForum.toString()) || 10,
-                weightProject: parseInt(data.weightProject.toString()) || 40,
+                weightQuiz: data.weightQuiz ?? 20,
+                weightLab: data.weightLab ?? 30,
+                weightForum: data.weightForum ?? 10,
+                weightProject: data.weightProject ?? 40,
             } as any
         });
 

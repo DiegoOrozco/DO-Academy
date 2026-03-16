@@ -85,6 +85,12 @@ export default async function AdminGradesPage() {
             lAvg: lAvg !== null ? Math.round(lAvg) : 0,
             fAvg: fAvg !== null ? Math.round(fAvg) : 0,
             pAvg: pAvg !== null ? Math.round(pAvg) : 0,
+            weights: {
+                QUIZ: course.weightQuiz,
+                LAB: course.weightLab,
+                FORUM: course.weightForum,
+                PROJECT: course.weightProject
+            },
             subsCount: courseSubs.length,
             courseSubs: allDeliverables
         };

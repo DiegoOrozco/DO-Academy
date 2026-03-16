@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Save, Settings, List, Plus, Trash2, GripVertical, Video, Link2, Loader2, FileText, Upload, ChevronDown, ChevronRight, Tags, Calendar, Code, Lock, ShieldAlert, Copy, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Save, Settings, List, Plus, Trash2, GripVertical, Video, Link2, Loader2, FileText, Upload, ChevronDown, ChevronRight, Tags, Calendar, Code, Lock, ShieldAlert, Copy, Eye, EyeOff, BarChart3 } from "lucide-react";
 import { saveCourseData } from "@/actions/admin-course";
 import { useRouter } from "next/navigation";
 
@@ -391,14 +391,23 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                         {course.title}
                     </h1>
                 </div>
-                <button
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className={`${isSaving ? "opacity-70 cursor-not-allowed" : ""} w-full sm:w-auto bg-[var(--color-primary)] hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-300 glow-accent flex items-center justify-center gap-2`}
-                >
-                    {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                    <span className="text-sm">{isSaving ? "Guardando..." : "Guardar Cambios"}</span>
-                </button>
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <Link
+                        href={`/admin/courses/${course.id}/analytics`}
+                        className="bg-white/5 hover:bg-white/10 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-300 border border-white/10 flex items-center justify-center gap-2"
+                    >
+                        <BarChart3 size={18} className="text-[var(--color-primary)]" />
+                        <span className="text-sm">Ver Análisis</span>
+                    </Link>
+                    <button
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        className={`${isSaving ? "opacity-70 cursor-not-allowed" : ""} bg-[var(--color-primary)] hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-300 glow-accent flex items-center justify-center gap-2`}
+                    >
+                        {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                        <span className="text-sm">{isSaving ? "Guardando..." : "Guardar Cambios"}</span>
+                    </button>
+                </div>
             </div>
 
             {/* Editor Main Area Layout */}
