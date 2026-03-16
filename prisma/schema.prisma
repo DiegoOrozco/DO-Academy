@@ -18,6 +18,7 @@ model User {
   resetToken         String?             @unique
   resetTokenExpiry   DateTime?
   verificationToken  String?             @unique
+  pendingEmail       String?
   googleId           String?             @unique
   enrollments        Enrollment[]
   posts              Post[]

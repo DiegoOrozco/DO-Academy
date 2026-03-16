@@ -130,8 +130,14 @@ export default function Navbar({ user }: NavbarProps) {
                                 <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 overflow-hidden cursor-pointer group-hover:border-[var(--color-primary)] transition-colors">
                                     <UserIcon size={20} />
                                 </div>
-                                {/* Dropdown placeholder or action */}
                                 <div className="absolute right-0 top-full mt-2 w-48 py-2 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all transform translate-y-2 group-hover:translate-y-0 z-50">
+                                    <Link
+                                        href="/profile"
+                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-white/5 transition-colors font-semibold border-b border-[var(--border-color)]"
+                                    >
+                                        <UserIcon size={16} />
+                                        Mi Perfil
+                                    </Link>
                                     <button
                                         onClick={() => handleLogout()}
                                         className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors font-semibold"
