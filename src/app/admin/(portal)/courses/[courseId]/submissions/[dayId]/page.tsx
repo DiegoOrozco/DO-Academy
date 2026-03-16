@@ -51,6 +51,7 @@ export default async function DaySubmissionsPage({
             fileName: sub?.fileName || null,
             status: sub?.status || "NO_SUBMISSION",
             grade: sub?.grade,
+            feedback: sub?.feedback,
             createdAt: sub?.createdAt || null
         };
     });
