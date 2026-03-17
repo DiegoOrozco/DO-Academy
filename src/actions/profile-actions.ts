@@ -109,14 +109,17 @@ export async function verifyNewEmail(token: string) {
             where: { verificationToken: token }
         });
 
-        if (!user || !user.pendingEmail) {
+        if (!user) {
             return { success: false, error: "Enlace de verificación inválido o expirado" };
         }
+
+        // If pendingEmail exists, it's an email change. Otherwise it's initial registration.
+        const newEmail = user.pendingEmail || user.email;
 
         await prisma.user.update({
             where: { id: user.id },
             data: {
-                email: user.pendingEmail,
+                email: newEmail,
                 pendingEmail: null,
                 verificationToken: null,
                 emailVerified: true

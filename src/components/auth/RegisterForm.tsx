@@ -70,6 +70,12 @@ export default function RegisterForm({ courseId, initialError }: RegisterFormPro
                     <p className="font-medium">Este correo está vinculado a Google. Usa el botón "Comenzar con Google".</p>
                 </div>
             )}
+            {initialError === "email_failed" && (
+                <div className="bg-red-500/10 text-red-400 text-sm p-4 rounded-xl border border-red-500/20 flex items-start gap-3">
+                    <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                    <p className="font-medium">No se pudo enviar el correo de verificación. Por favor revisa que el correo sea válido e intenta de nuevo.</p>
+                </div>
+            )}
 
             {courseId && <input type="hidden" name="courseId" value={courseId} />}
 

@@ -7,6 +7,8 @@ import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { signSession, verifySession } from "@/lib/session";
+import crypto from "crypto";
+import { sendEmail } from "@/lib/email";
 
 
 export async function registerStudent(formData: FormData) {
@@ -16,6 +18,8 @@ export async function registerStudent(formData: FormData) {
     const courseId = formData.get("courseId") as string;
 
     let success = false;
+    let userId = "";
+
     try {
         // Check if user already exists
         const existingUser = await prisma.user.findUnique({
@@ -32,6 +36,7 @@ export async function registerStudent(formData: FormData) {
 
         // Hash the password before saving
         const hashedPassword = await bcrypt.hash(password, 10);
+        const verificationToken = crypto.randomBytes(32).toString("hex");
 
         const user = await prisma.user.create({
             data: {
@@ -39,9 +44,45 @@ export async function registerStudent(formData: FormData) {
                 email,
                 password: hashedPassword,
                 role: "STUDENT",
-                emailVerified: true,
+                emailVerified: false, // Now false by default for manual registration
+                verificationToken,
             }
         });
+
+        userId = user.id;
+
+        // Try to send verification email
+        try {
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://doacademy.vercel.app";
+            const verificationLink = `${baseUrl}/verify-email?token=${verificationToken}`;
+
+            const htmlContent = `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                    <h2 style="color: #10b981;">¡Bienvenido a DO Academy!</h2>
+                    <p>Hola ${name},</p>
+                    <p>Gracias por registrarte. Para completar tu registro y poder matricularte en nuestros cursos, por favor verifica tu cuenta haciendo clic en el siguiente enlace:</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${verificationLink}" style="background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                            Verificar mi cuenta
+                        </a>
+                    </div>
+                    <p>Si no creaste esta cuenta, puedes ignorar este correo.</p>
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                    <p style="font-size: 12px; color: #666;">DO Academy - Comunidad de aprendizaje</p>
+                </div>
+            `;
+
+            await sendEmail({
+                to: email,
+                subject: "Verifica tu cuenta — DO Academy",
+                html: htmlContent
+            });
+        } catch (emailErr) {
+            console.error("Failed to send registration email:", emailErr);
+            // Delete the user if email failed so they can try again with a valid email
+            await prisma.user.delete({ where: { id: userId } });
+            redirect("/register?error=email_failed");
+        }
 
 
         const cookieStore = await cookies();
@@ -56,7 +97,7 @@ export async function registerStudent(formData: FormData) {
     } catch (error: any) {
         if (error.digest?.includes('NEXT_REDIRECT')) throw error;
         console.error("Registration error:", error);
-        redirect("/register?error=exists");
+        redirect("/register?error=db");
     }
 
     if (success) {
@@ -138,6 +179,16 @@ export async function unlockCourse(courseId: string, formData: FormData) {
         where: { id: courseId },
         select: { id: true, password: true }
     });
+
+    // Check if email is verified
+    const user = await prisma.user.findUnique({
+        where: { id: studentId },
+        select: { emailVerified: true }
+    });
+
+    if (user && !user.emailVerified) {
+        redirect("/verify-status");
+    }
 
     if (course && password.trim() === (course.password || "").trim()) {
         // Create actual Enrollment in DB
