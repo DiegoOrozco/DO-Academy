@@ -11,9 +11,10 @@ interface DayDeliveryProps {
     day: any;
     studentId: string;
     initialSubmission?: any;
+    userRole?: string;
 }
 
-export default function DayDelivery({ day, studentId, initialSubmission }: DayDeliveryProps) {
+export default function DayDelivery({ day, studentId, initialSubmission, userRole }: DayDeliveryProps) {
     const [file, setFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [submission, setSubmission] = useState<any>(initialSubmission);
@@ -44,7 +45,7 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                 isLate = true;
             }
         }
-        if (day.availableFrom && new Date() < new Date(day.availableFrom)) {
+        if (day.availableFrom && new Date() < new Date(day.availableFrom) && userRole !== "ADMIN") {
             isNotAvailableYet = true;
         }
     }
@@ -139,7 +140,7 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                     </p>
                 </div>
 
-                {!day.isCodingExercise && (
+                {!day.isCodingExercise && !isNotAvailableYet && (
                     <a
                         href={day.assignmentUrl ? `${day.assignmentUrl}${day.assignmentUrl.includes('vercel-storage.com') ? '?download=1' : ''}` : "#"}
                         target="_blank"
@@ -176,7 +177,7 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
             </div>
 
             <div className="space-y-4">
-                {day.exerciseDescription && (
+                {day.exerciseDescription && !isNotAvailableYet && (
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-2 px-1">
                             <FileText size={14} className="text-emerald-400" />

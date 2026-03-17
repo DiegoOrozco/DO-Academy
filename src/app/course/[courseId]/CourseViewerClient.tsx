@@ -388,6 +388,7 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
                             <DayDelivery
                                 day={activeDayData}
                                 studentId={studentId}
+                                userRole={userRole}
                                 initialSubmission={activeDayData.submissions?.[0]}
                             />
                             {/* Video Q&A for non-forum days */}
