@@ -35,8 +35,8 @@ export async function GET(request: Request) {
       console.log(`Migrating ${model}...`);
       const items = await (source as any)[model].findMany();
       
-      // Batch upserts to speed up and avoid single-row overhead
-      const promises = items.map((item: any) => {
+      let count = 0;
+      for (const item of items) {
         let where: any = { id: item.id };
         if (model === 'enrollment') where = { userId_courseId: { userId: item.userId, courseId: item.courseId } };
         if (model === 'videoProgress') where = { userId_dayId: { userId: item.userId, dayId: item.dayId } };
@@ -45,15 +45,14 @@ export async function GET(request: Request) {
         if (model === 'deadlineException') where = { userId_dayId: { userId: item.userId, dayId: item.dayId } };
         if (model === 'attendanceLog') where = { userId_dateText_sheetName: { userId: item.userId, dateText: item.dateText, sheetName: item.sheetName } };
 
-        return (dest as any)[model].upsert({
+        await (dest as any)[model].upsert({
           where,
           update: item,
           create: item,
         });
-      });
-
-      await Promise.all(promises);
-      logs.push(`Migrated ${items.length} records for ${model}.`);
+        count++;
+      }
+      logs.push(`Migrated ${count} records for ${model}.`);
     }
 
     return NextResponse.json({ success: true, logs });
