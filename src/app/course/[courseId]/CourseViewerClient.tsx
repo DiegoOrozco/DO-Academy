@@ -74,12 +74,32 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
     const lastSecondsRef = useRef<number>(0);
     const [usePlainIframe, setUsePlainIframe] = useState(false);
 
+    // RESTORATION FROM LOCALSTORAGE OR PROPS
+    const getLocalProgress = () => {
+        try {
+            const saved = localStorage.getItem(`video_progress_${activeDay.id}`);
+            return saved ? JSON.parse(saved) : null;
+        } catch { return null; }
+    };
+
+    const saveLocalProgress = (seconds: number, percent: number | null) => {
+        try {
+            localStorage.setItem(`video_progress_${activeDay.id}`, JSON.stringify({
+                seconds,
+                percent,
+                timestamp: Date.now()
+            }));
+        } catch { }
+    };
+
     const sendProgress = async (seconds: number, percent: number | null, isUnload = false) => {
         const now = Date.now();
-        // throttle if not explicitly unloading
-        if (!isUnload && now - lastSentAtRef.current < 4000 && Math.abs(seconds - lastSecondsRef.current) < 1) return;
+        // ONLY sync to DB on manual Pause, End, or Exit. 
+        // No periodic intervals anymore.
         lastSentAtRef.current = now;
         lastSecondsRef.current = seconds;
+        saveLocalProgress(seconds, percent);
+
         try {
             await fetch("/api/progress", {
                 method: "POST",
@@ -87,6 +107,7 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
                 body: JSON.stringify({ dayId: activeDay.id, seconds: Math.floor(seconds), percent: percent ?? undefined }),
                 keepalive: isUnload
             });
+            console.log("Progress synced to DB:", { seconds, percent });
         } catch { }
     };
 
@@ -98,6 +119,20 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
         const pct = dur > 0 ? Math.min(100, Math.round((sec / dur) * 100)) : null;
         sendProgress(sec, pct, isUnload);
     };
+
+    // LOCAL-ONLY INTERVAL: Save to localStorage every 5s (No DB calls)
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const p: any = playerRef.current;
+            if (p && typeof p.getCurrentTime === "function" && p.getPlayerState?.() === 1) { // 1 = PLAYING
+                const sec = p.getCurrentTime();
+                const dur = p.getDuration();
+                const pct = dur > 0 ? Math.min(100, Math.round((sec / dur) * 100)) : null;
+                saveLocalProgress(sec, pct);
+            }
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [activeDay.id]);
 
     useEffect(() => {
         const handleBeforeUnload = () => sendCurrentProgress(true);
@@ -113,7 +148,6 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
         const ensureYT = () => new Promise<void>((resolve) => {
             const w = window as any;
             if (w.YT && w.YT.Player) return resolve();
-            // Avoid duplicate script tags
             if (!document.getElementById("yt-iframe-api")) {
                 const tag = document.createElement("script");
                 tag.src = "https://www.youtube.com/iframe_api";
@@ -133,31 +167,44 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
                 await ensureYT();
                 if (cancelled || !playerDivRef.current) return;
                 try { playerRef.current?.destroy?.(); } catch { }
+                
+                // Try to resume from local or props
+                const local = getLocalProgress();
+                const startSeconds = local?.seconds || activeDay.seconds || 0;
+
                 playerRef.current = new (window as any).YT.Player(playerDivRef.current, {
                     videoId: activeDay.videoId,
-                    playerVars: { rel: 0, modestbranding: 1 },
+                    playerVars: { 
+                        rel: 0, 
+                        modestbranding: 1,
+                        start: Math.floor(startSeconds)
+                    },
                     events: {
-                        onReady: () => { /* No auto polling start */ },
                         onStateChange: (e: any) => {
                             const YT = (window as any).YT;
                             const p: any = playerRef.current;
                             const sec = p?.getCurrentTime ? p.getCurrentTime() : 0;
                             const dur = p?.getDuration ? p.getDuration() : 0;
                             const pct = dur > 0 ? Math.min(100, Math.round((sec / dur) * 100)) : null;
-                            if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.BUFFERING) { sendProgress(sec, pct); }
-                            else if (e.data === YT.PlayerState.ENDED) { sendProgress(dur || sec, 100); }
+                            
+                            // SYNC TO DB ONLY ON MANUAL EVENTS
+                            if (e.data === YT.PlayerState.PAUSED) { 
+                                sendProgress(sec, pct); 
+                            }
+                            else if (e.data === YT.PlayerState.ENDED) { 
+                                sendProgress(dur || sec, 100); 
+                            }
                         }
                     }
                 });
             } catch (err) {
-                // If anything goes wrong, fall back to a plain iframe (no tracking)
                 setUsePlainIframe(true);
             }
         })();
 
         return () => {
             cancelled = true;
-            sendCurrentProgress(true);
+            sendCurrentProgress(true); // Exit sync
             try { playerRef.current?.destroy?.(); } catch { }
             playerRef.current = null;
         };
