@@ -38,13 +38,14 @@ self.onmessage = async (event) => {
       let allOutput = "";
       let generatedOutputs = [];
 
-      const casesToRun = (testCases && testCases.length) ? testCases : [{ input: "", output: "" }];
+      const isValidationMode = testCases && testCases.length > 0;
+      const casesToRun = isValidationMode ? testCases : [{ input: event.data.userInput || "", output: "" }];
 
       for (let i = 0; i < casesToRun.length; i++) {
           const tc = casesToRun[i];
           
           let capturedOutput = "";
-          let stdinRead = false;
+          let stdinQueue = tc.input ? tc.input.split("\\n") : [];
 
           self.pyodide.setStdout({
               batched: (text) => {
@@ -54,9 +55,9 @@ self.onmessage = async (event) => {
 
           self.pyodide.setStdin({
               stdin: () => {
-                  if (stdinRead) return undefined;
-                  stdinRead = true;
-                  return tc.input ? tc.input + "\\n" : "";
+                  if (stdinQueue.length === 0) return undefined;
+                  const val = stdinQueue.shift();
+                  return val + "\\n";
               }
           });
 
@@ -66,22 +67,31 @@ self.onmessage = async (event) => {
               globals.destroy();
               
               const actual = capturedOutput.trim();
-              const expected = tc.output ? tc.output.trim() : "";
-              const isMatch = actual === expected;
               
-              allOutput += \`--- CASO DE PRUEBA \${i + 1}: \${isMatch ? "✅ PASÓ" : "❌ FALLÓ"} ---\\n\`;
-              if (!isMatch) {
-                  allOutput += \`[Esperado]: \${expected || "(Vacio)"}\\n\`;
-                  allOutput += \`[Obtenido]: \${actual || "(Sin salida)"}\\n\`;
+              if (isValidationMode) {
+                  const expected = tc.output ? tc.output.trim() : "";
+                  const isMatch = actual === expected;
+                  
+                  allOutput += \`--- CASO DE PRUEBA \${i + 1}: \${isMatch ? "✅ PASÓ" : "❌ FALLÓ"} ---\\n\`;
+                  if (!isMatch) {
+                      allOutput += \`[Esperado]: \${expected || "(Vacio)"}\\n\`;
+                      allOutput += \`[Obtenido]: \${actual || "(Sin salida)"}\\n\`;
+                  } else {
+                      allOutput += \`[Salida]: \${actual || "(Correcta)"}\\n\`;
+                  }
+                  allOutput += "\\n";
               } else {
-                  allOutput += \`[Salida]: \${actual || "(Correcta)"}\\n\`;
+                  allOutput += capturedOutput;
               }
-              allOutput += "\\n";
               
               generatedOutputs.push(actual);
           } catch (err) {
-              allOutput += \`--- CASO DE PRUEBA \${i + 1}: ⚠️ ERROR ---\\n\`;
-              allOutput += \`[Error]: \${err.message}\\n\\n\`;
+              if (isValidationMode) {
+                  allOutput += \`--- CASO DE PRUEBA \${i + 1}: ⚠️ ERROR ---\\n\`;
+                  allOutput += \`[Error]: \${err.message}\\n\\n\`;
+              } else {
+                  allOutput += \`Error: \${err.message}\\n\`;
+              }
               generatedOutputs.push(""); 
           }
       }
@@ -112,6 +122,8 @@ export default function StudentCodeEditor({
     const [result, setResult] = useState<{ status: 'success' | 'error' | 'pending' | null, score: number | null }>({ status: null, score: null });
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isPyodideLoading, setIsPyodideLoading] = useState(true);
+    const [userInput, setUserInput] = useState("");
+    const [activeTab, setActiveTab] = useState<'output' | 'input'>('output');
 
     const editorRef = useRef<any>(null);
     const workerRef = useRef<Worker | null>(null);
@@ -190,8 +202,10 @@ export default function StudentCodeEditor({
         workerRef.current.postMessage({
             id: executionIdRef.current,
             code,
-            testCases: withTestCases ? testCases : []
+            testCases: withTestCases ? testCases : [],
+            userInput: userInput
         });
+        if (!withTestCases) setActiveTab('output');
     };
 
     const handleSubmit = async () => {
@@ -328,56 +342,92 @@ export default function StudentCodeEditor({
 
                 {/* Console Area */}
                 <div className="w-full md:w-80 flex flex-col bg-[#0B0D11]">
-                    <div className="flex items-center justify-between px-4 py-3 bg-[#14181E] border-b border-slate-700/50">
-                        <div className="flex items-center gap-2">
-                            <Cpu size={14} className="text-blue-400" />
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Consola de Salida Real</span>
-                        </div>
-                        <button onClick={() => setOutput("")} className="text-slate-500 hover:text-white">
+                    <div className="flex items-center px-1 bg-[#14181E] border-b border-slate-700/50">
+                        <button 
+                            onClick={() => setActiveTab('output')}
+                            className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all ${activeTab === 'output' ? 'text-blue-400 bg-blue-500/5 border-b-2 border-blue-500' : 'text-slate-500 hover:text-slate-300'}`}
+                        >
+                            <Cpu size={14} />
+                            Salida
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('input')}
+                            className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all ${activeTab === 'input' ? 'text-amber-400 bg-amber-500/5 border-b-2 border-amber-500' : 'text-slate-500 hover:text-slate-300'}`}
+                        >
+                            <FileText size={14} />
+                            Entrada
+                        </button>
+                        <button onClick={() => { setOutput(""); setOutputsArray([]); }} className="p-3 text-slate-500 hover:text-white transition-colors">
                             <Trash2 size={12} />
                         </button>
                     </div>
 
-                    <div className="flex-1 p-6 font-mono text-[13px] overflow-y-auto bg-black/20">
-                        {!output && !result.status && (
-                            <div className="h-full flex flex-col items-center justify-center text-center opacity-30 grayscale">
-                                <AlertCircle size={32} className="mb-4 text-slate-500" />
-                                <p className="text-xs text-slate-500 leading-relaxed">
-                                    Presiona "Ejecutar" para ver la<br />salida de tu programa.
-                                </p>
-                            </div>
-                        )}
+                    <div className="flex-1 font-mono text-[13px] bg-black/20 flex flex-col min-h-0">
+                        {activeTab === 'output' ? (
+                            <div className="flex-1 p-6 overflow-y-auto">
+                                {!output && !result.status && (
+                                    <div className="h-full flex flex-col items-center justify-center text-center opacity-30 grayscale">
+                                        <AlertCircle size={32} className="mb-4 text-slate-500" />
+                                        <p className="text-xs text-slate-500 leading-relaxed">
+                                            Presiona "Correr Código" para ver la<br />salida de tu programa.
+                                        </p>
+                                    </div>
+                                )}
 
-                        {output && (
-                            <div className="animate-in fade-in duration-300">
-                                <pre className="text-blue-400 whitespace-pre-wrap">{output}</pre>
-                            </div>
-                        )}
+                                {output && (
+                                    <div className="animate-in fade-in duration-300">
+                                        <pre className="text-blue-400 whitespace-pre-wrap">{output}</pre>
+                                    </div>
+                                )}
 
-                        {result.status && (
-                            <div className={`mt-6 p-4 rounded-xl border animate-in slide-in-from-bottom-2 duration-500 ${result.status === 'success' ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-rose-500/10 border-rose-500/20'
-                                }`}>
-                                <div className="flex items-center gap-3 mb-2">
-                                    {result.status === 'success' ? (
-                                        <CheckCircle size={18} className="text-emerald-400" />
-                                    ) : (
-                                        <XCircle size={18} className="text-rose-400" />
-                                    )}
-                                    <span className={`text-xs font-bold uppercase tracking-widest ${result.status === 'success' ? 'text-emerald-400' : 'text-rose-400'
+                                {result.status && (
+                                    <div className={`mt-6 p-4 rounded-xl border animate-in slide-in-from-bottom-2 duration-500 ${result.status === 'success' ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-rose-500/10 border-rose-500/20'
                                         }`}>
-                                        {result.status === 'success' ? 'Laboratorio Superado' : 'Error en Validación'}
-                                    </span>
+                                        <div className="flex items-center gap-3 mb-2">
+                                            {result.status === 'success' ? (
+                                                <CheckCircle size={18} className="text-emerald-400" />
+                                            ) : (
+                                                <XCircle size={18} className="text-rose-400" />
+                                            )}
+                                            <span className={`text-xs font-bold uppercase tracking-widest ${result.status === 'success' ? 'text-emerald-400' : 'text-rose-400'
+                                                }`}>
+                                                {result.status === 'success' ? 'Laboratorio Superado' : 'Error en Validación'}
+                                            </span>
+                                        </div>
+                                        <p className="text-[10px] text-slate-400 leading-relaxed mb-4">
+                                            {result.status === 'success'
+                                                ? 'Tu código se ejecutó y la salida coincide con lo esperado.'
+                                                : 'La salida de tu programa es diferente a lo esperado por el profesor.'}
+                                        </p>
+                                        <div className="flex items-center justify-between pt-4 border-t border-slate-700/50">
+                                            <span className="text-[10px] font-medium text-slate-500">SIMILITUD</span>
+                                            <span className={`text-xl font-black ${result.status === 'success' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                {result.score}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="flex-1 flex flex-col p-4 bg-slate-900/50 divide-y divide-slate-700/30">
+                                <div className="pb-4">
+                                    <div className="flex items-center gap-2 mb-3 text-amber-500/70">
+                                        <FileText size={12} />
+                                        <span className="text-[10px] font-bold uppercase tracking-wider">Entrada de Usuario (input())</span>
+                                    </div>
+                                    <textarea
+                                        value={userInput}
+                                        onChange={(e) => setUserInput(e.target.value)}
+                                        placeholder="Escribe aquí los datos que usará input(). Usa una línea por cada llamada a input()."
+                                        className="w-full h-40 bg-black/40 border border-slate-700/50 rounded-lg p-3 text-slate-300 resize-none focus:outline-none focus:border-amber-500/30 font-mono text-xs leading-5"
+                                    />
                                 </div>
-                                <p className="text-[10px] text-slate-400 leading-relaxed mb-4">
-                                    {result.status === 'success'
-                                        ? 'Tu código se ejecutó y la salida coincide con lo esperado.'
-                                        : 'La salida de tu programa es diferente a lo esperado por el profesor.'}
-                                </p>
-                                <div className="flex items-center justify-between pt-4 border-t border-slate-700/50">
-                                    <span className="text-[10px] font-medium text-slate-500">SIMILITUD</span>
-                                    <span className={`text-xl font-black ${result.status === 'success' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                        {result.score}%
-                                    </span>
+                                <div className="pt-4">
+                                    <div className="p-3 bg-amber-500/5 border border-amber-500/10 rounded-lg">
+                                        <p className="text-[10px] text-amber-500/60 leading-relaxed">
+                                            💡 <span className="font-bold">¿Cómo usarlo?</span> Cada línea que escribas aquí simula una entrada de teclado para tu script. Si tu código pide nombre y edad, escribe el nombre en la línea 1 y la edad en la línea 2.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         )}
