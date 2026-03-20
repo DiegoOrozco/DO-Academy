@@ -182,7 +182,15 @@ export default function DayDelivery({ day, studentId, initialSubmission }: DayDe
                             <FileText size={14} className="text-emerald-400" />
                             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Enunciado (Instrucciones)</span>
                         </div>
-                        <div className="p-6 bg-[#14181E] border border-slate-700/50 rounded-2xl mb-4 text-[14px] text-slate-300 leading-relaxed font-medium max-h-[300px] overflow-y-auto custom-scrollbar [&>p]:mb-3 [&>h1]:text-xl [&>h1]:font-bold [&>h1]:mb-3 [&>h2]:text-lg [&>h2]:font-bold [&>h2]:mb-2 [&>h3]:text-base [&>h3]:font-bold [&>h3]:text-emerald-400 [&>h3]:mb-2 [&>ul]:list-disc [&>ul]:ml-5 [&>ul]:mb-3 [&>ol]:list-decimal [&>ol]:ml-5 [&>ol]:mb-3 [&>code]:bg-slate-800 [&>code]:text-emerald-300 [&>code]:px-1.5 [&>code]:py-0.5 [&>code]:rounded [&>pre]:bg-slate-900 [&>pre]:p-4 [&>pre]:rounded-lg [&>pre]:mb-4 [&>pre>code]:bg-transparent [&>pre>code]:text-blue-300 [&>pre>code]:p-0 [&>strong]:text-white [&>a]:text-blue-400 [&>a]:underline">
+                        <div 
+                            className="p-6 bg-[#14181E] border border-slate-700/50 rounded-2xl mb-4 text-[14px] text-slate-300 leading-relaxed font-medium max-h-[300px] overflow-y-auto custom-scrollbar [&>p]:mb-3 [&>h1]:text-xl [&>h1]:font-bold [&>h1]:mb-3 [&>h2]:text-lg [&>h2]:font-bold [&>h2]:mb-2 [&>h3]:text-base [&>h3]:font-bold [&>h3]:text-emerald-400 [&>h3]:mb-2 [&>ul]:list-disc [&>ul]:ml-5 [&>ul]:mb-3 [&>ol]:list-decimal [&>ol]:ml-5 [&>ol]:mb-3 [&>code]:bg-slate-800 [&>code]:text-emerald-300 [&>code]:px-1.5 [&>code]:py-0.5 [&>code]:rounded [&>pre]:bg-slate-900 [&>pre]:p-4 [&>pre]:rounded-lg [&>pre]:mb-4 [&>pre>code]:bg-transparent [&>pre>code]:text-blue-300 [&>pre>code]:p-0 [&>strong]:text-white [&>a]:text-blue-400 [&>a]:underline select-none"
+                            onContextMenu={(e) => e.preventDefault()}
+                            onCopy={(e) => {
+                                e.preventDefault();
+                                alert("El copiado está deshabilitado para el enunciado.");
+                            }}
+                            onCut={(e) => e.preventDefault()}
+                        >
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                 {day.exerciseDescription}
                             </ReactMarkdown>
