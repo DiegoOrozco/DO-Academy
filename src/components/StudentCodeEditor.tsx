@@ -51,7 +51,8 @@ self.onmessage = async (event) => {
               capturedOutput += text;
           };
 
-          self.pyodide.runPython(\`
+          if (!self.hasPatchedInput) {
+              self.pyodide.runPython(\`
 import sys
 import builtins
 import js
@@ -68,15 +69,19 @@ class JSStdout:
 sys.stdout = JSStdout()
 sys.stderr = JSStdout()
 
-_original_input = builtins.input
+if not hasattr(builtins, "_original_input"):
+    builtins._original_input = builtins.input
+
 def input_mock(prompt=""):
     if prompt:
         sys.stdout.write(prompt)
         sys.stdout.flush()
-    return _original_input()
+    return builtins._original_input()
 
 builtins.input = input_mock
-          \`);
+              \`);
+              self.hasPatchedInput = true;
+          }
 
           self.pyodide.setStdin({
               stdin: () => {
