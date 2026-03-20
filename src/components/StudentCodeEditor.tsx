@@ -140,18 +140,29 @@ builtins.input = input_mock
               generatedOutputs.push(actual);
           } catch (err) {
               let msg = err.message;
-              if (msg.includes("EOFError")) {
-                  msg = "⚠️ ERROR DE ENTRADA: El programa solicitó un dato (input()) pero no hay más líneas en la pestaña 'ENTRADA'.\\n\\n💡 Sugerencia: Si usas un ciclo (while), asegúrate de poner suficientes respuestas en la pestaña de entrada.";
-              }
-
-              if (isValidationMode) {
-                  allOutput += \`--- CASO DE PRUEBA \${i + 1}: ⚠️ ERROR ---\\n\`;
-                  allOutput += \`[Error]: \${msg}\\n\\n\`;
+              const isEOF = msg.includes("EOFError");
+              
+              if (isEOF && !isValidationMode) {
+                  // Caso solicitado: Finalización elegante al agotarse la entrada
+                  const quietMsg = "\\n\\n(Ejecución finalizada: se agotó la entrada)";
+                  self.postMessage({ type: "stdout", id, text: quietMsg });
+                  allOutput += capturedOutput + quietMsg;
+                  generatedOutputs.push(capturedOutput.trim());
               } else {
-                  allOutput += \`\\nError: \${msg}\\n\`;
-                  self.postMessage({ type: "stdout", id, text: \`\\nError: \${msg}\\n\` });
+                  // Errores normales o EOF en modo validación
+                  const friendlyMsg = isEOF 
+                    ? "⚠️ ERROR DE ENTRADA: Se solicitó un dato (input) pero la pestaña 'ENTRADA' está vacía."
+                    : msg;
+                    
+                  if (isValidationMode) {
+                      allOutput += "--- CASO DE PRUEBA " + (i + 1) + ": ⚠️ ERROR ---\n";
+                      allOutput += "[Error]: " + friendlyMsg + "\n\n";
+                  } else {
+                      allOutput += "\nError: " + friendlyMsg + "\n";
+                      self.postMessage({ type: "stdout", id, text: "\nError: " + friendlyMsg + "\n" });
+                  }
+                  generatedOutputs.push(""); 
               }
-              generatedOutputs.push(""); 
           }
       }
 
