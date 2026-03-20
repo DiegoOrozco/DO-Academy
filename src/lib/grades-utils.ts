@@ -6,6 +6,7 @@ export interface CourseGradeData {
     lAvg: number;
     fAvg: number;
     pAvg: number;
+    eAvg: number;
     subsCount: number;
     progressPct: number;
 }
@@ -16,8 +17,8 @@ export function calculateCourseGrade(course: any, studentId: string, studentExce
     let totalDeliverables = 0;
     let completedDeliverables = 0;
 
-    const courseRubricCount = { LAB: 0, PROJECT: 0, QUIZ: 0, FORUM: 0 };
-    const courseRubricEarned = { LAB: 0, PROJECT: 0, QUIZ: 0, FORUM: 0 };
+    const courseRubricCount = { LAB: 0, PROJECT: 0, QUIZ: 0, FORUM: 0, EXAM: 0 };
+    const courseRubricEarned = { LAB: 0, PROJECT: 0, QUIZ: 0, FORUM: 0, EXAM: 0 };
 
     course.weeks.forEach((week: any) => {
         week.days.forEach((day: any) => {
@@ -33,7 +34,7 @@ export function calculateCourseGrade(course: any, studentId: string, studentExce
             // Deliverables & Grades
             if (day.isDeliveryDay && day.assignmentType) {
                 totalDeliverables++;
-                const type = day.assignmentType as "LAB" | "PROJECT" | "QUIZ" | "FORUM";
+                const type = day.assignmentType as "LAB" | "PROJECT" | "QUIZ" | "FORUM" | "EXAM";
                 const submission = day.submissions?.find((s: any) => s.userId === studentId);
 
                 if (submission) {
@@ -53,12 +54,14 @@ export function calculateCourseGrade(course: any, studentId: string, studentExce
     const pAvg = calcRubricAvg(courseRubricEarned.PROJECT, courseRubricCount.PROJECT);
     const qAvg = calcRubricAvg(courseRubricEarned.QUIZ, courseRubricCount.QUIZ);
     const fAvg = calcRubricAvg(courseRubricEarned.FORUM, courseRubricCount.FORUM);
+    const eAvg = calcRubricAvg(courseRubricEarned.EXAM, courseRubricCount.EXAM);
 
     const totalGrade =
-        (lAvg * (course.weightLab / 100)) +
-        (pAvg * (course.weightProject / 100)) +
-        (qAvg * (course.weightQuiz / 100)) +
-        (fAvg * (course.weightForum / 100));
+        (lAvg * ((course.weightLab ?? 30) / 100)) +
+        (pAvg * ((course.weightProject ?? 40) / 100)) +
+        (qAvg * ((course.weightQuiz ?? 20) / 100)) +
+        (fAvg * ((course.weightForum ?? 10) / 100)) +
+        (eAvg * ((course.weightExam ?? 0) / 100));
 
     const totalItems = totalVideos + totalDeliverables;
     const completedItems = completedVideos + completedDeliverables;
@@ -70,6 +73,7 @@ export function calculateCourseGrade(course: any, studentId: string, studentExce
         lAvg: Math.round(lAvg),
         fAvg: Math.round(fAvg),
         pAvg: Math.round(pAvg),
+        eAvg: Math.round(eAvg),
         subsCount: completedDeliverables,
         progressPct
     };

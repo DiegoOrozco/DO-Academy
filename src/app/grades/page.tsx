@@ -144,13 +144,15 @@ export default async function GradesPage() {
                                                         LAB: gradeData.lAvg,
                                                         QUIZ: gradeData.qAvg,
                                                         FORUM: gradeData.fAvg,
-                                                        PROJECT: gradeData.pAvg
+                                                        PROJECT: gradeData.pAvg,
+                                                        EXAM: gradeData.eAvg
                                                     }}
                                                     weights={{
-                                                        LAB: (course as any).weightLab,
-                                                        QUIZ: (course as any).weightQuiz,
-                                                        FORUM: (course as any).weightForum,
-                                                        PROJECT: (course as any).weightProject
+                                                        LAB: (course as any).weightLab ?? 30,
+                                                        QUIZ: (course as any).weightQuiz ?? 20,
+                                                        FORUM: (course as any).weightForum ?? 10,
+                                                        PROJECT: (course as any).weightProject ?? 40,
+                                                        EXAM: (course as any).weightExam ?? 0
                                                     }}
                                                     size={160}
                                                 />

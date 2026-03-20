@@ -16,6 +16,7 @@ const courseDataSchema = z.object({
     weightLab: z.union([z.number(), z.string()]).transform(v => parseInt(v.toString()) || 0),
     weightForum: z.union([z.number(), z.string()]).transform(v => parseInt(v.toString()) || 0),
     weightProject: z.union([z.number(), z.string()]).transform(v => parseInt(v.toString()) || 0),
+    weightExam: z.union([z.number(), z.string()]).transform(v => parseInt(v.toString()) || 0),
     weeks: z.array(z.object({
         id: z.string(),
         title: z.string(),
@@ -62,6 +63,7 @@ export async function saveCourseData(courseId: string, rawData: any) {
                 weightLab: data.weightLab ?? 30,
                 weightForum: data.weightForum ?? 10,
                 weightProject: data.weightProject ?? 40,
+                weightExam: data.weightExam ?? 0,
             } as any
         });
 

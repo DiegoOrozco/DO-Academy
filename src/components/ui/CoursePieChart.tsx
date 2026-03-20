@@ -8,12 +8,14 @@ interface CoursePieChartProps {
         QUIZ: number;
         FORUM: number;
         PROJECT: number;
+        EXAM: number;
     };
     weights: {
         LAB: number;
         QUIZ: number;
         FORUM: number;
         PROJECT: number;
+        EXAM: number;
     };
     size?: number;
 }
@@ -26,6 +28,7 @@ export default function CoursePieChart({ data, weights, size = 160 }: CoursePieC
         { id: "QUIZ", label: "Quices", value: data.QUIZ, weight: weights.QUIZ, color: "#A855F7" },
         { id: "FORUM", label: "Foros", value: data.FORUM, weight: weights.FORUM, color: "#10B981" },
         { id: "PROJECT", label: "Proyectos", value: data.PROJECT, weight: weights.PROJECT, color: "#F59E0B" },
+        { id: "EXAM", label: "Exámenes", value: data.EXAM, weight: weights.EXAM, color: "#EC4899" }, // Pink for Exam
     ];
 
     const totalWeight = categories.reduce((acc, cat) => acc + cat.weight, 0);
@@ -134,7 +137,7 @@ export default function CoursePieChart({ data, weights, size = 160 }: CoursePieC
             </div>
 
             <div className="grid grid-cols-1 gap-4 flex-grow min-w-[180px]">
-                {categories.map((cat) => (
+                {categories.filter(c => c.weight > 0).map((cat) => (
                     <div
                         key={cat.id}
                         className={`flex items-center justify-between p-2 rounded-xl transition-all border ${hovered === cat.id ? 'bg-white/5 border-white/10' : 'bg-transparent border-transparent'}`}

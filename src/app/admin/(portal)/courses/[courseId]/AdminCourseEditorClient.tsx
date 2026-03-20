@@ -141,10 +141,11 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
         status: ic.status || "published",
         password: ic.password || "doacademy",
         thumbnail: ic.thumbnail || "",
-        weightQuiz: ic.weightQuiz || 20,
-        weightLab: ic.weightLab || 30,
-        weightForum: ic.weightForum || 10,
-        weightProject: ic.weightProject || 40,
+        weightQuiz: ic.weightQuiz ?? 20,
+        weightLab: ic.weightLab ?? 30,
+        weightForum: ic.weightForum ?? 10,
+        weightProject: ic.weightProject ?? 40,
+        weightExam: ic.weightExam ?? 0,
         weeks: ic.weeks?.length > 0 ? ic.weeks.map((w: any) => ({
             ...w,
             days: w.days?.length > 0 ? w.days.map((d: any) => ({ ...d })) : []
@@ -543,11 +544,20 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                             className="w-full bg-[rgba(0,0,0,0.3)] border border-slate-700/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 transition-all"
                                         />
                                     </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-300 mb-2">Exámenes (%)</label>
+                                        <input
+                                            type="number"
+                                            value={course.weightExam}
+                                            onChange={(e) => setCourse({ ...course, weightExam: parseInt(e.target.value) || 0 })}
+                                            className="w-full bg-[rgba(0,0,0,0.3)] border border-slate-700/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 transition-all"
+                                        />
+                                    </div>
                                 </div>
                                 <div className="mt-4 flex items-center gap-2 text-sm">
                                     <span className="text-slate-400">Total:</span>
-                                    <span className={`font-bold ${(course.weightQuiz + course.weightLab + course.weightForum + course.weightProject) === 100 ? "text-emerald-400" : "text-red-400"}`}>
-                                        {course.weightQuiz + course.weightLab + course.weightForum + course.weightProject}%
+                                    <span className={`font-bold ${(course.weightQuiz + course.weightLab + course.weightForum + course.weightProject + course.weightExam) === 100 ? "text-emerald-400" : "text-red-400"}`}>
+                                        {course.weightQuiz + course.weightLab + course.weightForum + course.weightProject + course.weightExam}%
                                     </span>
                                 </div>
                             </div>
@@ -849,6 +859,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                                                 <option value="LAB">Laboratorio Práctico</option>
                                                                                                 <option value="FORUM">Foro de Discusión</option>
                                                                                                 <option value="PROJECT">Proyecto Final</option>
+                                                                                                <option value="EXAM">Examen Práctico / Final</option>
                                                                                                 <option value="PRACTICE">Práctica Libre (Sin Valor de Rúbrica)</option>
                                                                                             </select>
                                                                                         </div>
