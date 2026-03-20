@@ -155,11 +155,11 @@ builtins.input = input_mock
                     : msg;
                     
                   if (isValidationMode) {
-                      allOutput += "--- CASO DE PRUEBA " + (i + 1) + ": ⚠️ ERROR ---\n";
-                      allOutput += "[Error]: " + friendlyMsg + "\n\n";
+                      allOutput += "--- CASO DE PRUEBA " + (i + 1) + ": ⚠️ ERROR ---\\n";
+                      allOutput += "[Error]: " + friendlyMsg + "\\n\\n";
                   } else {
-                      allOutput += "\nError: " + friendlyMsg + "\n";
-                      self.postMessage({ type: "stdout", id, text: "\nError: " + friendlyMsg + "\n" });
+                      allOutput += "\\nError: " + friendlyMsg + "\\n";
+                      self.postMessage({ type: "stdout", id, text: "\\nError: " + friendlyMsg + "\\n" });
                   }
                   generatedOutputs.push(""); 
               }
