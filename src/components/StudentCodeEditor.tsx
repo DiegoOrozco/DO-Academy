@@ -47,19 +47,28 @@ self.onmessage = async (event) => {
           let capturedOutput = "";
           let stdinQueue = tc.input ? tc.input.split("\\n") : [];
 
-          self.pyodide.setStdout({
-              batched: (text) => {
-                  capturedOutput += text + "\\n";
-              }
+          self.pyodide.runPython(\`
+import sys
+from pyodide.ffi import create_proxy
+
+def js_write(text):
+    import js
+    js.self.onStdout(text)
+
+sys.stdout.write = js_write
+sys.stderr.write = js_write
+          \`);
+
+          self.onStdout = create_proxy((text) => {
+              capturedOutput += text;
           });
 
           self.pyodide.setStdin({
               stdin: () => {
                   if (stdinQueue.length === 0) return undefined;
                   const val = stdinQueue.shift();
-                  // MOSTRAR EL VALOR EN CONSOLA PARA QUE SE VEA COMO TERMINAL (ECHO)
-                  capturedOutput += val + "\\n"; 
-                  return val + "\\n";
+                  capturedOutput += val + "\n"; 
+                  return val + "\n";
               }
           });
 
@@ -130,6 +139,22 @@ export default function StudentCodeEditor({
     const editorRef = useRef<any>(null);
     const workerRef = useRef<Worker | null>(null);
     const executionIdRef = useRef(0);
+
+    // Autosave logic
+    useEffect(() => {
+        const savedCode = localStorage.getItem(`autosave-${dayId}-${userId}`);
+        if (savedCode && savedCode !== initialCode) {
+            setCode(savedCode);
+        }
+    }, [dayId, userId, initialCode]);
+
+    useEffect(() => {
+        if (code === initialCode) return;
+        const timer = setTimeout(() => {
+            localStorage.setItem(`autosave-${dayId}-${userId}`, code);
+        }, 1000); // 1 second debounce
+        return () => clearTimeout(timer);
+    }, [code, dayId, userId, initialCode]);
 
     // Initialize Web Worker
     useEffect(() => {
@@ -241,7 +266,7 @@ export default function StudentCodeEditor({
     };
 
     return (
-        <div className={`flex flex-col bg-[#0B0D11] border border-slate-700/30 rounded-2xl overflow-hidden shadow-2xl transition-all ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : 'relative h-[650px]'}`}>
+        <div className={`flex flex-col bg-[#0B0D11] border border-slate-700/30 rounded-2xl overflow-hidden shadow-2xl transition-all ${isFullscreen ? 'fixed inset-0 z-[9999] rounded-none' : 'relative h-[650px]'}`}>
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 bg-[#14181E] border-b border-slate-700/50">
                 <div className="flex items-center gap-4">
