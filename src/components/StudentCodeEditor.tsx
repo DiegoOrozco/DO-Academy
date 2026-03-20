@@ -47,28 +47,19 @@ self.onmessage = async (event) => {
           let capturedOutput = "";
           let stdinQueue = tc.input ? tc.input.split("\\n") : [];
 
-          self.pyodide.runPython(\`
-import sys
-from pyodide.ffi import create_proxy
-
-def js_write(text):
-    import js
-    js.self.onStdout(text)
-
-sys.stdout.write = js_write
-sys.stderr.write = js_write
-          \`);
-
-          self.onStdout = create_proxy((text) => {
-              capturedOutput += text;
+          self.pyodide.setStdout({
+              batched: (text) => {
+                  capturedOutput += text + "\\n";
+              }
           });
 
           self.pyodide.setStdin({
               stdin: () => {
                   if (stdinQueue.length === 0) return undefined;
                   const val = stdinQueue.shift();
-                  capturedOutput += val + "\n"; 
-                  return val + "\n";
+                  // MOSTRAR EL VALOR EN CONSOLA PARA QUE SE VEA COMO TERMINAL (ECHO)
+                  capturedOutput += val + "\\n"; 
+                  return val + "\\n";
               }
           });
 
