@@ -142,10 +142,8 @@ export default function StudentCodeEditor({
         };
     }, []);
 
-    // Anti-Plagiarism logic
+    // Anti-Plagiarism logic - ALWAYS ENABLED as requested
     useEffect(() => {
-        if (!enablePlagiarism) return;
-
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v' || e.key === 'x')) {
                 e.preventDefault();
@@ -171,13 +169,13 @@ export default function StudentCodeEditor({
             window.removeEventListener('contextmenu', handleContextMenu);
             window.removeEventListener('paste', handlePaste);
         };
-    }, [enablePlagiarism]);
+    }, []);
 
     const handleEditorDidMount = (editor: any) => {
         editorRef.current = editor;
     };
 
-    const handleExecute = () => {
+    const handleExecute = (withTestCases: boolean = false) => {
         if (!workerRef.current || isPyodideLoading) {
             setOutput("Espere a que el motor de Python se inicie...");
             return;
@@ -192,7 +190,7 @@ export default function StudentCodeEditor({
         workerRef.current.postMessage({
             id: executionIdRef.current,
             code,
-            testCases
+            testCases: withTestCases ? testCases : []
         });
     };
 
@@ -258,13 +256,28 @@ export default function StudentCodeEditor({
                     </button>
                     <div className="h-6 w-[1px] bg-slate-700/50 mx-1"></div>
                     <button
-                        onClick={handleExecute}
+                        onClick={() => handleExecute(false)}
                         disabled={isExecuting || isSubmitting || isPyodideLoading}
                         className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all border border-slate-700/50 active:scale-95 disabled:opacity-50"
+                        title="Ejecuta tu código para ver la salida"
                     >
                         <Play size={14} className={isExecuting ? "animate-pulse" : ""} />
-                        Ejecutar
+                        Correr Código
                     </button>
+
+                    {testCases.length > 0 && (
+                        <button
+                            onClick={() => handleExecute(true)}
+                            disabled={isExecuting || isSubmitting || isPyodideLoading}
+                            className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-xl text-xs font-bold transition-all border border-emerald-500/20 active:scale-95 disabled:opacity-50"
+                            title="Prueba tu código con casos configurados"
+                        >
+                            <Cpu size={14} />
+                            Validar Casos
+                        </button>
+                    )}
+
+                    <div className="h-6 w-[1px] bg-slate-700/50 mx-1"></div>
                     <button
                         onClick={handleSubmit}
                         disabled={isExecuting || isSubmitting || isPyodideLoading || isLate}
