@@ -47,7 +47,8 @@ self.onmessage = async (event) => {
           let capturedOutput = "";
           let stdinQueue = tc.input ? tc.input.split("\\n") : [];
 
-          self.onStdout = self.pyodide.ffi.create_proxy((text) => {
+          const createProxy = (self.pyodide.ffi && self.pyodide.ffi.create_proxy) || self.pyodide.create_proxy;
+          self.onStdout = createProxy.bind(self.pyodide.ffi || self.pyodide)((text) => {
               capturedOutput += text;
           });
 
