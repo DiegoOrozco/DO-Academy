@@ -47,6 +47,102 @@ export async function updateManualGrade(userId: string, dayId: string, grade: nu
     }
 }
 
+export async function updateDetailedManualGrade(
+    userId: string, 
+    dayId: string, 
+    grade: number, 
+    feedback: { 
+        text?: string, 
+        feedback_positivo?: string[] | string, 
+        mejoras?: string[] | string 
+    }
+) {
+    try {
+        await ensureAdmin();
+
+        const finalGrade = Math.max(0, Math.min(100, Math.round(grade)));
+
+        const submission = await prisma.submission.upsert({
+            where: {
+                userId_dayId: {
+                    userId,
+                    dayId
+                }
+            },
+            create: {
+                userId,
+                dayId,
+                content: "Assigned manually by Administrator",
+                fileName: "manual_grade.txt",
+                status: "GRADED",
+                grade: finalGrade,
+                feedback: feedback
+            },
+            update: {
+                status: "GRADED",
+                grade: finalGrade,
+                feedback: feedback
+            },
+            include: {
+                user: { select: { email: true, name: true } },
+                day: { select: { title: true } }
+            }
+        });
+
+        // SEND EMAIL NOTIFICATION
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://doacademy.vercel.app";
+        const gradesLink = `${baseUrl}/grades`;
+
+        const htmlContent = `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; background-color: #ffffff;">
+              <h2 style="color: #10b981; margin-bottom: 20px;">¡Tu tarea ha sido calificada!</h2>
+              <div style="line-height: 1.6; color: #333; font-size: 16px; margin-bottom: 30px;">
+                Hola <strong>${submission.user.name}</strong>,<br><br>
+                Hemos terminado de revisar tu entrega para la actividad <strong>"${submission.day.title}"</strong>.
+              </div>
+              
+              <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 30px;">
+                <p style="margin: 0; font-size: 14px; color: #64748b; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">Calificación Final</p>
+                <p style="margin: 10px 0 0 0; font-size: 48px; font-weight: 900; color: #0f172a;">${finalGrade}</p>
+              </div>
+
+              <div style="text-align: center; margin-bottom: 35px;">
+                <a href="${gradesLink}" style="display: inline-block; padding: 14px 30px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                  Ver Comentarios y Detalles
+                </a>
+              </div>
+              
+              <hr style="margin-top: 30px; border: 0; border-top: 1px solid #eee;">
+              <p style="font-size: 11px; color: #9ca3af; text-align: center; margin-top: 20px;">
+                &copy; ${new Date().getFullYear()} DO Academy - Todos los derechos reservados.
+              </p>
+            </div>
+        `;
+
+        try {
+            const { sendEmail } = await import("@/lib/email");
+            await sendEmail({
+                to: submission.user.email,
+                subject: `Calificación Lista: ${submission.day.title} — DO Academy`,
+                html: htmlContent,
+                replyTo: "no-reply@do-academy.com"
+            });
+            console.log(`[MANUAL GRADE] Email notification sent to ${submission.user.email}`);
+        } catch (mailErr: any) {
+            console.error(`[MANUAL GRADE] Email failed to send:`, mailErr);
+        }
+
+        revalidatePath("/admin/grades");
+        revalidatePath("/admin/(portal)/courses/[courseId]/submissions/[dayId]", "page");
+        revalidatePath("/");
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error updating detailed manual grade:", error);
+        return { success: false, error: error.message };
+    }
+}
+
 export async function deleteSubmission(userId: string, dayId: string) {
     try {
         await ensureAdmin();

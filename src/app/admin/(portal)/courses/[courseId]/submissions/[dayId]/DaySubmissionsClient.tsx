@@ -4,11 +4,12 @@ import React, { useState, useTransition } from "react";
 import { ArrowLeft, Download, FileDown, Search, User, CheckCircle2, Clock, XCircle, Cpu, Loader2, Edit2, Check, FileArchive } from "lucide-react";
 import JSZip from "jszip";
 import Link from "next/link";
-import { triggerAiGradingForDay, processNextPendingSubmission, triggerIndividualAiGrading, gradeIndividualSubmissionAction, testAiConnection } from "@/actions/admin-grading";
+import { triggerAiGradingForDay, processNextPendingSubmission, triggerIndividualAiGrading, gradeIndividualSubmissionAction, testAiConnection, getAiGradingPreviewAction } from "@/actions/admin-grading";
 import { updateManualGrade, deleteSubmission } from "@/actions/admin-grades";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import FeedbackModal from "@/components/FeedbackModal";
+import ManualGradingModal from "@/components/ManualGradingModal";
 
 interface StudentSubmission {
     studentId: string;
@@ -99,6 +100,7 @@ export default function DaySubmissionsClient({
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
     const [isZipping, setIsZipping] = useState(false);
     const [selectedFeedback, setSelectedFeedback] = useState<{ submission: StudentSubmission; dayTitle: string } | null>(null);
+    const [manualGrading, setManualGrading] = useState<StudentSubmission | null>(null);
 
     const filteredData = initialData.filter(s =>
         s.studentName.toLowerCase().includes(search.toLowerCase())
@@ -184,19 +186,25 @@ export default function DaySubmissionsClient({
 
     const [individualLoading, setIndividualLoading] = useState<string | null>(null);
 
-    const handleIndividualAiGrading = async (subId: string) => {
-        setIndividualLoading(subId);
+    const handleIndividualAiGrading = async (sub: StudentSubmission) => {
+        if (!sub.submissionId) return;
+        setIndividualLoading(sub.submissionId);
         try {
-            // SURGICAL: Use the direct action instead of the trigger/queue
-            const res: any = await gradeIndividualSubmissionAction(subId);
+            // STEP 1: Get Preview from AI
+            const res: any = await getAiGradingPreviewAction(sub.submissionId);
             if (res.success) {
-                router.refresh();
+                // STEP 2: Open Manual Modal with the AI Results
+                setManualGrading({
+                    ...sub,
+                    grade: res.gradingResult.nota,
+                    feedback: res.gradingResult
+                });
             } else {
-                alert("Error Directo: " + (res.error || "No se pudo calificar."));
+                alert("Error al obtener revisión IA: " + (res.error || "Desconocido"));
             }
         } catch (error) {
             console.error(error);
-            alert("Error de conexión al servidor.");
+            alert("Error de conexión al obtener revisión IA.");
         } finally {
             setIndividualLoading(null);
         }
@@ -422,11 +430,20 @@ export default function DaySubmissionsClient({
                                         )}
                                     </td>
                                     <td className="px-6 py-4 text-center">
-                                        <GradeEditor
-                                            initialGrade={row.grade}
-                                            userId={row.studentId}
-                                            dayId={dayId}
-                                        />
+                                        <div className="flex items-center justify-center gap-2 group/manual">
+                                            <GradeEditor
+                                                initialGrade={row.grade}
+                                                userId={row.studentId}
+                                                dayId={dayId}
+                                            />
+                                            <button
+                                                onClick={() => setManualGrading(row)}
+                                                className="p-1 rounded-md text-slate-500 hover:text-emerald-400 hover:bg-white/5 transition-all opacity-0 group-hover/manual:opacity-100"
+                                                title="Revisión Manual Detallada"
+                                            >
+                                                <Edit2 size={12} />
+                                            </button>
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div 
@@ -465,7 +482,7 @@ export default function DaySubmissionsClient({
                                             {row.submissionId && (
                                                 <>
                                                     <button
-                                                        onClick={() => handleIndividualAiGrading(row.submissionId!)}
+                                                        onClick={() => handleIndividualAiGrading(row)}
                                                         disabled={!!individualLoading || isAiGrading}
                                                         title="Calificar ahora con IA"
                                                         className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase text-rose-400 hover:text-white transition-colors bg-rose-500/5 px-3 py-1.5 rounded-lg border border-rose-500/10 hover:border-rose-500/30 disabled:opacity-50"
@@ -475,7 +492,7 @@ export default function DaySubmissionsClient({
                                                         ) : (
                                                             <Cpu size={14} />
                                                         )}
-                                                        {individualLoading === row.submissionId ? "Calificando..." : "IA"}
+                                                        {individualLoading === row.submissionId ? "Analizando..." : "IA"}
                                                     </button>
                                                     <button
                                                         onClick={() => handleDownload(row)}
@@ -506,20 +523,23 @@ export default function DaySubmissionsClient({
                             ))}
                         </tbody>
                     </table>
+            </div>
+            {filteredData.length === 0 && (
+                <div className="p-10 text-center text-slate-500 italic">
+                    No se encontraron estudiantes registrados.
                 </div>
-                {filteredData.length === 0 && (
-                    <div className="p-10 text-center text-slate-500 italic">
-                        No se encontraron estudiantes registrados.
-                    </div>
-                )}
-            {selectedFeedback && (
-                <FeedbackModal
-                    isOpen={!!selectedFeedback}
-                    onClose={() => setSelectedFeedback(null)}
-                    studentName={selectedFeedback.submission.studentName}
-                    dayTitle={selectedFeedback.dayTitle}
-                    feedback={selectedFeedback.submission.feedback}
-                    grade={selectedFeedback.submission.grade}
+            )}
+
+            {manualGrading && (
+                <ManualGradingModal
+                    isOpen={!!manualGrading}
+                    onClose={() => setManualGrading(null)}
+                    studentId={manualGrading.studentId}
+                    studentName={manualGrading.studentName}
+                    dayId={dayId}
+                    dayTitle={dayTitle}
+                    initialFeedback={manualGrading.feedback}
+                    initialGrade={manualGrading.grade}
                 />
             )}
             </div>

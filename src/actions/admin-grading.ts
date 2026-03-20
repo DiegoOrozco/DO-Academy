@@ -317,6 +317,55 @@ export async function gradeIndividualSubmissionAction(submissionId: string) {
     }
 }
 
+/**
+ * Gets a preview of AI grading WITHOUT saving to DB or sending email.
+ */
+export async function getAiGradingPreviewAction(submissionId: string) {
+    try {
+        const submission = await prisma.submission.findUnique({
+            where: { id: submissionId },
+            include: {
+                day: {
+                    select: {
+                        gradingSeverity: true,
+                        exerciseDescription: true
+                    }
+                }
+            }
+        });
+
+        if (!submission) return { success: false, error: "Entrega no encontrada." };
+
+        let contentToGrade = submission.content;
+        let mimeType = "text/plain";
+        let buffer: Buffer;
+
+        if (contentToGrade.startsWith("http")) {
+            const response = await fetch(contentToGrade);
+            const arrayBuffer = await response.arrayBuffer();
+            buffer = Buffer.from(arrayBuffer);
+            if (submission.fileName.endsWith(".pdf")) mimeType = "application/pdf";
+            else if (submission.fileName.endsWith(".py")) mimeType = "text/x-python";
+        } else {
+            buffer = Buffer.from(contentToGrade, "utf-8");
+            if (submission.fileName.endsWith(".py")) mimeType = "text/x-python";
+        }
+
+        const gradingResult = await gradeSubmission(
+            submission.fileName,
+            buffer,
+            mimeType,
+            submission.day.gradingSeverity || 1,
+            submission.day.exerciseDescription || undefined
+        );
+
+        return { success: true, gradingResult };
+    } catch (error: any) {
+        console.error("[PREVIEW ERROR]", error);
+        return { success: false, error: error.message || "Error de conexión con IA" };
+    }
+}
+
 export async function testAiConnection() {
     const results: string[] = [];
     const apiKey = process.env.GOOGLE_AI_API_KEY;
