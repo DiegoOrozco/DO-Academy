@@ -165,14 +165,15 @@ export default function ManualGradingModal({
                             <div className="space-y-4">
                                 {positives.map((p, i) => (
                                     <div key={i} className="flex gap-2 group/field">
-                                        <input
+                                        <textarea
                                             value={p}
                                             onChange={(e) => {
                                                 const newP = [...positives];
                                                 newP[i] = e.target.value;
                                                 setPositives(newP);
                                             }}
-                                            className="flex-1 bg-black/40 rounded-xl border border-white/5 p-4 text-emerald-100/90 text-sm focus:outline-none focus:border-emerald-500/30 transition-all"
+                                            rows={2}
+                                            className="flex-1 bg-black/40 rounded-xl border border-white/5 p-4 text-emerald-100/90 text-sm focus:outline-none focus:border-emerald-500/30 transition-all resize-none"
                                             placeholder="Logró implementar..."
                                         />
                                         {positives.length > 1 && (
@@ -205,14 +206,15 @@ export default function ManualGradingModal({
                             <div className="space-y-4">
                                 {improvements.map((p, i) => (
                                     <div key={i} className="flex gap-2 group/field">
-                                        <input
+                                        <textarea
                                             value={p}
                                             onChange={(e) => {
                                                 const newI = [...improvements];
                                                 newI[i] = e.target.value;
                                                 setImprovements(newI);
                                             }}
-                                            className="flex-1 bg-black/40 rounded-xl border border-white/5 p-4 text-amber-100/90 text-sm focus:outline-none focus:border-amber-500/30 transition-all"
+                                            rows={2}
+                                            className="flex-1 bg-black/40 rounded-xl border border-white/5 p-4 text-amber-100/90 text-sm focus:outline-none focus:border-amber-500/30 transition-all resize-none"
                                             placeholder="Faltó validar..."
                                         />
                                         {improvements.length > 1 && (
