@@ -57,6 +57,8 @@ self.onmessage = async (event) => {
               stdin: () => {
                   if (stdinQueue.length === 0) return undefined;
                   const val = stdinQueue.shift();
+                  // MOSTRAR EL VALOR EN CONSOLA PARA QUE SE VEA COMO TERMINAL (ECHO)
+                  capturedOutput += val + "\\n"; 
                   return val + "\\n";
               }
           });
