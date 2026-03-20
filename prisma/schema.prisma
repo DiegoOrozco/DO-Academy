@@ -42,6 +42,7 @@ model Course {
   weightProject Int          @default(40)
   weightQuiz    Int          @default(20)
   weightExam    Int          @default(0)
+  enableCopyPaste Boolean    @default(false)
   enrollments   Enrollment[]
   weeks         Week[]
 }

@@ -437,6 +437,7 @@ export default function CourseViewerClient({ course, studentId, userRole }: { co
                                 studentId={studentId}
                                 userRole={userRole}
                                 initialSubmission={activeDayData.submissions?.[0]}
+                                enableCopyPaste={course.enableCopyPaste}
                             />
                             {/* Video Q&A for non-forum days */}
                             <VideoQA

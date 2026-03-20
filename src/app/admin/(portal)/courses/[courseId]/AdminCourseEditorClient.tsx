@@ -141,6 +141,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
         status: ic.status || "published",
         password: ic.password || "doacademy",
         thumbnail: ic.thumbnail || "",
+        enableCopyPaste: !!ic.enableCopyPaste,
         weightQuiz: ic.weightQuiz ?? 20,
         weightLab: ic.weightLab ?? 30,
         weightForum: ic.weightForum ?? 10,
@@ -501,6 +502,29 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                     onChange={(e) => setCourse({ ...course, thumbnail: e.target.value })}
                                     className="w-full bg-[rgba(0,0,0,0.3)] border border-slate-700/50 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[var(--color-primary)] transition-all"
                                 />
+                            </div>
+
+                            <div className="pt-6 border-t border-slate-800">
+                                <div className="flex items-center justify-between mb-2">
+                                    <div>
+                                        <h3 className="text-sm font-bold text-white uppercase tracking-widest">Seguridad del Código</h3>
+                                        <p className="text-[10px] text-slate-500 mt-1">Habilita o deshabilita la protección contra copia en el editor.</p>
+                                    </div>
+                                    <label className="flex items-center gap-3 cursor-pointer group/toggle">
+                                        <div className="relative inline-flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                className="sr-only peer"
+                                                checked={!!course.enableCopyPaste}
+                                                onChange={(e) => setCourse({ ...course, enableCopyPaste: e.target.checked })}
+                                            />
+                                            <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-primary)]"></div>
+                                        </div>
+                                        <span className="text-xs font-bold text-slate-300 uppercase tracking-widest group-hover/toggle:text-white transition-colors">
+                                            {course.enableCopyPaste ? "Copiado Permitido" : "Copiado Desactivado"}
+                                        </span>
+                                    </label>
+                                </div>
                             </div>
 
                             <div className="pt-6 border-t border-slate-800">

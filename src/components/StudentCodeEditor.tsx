@@ -11,6 +11,7 @@ interface StudentCodeEditorProps {
     testCases?: Array<{ input: string; output: string }>;
     similarityThreshold?: number;
     enablePlagiarism?: boolean;
+    enableCopyPaste?: boolean;
     isLate?: boolean;
     onSuccess?: (grade: number) => void;
     dayId: string;
@@ -141,6 +142,7 @@ export default function StudentCodeEditor({
     testCases = [],
     similarityThreshold = 0.9,
     enablePlagiarism = false,
+    enableCopyPaste = false,
     isLate = false,
     onSuccess,
     dayId,
@@ -202,8 +204,10 @@ export default function StudentCodeEditor({
         };
     }, []);
 
-    // Anti-Plagiarism logic - ALWAYS ENABLED as requested
+    // Anti-Plagiarism logic - Configurable via Admin
     useEffect(() => {
+        if (enableCopyPaste) return; // If enabled, we don't add restrictions
+
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v' || e.key === 'x')) {
                 e.preventDefault();
@@ -229,7 +233,7 @@ export default function StudentCodeEditor({
             window.removeEventListener('contextmenu', handleContextMenu);
             window.removeEventListener('paste', handlePaste);
         };
-    }, []);
+    }, [enableCopyPaste]);
 
     const handleEditorDidMount = (editor: any) => {
         editorRef.current = editor;

@@ -12,9 +12,10 @@ interface DayDeliveryProps {
     studentId: string;
     initialSubmission?: any;
     userRole?: string;
+    enableCopyPaste?: boolean;
 }
 
-export default function DayDelivery({ day, studentId, initialSubmission, userRole }: DayDeliveryProps) {
+export default function DayDelivery({ day, studentId, initialSubmission, userRole, enableCopyPaste }: DayDeliveryProps) {
     const [file, setFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [submission, setSubmission] = useState<any>(initialSubmission);
@@ -207,6 +208,7 @@ export default function DayDelivery({ day, studentId, initialSubmission, userRol
                         testCases={day.testCases || []}
                         similarityThreshold={day.similarityThreshold || 0.9}
                         enablePlagiarism={day.enablePlagiarism}
+                        enableCopyPaste={enableCopyPaste}
                         isLate={isLate}
                         onSuccess={async (grade) => {
                             window.location.reload();
