@@ -47,9 +47,21 @@ self.onmessage = async (event) => {
           
           let capturedOutput = "";
           let stdinQueue = tc.input ? tc.input.split("\\n") : [];
+          
+          let lastFlush = Date.now();
+          let stdoutBuffer = "";
 
           self.onStdout = (text) => {
               capturedOutput += text;
+              if (!isValidationMode) {
+                  stdoutBuffer += text;
+                  const now = Date.now();
+                  if (now - lastFlush > 50) {
+                      self.postMessage({ type: "stdout", id, text: stdoutBuffer });
+                      stdoutBuffer = "";
+                      lastFlush = now;
+                  }
+              }
           };
 
           if (!self.hasPatchedInput) {
@@ -88,9 +100,12 @@ builtins.input = input_mock
               stdin: () => {
                   if (stdinQueue.length === 0) return undefined;
                   const val = stdinQueue.shift();
-                  // El eco va después del prompt ya impreso por input_mock
-                  capturedOutput += val + "\\n"; 
-                  return val + "\\n";
+                  const echo = val + "\\n";
+                  capturedOutput += echo;
+                  if (!isValidationMode) {
+                      self.postMessage({ type: "stdout", id, text: echo });
+                  }
+                  return echo;
               }
           });
 
@@ -99,6 +114,11 @@ builtins.input = input_mock
               await self.pyodide.runPythonAsync(code, { globals });
               globals.destroy();
               
+              if (!isValidationMode && stdoutBuffer) {
+                  self.postMessage({ type: "stdout", id, text: stdoutBuffer });
+                  stdoutBuffer = "";
+              }
+
               const actual = capturedOutput.trim();
               
               if (isValidationMode) {
@@ -119,11 +139,17 @@ builtins.input = input_mock
               
               generatedOutputs.push(actual);
           } catch (err) {
+              let msg = err.message;
+              if (msg.includes("EOFError")) {
+                  msg = "⚠️ ERROR DE ENTRADA: El programa solicitó un dato (input()) pero no hay más líneas en la pestaña 'ENTRADA'.\\n\\n💡 Sugerencia: Si usas un ciclo (while), asegúrate de poner suficientes respuestas en la pestaña de entrada.";
+              }
+
               if (isValidationMode) {
                   allOutput += \`--- CASO DE PRUEBA \${i + 1}: ⚠️ ERROR ---\\n\`;
-                  allOutput += \`[Error]: \${err.message}\\n\\n\`;
+                  allOutput += \`[Error]: \${msg}\\n\\n\`;
               } else {
-                  allOutput += \`Error: \${err.message}\\n\`;
+                  allOutput += \`\\nError: \${msg}\\n\`;
+                  self.postMessage({ type: "stdout", id, text: \`\\nError: \${msg}\\n\` });
               }
               generatedOutputs.push(""); 
           }
@@ -179,28 +205,46 @@ export default function StudentCodeEditor({
         return () => clearTimeout(timer);
     }, [code, dayId, userId, initialCode]);
 
-    // Initialize Web Worker
-    useEffect(() => {
+    const initWorker = () => {
+        if (workerRef.current) workerRef.current.terminate();
+        
         const blob = new Blob([pyodideWorkerCode], { type: "application/javascript" });
         const worker = new Worker(URL.createObjectURL(blob));
         workerRef.current = worker;
 
         worker.onmessage = (e) => {
-            const { type, id, allOutput, generatedOutputs, error } = e.data;
+            const { type, id, allOutput, generatedOutputs, error, text } = e.data;
             if (type === "loaded") {
                 setIsPyodideLoading(false);
+            } else if (type === "stdout" && id === executionIdRef.current) {
+                setOutput(prev => prev + text);
             } else if (type === "result" && id === executionIdRef.current) {
                 setOutput(allOutput);
-                setOutputsArray(generatedOutputs);
+                setOutputsArray(generatedOutputs || []);
                 setIsExecuting(false);
             } else if (type === "error" && id === executionIdRef.current) {
-                setOutput(`> Error General: ${error}`);
+                setOutput(prev => prev + `\n> Error General: ${error}`);
                 setIsExecuting(false);
             }
         };
 
+        return worker;
+    };
+
+    const stopWorker = () => {
+        if (workerRef.current) {
+            workerRef.current.terminate();
+            setIsExecuting(false);
+            setIsPyodideLoading(true);
+            initWorker(); // Restart a clean worker
+        }
+    };
+
+    // Initialize Web Worker
+    useEffect(() => {
+        initWorker();
         return () => {
-            worker.terminate();
+            workerRef.current?.terminate();
         };
     }, []);
 
@@ -330,13 +374,17 @@ export default function StudentCodeEditor({
                     </button>
                     <div className="h-6 w-[1px] bg-slate-700/50 mx-1"></div>
                     <button
-                        onClick={() => handleExecute(false)}
-                        disabled={isExecuting || isSubmitting || isPyodideLoading}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all border border-slate-700/50 active:scale-95 disabled:opacity-50"
-                        title="Ejecuta tu código para ver la salida"
+                        onClick={() => isExecuting ? stopWorker() : handleExecute(false)}
+                        disabled={isSubmitting || isPyodideLoading}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border active:scale-95 disabled:opacity-50 ${
+                            isExecuting 
+                            ? "bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20" 
+                            : "bg-slate-800 border-slate-700/50 text-white hover:bg-slate-700"
+                        }`}
+                        title={isExecuting ? "Detener ejecución inmediata" : "Ejecuta tu código para ver la salida"}
                     >
-                        <Play size={14} className={isExecuting ? "animate-pulse" : ""} />
-                        Correr Código
+                        {isExecuting ? <XCircle size={14} className="animate-pulse" /> : <Play size={14} />}
+                        {isExecuting ? "Detener" : "Correr Código"}
                     </button>
 
                     {testCases.length > 0 && (
