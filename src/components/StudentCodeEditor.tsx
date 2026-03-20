@@ -47,17 +47,42 @@ self.onmessage = async (event) => {
           let capturedOutput = "";
           let stdinQueue = tc.input ? tc.input.split("\\n") : [];
 
-          self.pyodide.setStdout({
-              batched: (text) => {
-                  capturedOutput += text + "\\n";
-              }
+          self.onStdout = self.pyodide.ffi.create_proxy((text) => {
+              capturedOutput += text;
           });
+
+          self.pyodide.runPython(\`
+import sys
+import builtins
+import js
+
+class JSStdout:
+    def write(self, s):
+        js.self.onStdout(s)
+        return len(s)
+    def flush(self):
+        pass
+    def isatty(self):
+        return True
+
+sys.stdout = JSStdout()
+sys.stderr = JSStdout()
+
+_original_input = builtins.input
+def input_mock(prompt=""):
+    if prompt:
+        sys.stdout.write(prompt)
+        sys.stdout.flush()
+    return _original_input()
+
+builtins.input = input_mock
+          \`);
 
           self.pyodide.setStdin({
               stdin: () => {
                   if (stdinQueue.length === 0) return undefined;
                   const val = stdinQueue.shift();
-                  // MOSTRAR EL VALOR EN CONSOLA PARA QUE SE VEA COMO TERMINAL (ECHO)
+                  // El eco va después del prompt ya impreso por input_mock
                   capturedOutput += val + "\\n"; 
                   return val + "\\n";
               }
