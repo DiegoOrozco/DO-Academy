@@ -31,7 +31,7 @@ export async function submitCodingExercise(rawInput: any) {
 
         if (!day) throw new Error("Ejercicio no encontrado");
 
-        let grade = 0;
+        let grade: number | null = 0;
         let feedbackText = "";
         let isAiGraded = false;
 
@@ -73,18 +73,11 @@ export async function submitCodingExercise(rawInput: any) {
                 feedbackText = `Tu precisión promedio fue de ${grade}%. Se requiere al menos un ${Math.round(threshold * 100)}% para aprobar.\nCasos: ` + details.map(d => `C${d.caso}(${d.similitud}%)`).join(", ");
             }
         } else {
-            // AI GRADING PATH
-            const { gradeSubmission } = await import("@/lib/gemini");
-            const aiResult = await gradeSubmission(
-                "solution.py",
-                code,
-                "text/x-python",
-                day.gradingSeverity || 1,
-                day.exerciseDescription || ""
-            );
-
-            grade = aiResult.nota !== null ? aiResult.nota : 100; // If level 0, we give 100 or keep null? In DB it's Float?.
-            feedbackText = aiResult.text || aiResult.comentario || "Revisión completada por IA.";
+            // AI GRADING PATH - DELAYED (QUEUE)
+            // We no longer call gradeSubmission here to avoid overloading on batch submissions.
+            // The background cron job will pick this up.
+            grade = null;
+            feedbackText = "Tu entrega ha sido recibida y está en cola para ser calificada por la IA. Recibirás un correo cuando esté lista.";
             isAiGraded = true;
         }
 
@@ -94,12 +87,12 @@ export async function submitCodingExercise(rawInput: any) {
             } as any,
             update: {
                 content: code,
-                status: "GRADED",
+                status: isAiGraded ? "PENDING" : "GRADED",
                 grade: grade,
                 feedback: { 
                     text: feedbackText,
                     isAiGraded,
-                    ...(isAiGraded ? {} : { outputs }) // Optionally store outputs if not AI graded
+                    ...(isAiGraded ? {} : { outputs })
                 } as any,
                 fileName: "solution.py",
             },
@@ -107,7 +100,7 @@ export async function submitCodingExercise(rawInput: any) {
                 userId,
                 dayId,
                 content: code,
-                status: "GRADED",
+                status: isAiGraded ? "PENDING" : "GRADED",
                 grade: grade,
                 feedback: { 
                     text: feedbackText,
@@ -117,7 +110,7 @@ export async function submitCodingExercise(rawInput: any) {
             },
         });
 
-        console.log(`[Submission] Saved for user ${userId} on day ${dayId}. Content length: ${code.length}`);
+        console.log(`[Submission] Saved for user ${userId} on day ${dayId}. Status: ${submission.status}`);
 
         revalidatePath(`/courses`, "layout");
 

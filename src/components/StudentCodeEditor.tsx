@@ -151,7 +151,7 @@ export default function StudentCodeEditor({
     const [outputsArray, setOutputsArray] = useState<string[]>([]);
     const [isExecuting, setIsExecuting] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [result, setResult] = useState<{ status: 'success' | 'error' | 'pending' | null, score: number | null }>({ status: null, score: null });
+    const [result, setResult] = useState<{ status: 'success' | 'error' | 'pending' | 'ai-pending' | null, score: number | null, message?: string }>({ status: null, score: null });
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isPyodideLoading, setIsPyodideLoading] = useState(true);
     const [userInput, setUserInput] = useState("");
@@ -274,8 +274,16 @@ export default function StudentCodeEditor({
             });
 
             if (res.success && res.submission) {
-                setResult({ status: 'success', score: res.similarity || 0 });
-                if (onSuccess) onSuccess(res.similarity || 0);
+                if (res.submission.status === 'PENDING') {
+                    setResult({ 
+                        status: 'ai-pending', 
+                        score: null, 
+                        message: (res.submission.feedback as any)?.text || "Entrega recibida. Procesando calificación..." 
+                    });
+                } else {
+                    setResult({ status: 'success', score: res.similarity || 0 });
+                    if (onSuccess) onSuccess(res.similarity || 0);
+                }
             } else {
                 setResult({ status: 'error', score: 0 });
             }
@@ -428,7 +436,7 @@ export default function StudentCodeEditor({
                                     </div>
                                 )}
 
-                                {result.status && (
+                                {result.status && result.status !== 'ai-pending' && (
                                     <div className={`mt-6 p-4 rounded-xl border animate-in slide-in-from-bottom-2 duration-500 ${result.status === 'success' ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-rose-500/10 border-rose-500/20'
                                         }`}>
                                         <div className="flex items-center gap-3 mb-2">
@@ -452,6 +460,29 @@ export default function StudentCodeEditor({
                                             <span className={`text-xl font-black ${result.status === 'success' ? 'text-emerald-400' : 'text-rose-400'}`}>
                                                 {result.score}%
                                             </span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {result.status === 'ai-pending' && (
+                                    <div className="mt-6 p-6 rounded-2xl bg-blue-500/10 border border-blue-500/20 animate-in zoom-in-95 duration-500">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                                                <Send size={18} className="text-blue-400 animate-pulse" />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-black text-white uppercase tracking-widest">Entrega Recibida</h4>
+                                                <p className="text-[10px] text-blue-400 font-bold uppercase tracking-tighter">Modo: Revisión IA Diferida</p>
+                                            </div>
+                                        </div>
+                                        <div className="p-4 bg-black/30 rounded-xl border border-white/5">
+                                            <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                                                {result.message}
+                                            </p>
+                                        </div>
+                                        <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between text-[10px] font-bold text-slate-500">
+                                            <span className="uppercase tracking-widest">Estado</span>
+                                            <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-500 uppercase tracking-tighter">En cola de calificación</span>
                                         </div>
                                     </div>
                                 )}

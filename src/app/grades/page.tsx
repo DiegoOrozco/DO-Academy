@@ -2,7 +2,7 @@ import prisma from "@/lib/prisma";
 import { getStudent } from "@/lib/student-auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { GraduationCap, Calendar, CheckCircle2, FileText, ChevronRight, ArrowLeft, BookOpen, BarChart3 } from "lucide-react";
+import { GraduationCap, Calendar, CheckCircle2, FileText, ChevronRight, ArrowLeft, BookOpen, BarChart3, AlertCircle } from "lucide-react";
 import CoursePieChart from "@/components/ui/CoursePieChart";
 import { calculateCourseGrade } from "@/lib/grades-utils";
 
@@ -212,26 +212,49 @@ export default async function GradesPage() {
                                                 </div>
 
                                                 {sub.feedback && (
-                                                    <div className="mt-6 pt-6 border-t border-white/5 text-sm">
-                                                        <p className="text-slate-300 leading-relaxed italic mb-4">
-                                                            "{sub.feedback.comentario}"
-                                                        </p>
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                            <div className="space-y-1">
-                                                                <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-2">Lo mejor</p>
-                                                                {sub.feedback.feedback_positivo?.slice(0, 2).map((item: string, i: number) => (
-                                                                    <p key={i} className="text-xs text-slate-400 flex items-start gap-2">
-                                                                        <span className="text-emerald-500">•</span> {item}
-                                                                    </p>
-                                                                ))}
+                                                    <div className="mt-8 pt-6 border-t border-white/5 space-y-6 animate-in fade-in duration-500">
+                                                        {/* Comentario General simplified */}
+                                                        {sub.feedback.comentario && (
+                                                            <div className="p-4 bg-indigo-500/5 rounded-2xl border border-indigo-500/10 italic text-slate-400 text-sm leading-relaxed">
+                                                                "{sub.feedback.comentario}"
                                                             </div>
-                                                            <div className="space-y-1">
-                                                                <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mb-2">A mejorar</p>
-                                                                {sub.feedback.mejoras?.slice(0, 2).map((item: string, i: number) => (
-                                                                    <p key={i} className="text-xs text-slate-400 flex items-start gap-2">
-                                                                        <span className="text-amber-500">•</span> {item}
-                                                                    </p>
-                                                                ))}
+                                                        )}
+
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            {/* Positivos */}
+                                                            <div className="space-y-3">
+                                                                <div className="flex items-center gap-2 text-emerald-400 shrink-0">
+                                                                    <CheckCircle2 size={14} />
+                                                                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400/80">Fortalezas</span>
+                                                                </div>
+                                                                <div className="space-y-2">
+                                                                    {sub.feedback.feedback_positivo?.map((item: string, i: number) => (
+                                                                        <div key={i} className="flex gap-2 p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10 text-xs text-slate-300">
+                                                                            <span className="text-emerald-500 mt-0.5">•</span> {item}
+                                                                        </div>
+                                                                    ))}
+                                                                    {(!sub.feedback.feedback_positivo || sub.feedback.feedback_positivo.length === 0) && (
+                                                                        <p className="text-[10px] text-slate-600 italic">No hay comentarios específicos.</p>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Mejoras */}
+                                                            <div className="space-y-3">
+                                                                <div className="flex items-center gap-2 text-amber-400 shrink-0">
+                                                                    <AlertCircle size={14} />
+                                                                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-400/80">Mejoras</span>
+                                                                </div>
+                                                                <div className="space-y-2">
+                                                                    {sub.feedback.mejoras?.map((item: string, i: number) => (
+                                                                        <div key={i} className="flex gap-2 p-3 bg-amber-500/5 rounded-xl border border-amber-500/10 text-xs text-slate-300">
+                                                                            <span className="text-amber-500 mt-0.5">•</span> {item}
+                                                                        </div>
+                                                                    ))}
+                                                                    {(!sub.feedback.mejoras || sub.feedback.mejoras.length === 0) && (
+                                                                        <p className="text-[10px] text-slate-600 italic">No hay mejoras sugeridas.</p>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
