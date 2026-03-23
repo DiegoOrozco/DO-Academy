@@ -1,12 +1,27 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { GraduationCap, Search, Filter, Download, User, ChevronRight, BookOpen, ChevronDown, Check, Edit2, FileDown, Loader2 } from "lucide-react";
+import { GraduationCap, Search, Download, User, ChevronRight, BookOpen, Check, Edit2, FileDown, Loader2, Filter } from "lucide-react";
 import JSZip from "jszip";
 import { updateManualGrade } from "../../../../actions/admin-grades";
-
 import FeedbackModal from "@/components/FeedbackModal";
 
+// ───────────────────────────────────────────────
+// Types
+// ───────────────────────────────────────────────
+interface CourseInfo {
+    id: string;
+    title: string;
+    weightQuiz: number;
+    weightLab: number;
+    weightForum: number;
+    weightProject: number;
+    weightExam: number;
+}
+
+// ───────────────────────────────────────────────
+// Inline grade editor
+// ───────────────────────────────────────────────
 function GradeEditor({ initialGrade, userId, dayId }: { initialGrade: number | null, userId: string, dayId: string }) {
     const [isEditing, setIsEditing] = useState(false);
     const [grade, setGrade] = useState(initialGrade !== null ? String(initialGrade) : "");
@@ -59,35 +74,150 @@ function GradeEditor({ initialGrade, userId, dayId }: { initialGrade: number | n
     );
 }
 
+// ───────────────────────────────────────────────
+// CSV Export helper
+// ───────────────────────────────────────────────
+function buildCSV(rows: any[], course: CourseInfo): string {
+    const { weightQuiz, weightLab, weightForum, weightProject, weightExam } = course;
+
+    // Collect all rubric types that have weight > 0
+    const rubrics: { key: "QUIZ" | "LAB" | "FORUM" | "PROJECT" | "EXAM"; label: string; pct: number }[] = [];
+    if (weightQuiz > 0)   rubrics.push({ key: "QUIZ",    label: `Quiz (${weightQuiz}%)`,    pct: weightQuiz });
+    if (weightLab > 0)    rubrics.push({ key: "LAB",     label: `Lab (${weightLab}%)`,      pct: weightLab });
+    if (weightForum > 0)  rubrics.push({ key: "FORUM",   label: `Foro (${weightForum}%)`,   pct: weightForum });
+    if (weightProject > 0) rubrics.push({ key: "PROJECT", label: `Proyecto (${weightProject}%)`, pct: weightProject });
+    if (weightExam > 0)   rubrics.push({ key: "EXAM",    label: `Examen (${weightExam}%)`,  pct: weightExam });
+
+    // Map displayable avg per rubric key
+    const rubricToAvgKey: Record<string, string> = {
+        QUIZ: "qAvg", LAB: "lAvg", FORUM: "fAvg", PROJECT: "pAvg", EXAM: "eAvg",
+    };
+
+    const header = [
+        "Nombre",
+        "Email",
+        "Curso",
+        ...rubrics.map(r => r.label),
+        "Nota Final",
+        "Entregas Realizadas",
+    ];
+
+    const escape = (v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+
+    const lines = [
+        header.map(escape).join(","),
+        ...rows.map(row => [
+            escape(row.name),
+            escape(row.email),
+            escape(row.courseTitle),
+            ...rubrics.map(r => escape(row.gradeData[rubricToAvgKey[r.key]] ?? 0)),
+            escape(row.gradeData.total ?? 0),
+            escape(row.gradeData.subsCount ?? 0),
+        ].join(","))
+    ];
+
+    return "\uFEFF" + lines.join("\r\n"); // BOM for Excel UTF-8 compatibility
+}
+
+function triggerCSVDownload(csvContent: string, fileName: string) {
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// ───────────────────────────────────────────────
+// Main component
+// ───────────────────────────────────────────────
 export default function AdminGradesClient({
     tableData,
+    courses,
     totalStudents,
     avgScore,
     passRate
 }: {
     tableData: any[],
+    courses: CourseInfo[],
     totalStudents: number,
     avgScore: number,
     passRate: number
 }) {
     const [searchTerm, setSearchTerm] = useState("");
+    const [selectedCourseId, setSelectedCourseId] = useState<string>("all");
     const [expandedRows, setExpandedRows] = useState<string[]>([]);
     const [selectedFeedback, setSelectedFeedback] = useState<{ sub: any; name: string } | null>(null);
+    const [isZipping, setIsZipping] = useState(false);
 
-    // Simplistic filter just for demonstration or actual basic filtering
-    // You can expand this to filter by course or status
-    const [activeFilter, setActiveFilter] = useState<string | null>(null);
+    // ── Filtered data ──────────────────────────
+    const filteredData = tableData.filter(row => {
+        const matchesSearch =
+            row.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            row.courseTitle.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCourse = selectedCourseId === "all" || row.courseId === selectedCourseId;
+        return matchesSearch && matchesCourse;
+    });
 
+    // ── CSV export ────────────────────────────
+    const handleExportCSV = () => {
+        if (filteredData.length === 0) {
+            alert("No hay datos para exportar con el filtro actual.");
+            return;
+        }
+
+        // Determine which course info to use for rubric header
+        let courseInfo: CourseInfo | undefined;
+        if (selectedCourseId !== "all") {
+            courseInfo = courses.find(c => c.id === selectedCourseId);
+        }
+
+        if (!courseInfo && selectedCourseId !== "all") {
+            alert("No se encontró información del curso seleccionado.");
+            return;
+        }
+
+        // When "all" is selected, we generate one CSV but rubric columns come from
+        // the first row's weights (since they might differ per course).
+        // Better UX: ask user to select a specific course.
+        if (selectedCourseId === "all") {
+            const uniqueCourses = [...new Set(filteredData.map(r => r.courseId))];
+            if (uniqueCourses.length > 1) {
+                alert("Por favor selecciona un curso específico antes de exportar el reporte CSV, para que los rubros del encabezado sean correctos.");
+                return;
+            }
+            // Only one course in data — use it
+            courseInfo = courses.find(c => c.id === uniqueCourses[0]);
+            if (!courseInfo) {
+                // Fallback: build weights from the first row
+                const firstRow = filteredData[0];
+                courseInfo = {
+                    id: firstRow.courseId,
+                    title: firstRow.courseTitle,
+                    weightQuiz: firstRow.gradeData.weights?.QUIZ ?? 0,
+                    weightLab: firstRow.gradeData.weights?.LAB ?? 0,
+                    weightForum: firstRow.gradeData.weights?.FORUM ?? 0,
+                    weightProject: firstRow.gradeData.weights?.PROJECT ?? 0,
+                    weightExam: firstRow.gradeData.weights?.EXAM ?? 0,
+                };
+            }
+        }
+
+        const csv = buildCSV(filteredData, courseInfo!);
+        const safeName = (courseInfo?.title ?? "reporte").replace(/[^a-zA-Z0-9_\-]/g, "_");
+        triggerCSVDownload(csv, `calificaciones_${safeName}.csv`);
+    };
+
+    // ── File download ─────────────────────────
     const handleDownload = (content: string, fileName: string) => {
         if (!content) return;
-
         if (content.startsWith("http")) {
-            // It's a URL (Blob storage)
-            // Add ?download=1 for Vercel Blob if it's a direct link, or just open it
             const downloadUrl = content.includes('vercel-storage.com') ? `${content}?download=1` : content;
             window.open(downloadUrl, "_blank");
         } else {
-            // It's raw content (Old data or coding exercise)
             const blob = new Blob([content], { type: "text/plain" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -100,36 +230,21 @@ export default function AdminGradesClient({
         }
     };
 
-    const [isZipping, setIsZipping] = useState(false);
-
     const downloadAll = async (submissions: any[], studentName: string) => {
         const validSubs = (submissions || []).filter(s => s.content);
-        if (validSubs.length === 0) {
-            alert("No hay archivos para descargar.");
-            return;
-        }
-
-        if (!confirm(`¿Descargar las ${validSubs.length} entregas de ${studentName} en un solo archivo .ZIP?`)) {
-            return;
-        }
+        if (validSubs.length === 0) { alert("No hay archivos para descargar."); return; }
+        if (!confirm(`¿Descargar las ${validSubs.length} entregas de ${studentName} en un solo archivo .ZIP?`)) return;
 
         setIsZipping(true);
         const zip = new JSZip();
-
         try {
             for (const sub of validSubs) {
                 const dayCleanTitle = sub.title.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
                 const studentCleanName = studentName.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
-                
                 let extension = "txt";
-                if (sub.fileName?.includes(".")) {
-                    extension = sub.fileName.split(".").pop() || "txt";
-                } else if (sub.content.startsWith("http") && sub.content.includes(".pdf")) {
-                    extension = "pdf";
-                }
-                
+                if (sub.fileName?.includes(".")) extension = sub.fileName.split(".").pop() || "txt";
+                else if (sub.content.startsWith("http") && sub.content.includes(".pdf")) extension = "pdf";
                 const fileName = `${studentCleanName}_${dayCleanTitle}.${extension}`;
-
                 if (sub.content.startsWith("http")) {
                     const response = await fetch(sub.content);
                     const blob = await response.blob();
@@ -138,13 +253,11 @@ export default function AdminGradesClient({
                     zip.file(fileName, sub.content);
                 }
             }
-
             const content = await zip.generateAsync({ type: "blob" });
             const url = URL.createObjectURL(content);
             const a = document.createElement("a");
             a.href = url;
-            const studentCleanName = studentName.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
-            a.download = `entregas_${studentCleanName}.zip`;
+            a.download = `entregas_${studentName.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "")}.zip`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -158,22 +271,22 @@ export default function AdminGradesClient({
     };
 
     const toggleRow = (id: string) => {
-        setExpandedRows(prev =>
-            prev.includes(id) ? prev.filter(rId => rId !== id) : [...prev, id]
-        );
+        setExpandedRows(prev => prev.includes(id) ? prev.filter(rId => rId !== id) : [...prev, id]);
     };
 
-    const filteredData = tableData.filter(row => {
-        const matchesSearch = row.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            row.courseTitle.toLowerCase().includes(searchTerm.toLowerCase());
+    // ── Derived stats for selected filter ─────
+    const filteredAvg = filteredData.length > 0
+        ? filteredData.reduce((acc, row) => acc + row.gradeData.total, 0) / filteredData.length
+        : 0;
+    const filteredPassRate = filteredData.length > 0
+        ? (filteredData.filter(row => row.gradeData.total >= 70).length / filteredData.length) * 100
+        : 0;
 
-        // Example filter logic: active/inactive or passed/failed
-        // If no filter active, just match search
-        return matchesSearch;
-    });
+    const selectedCourse = courses.find(c => c.id === selectedCourseId);
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                     <h1 className="text-3xl font-black text-[var(--text-primary)] tracking-tight">Libro de Calificaciones</h1>
@@ -181,6 +294,7 @@ export default function AdminGradesClient({
                 </div>
 
                 <button
+                    onClick={handleExportCSV}
                     className="flex items-center gap-2 bg-[var(--color-primary)] hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-2xl transition-all shadow-xl shadow-blue-500/20 glow-accent"
                 >
                     <Download size={20} />
@@ -188,23 +302,76 @@ export default function AdminGradesClient({
                 </button>
             </div>
 
+            {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="glass-effect p-6 rounded-2xl border border-[var(--border-color)] flex flex-col gap-1 bg-[var(--card-bg)]">
-                    <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Estudiantes Activos</span>
-                    <span className="text-3xl font-black text-[var(--text-primary)]">{totalStudents}</span>
+                    <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">
+                        {selectedCourseId === "all" ? "Estudiantes Activos" : "Registros Filtrados"}
+                    </span>
+                    <span className="text-3xl font-black text-[var(--text-primary)]">
+                        {selectedCourseId === "all" ? totalStudents : filteredData.length}
+                    </span>
                 </div>
                 <div className="glass-effect p-6 rounded-2xl border border-[var(--border-color)] flex flex-col gap-1 bg-[var(--card-bg)]">
-                    <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Promedio Global</span>
-                    <span className="text-3xl font-black text-[var(--text-primary)]">{avgScore.toFixed(1)}</span>
+                    <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Promedio</span>
+                    <span className="text-3xl font-black text-[var(--text-primary)]">
+                        {(selectedCourseId === "all" ? avgScore : filteredAvg).toFixed(1)}
+                    </span>
                 </div>
                 <div className="glass-effect p-6 rounded-2xl border border-[var(--border-color)] flex flex-col gap-1 bg-[var(--card-bg)]">
                     <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Tasa de Aprobación</span>
-                    <span className="text-3xl font-black text-[var(--text-primary)]">{passRate.toFixed(0)}%</span>
+                    <span className="text-3xl font-black text-[var(--text-primary)]">
+                        {(selectedCourseId === "all" ? passRate : filteredPassRate).toFixed(0)}%
+                    </span>
                 </div>
             </div>
 
+            {/* Rubric legend if a course is selected */}
+            {selectedCourse && (
+                <div className="glass-effect rounded-2xl border border-[var(--border-color)] p-4 bg-[var(--card-bg)]">
+                    <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <Filter size={12} /> Rubros del curso &mdash; {selectedCourse.title}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                        {selectedCourse.weightQuiz > 0 && (
+                            <span className="text-xs font-bold px-3 py-1 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                                Quiz {selectedCourse.weightQuiz}%
+                            </span>
+                        )}
+                        {selectedCourse.weightLab > 0 && (
+                            <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                Lab {selectedCourse.weightLab}%
+                            </span>
+                        )}
+                        {selectedCourse.weightForum > 0 && (
+                            <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                Foro {selectedCourse.weightForum}%
+                            </span>
+                        )}
+                        {selectedCourse.weightProject > 0 && (
+                            <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                Proyecto {selectedCourse.weightProject}%
+                            </span>
+                        )}
+                        {selectedCourse.weightExam > 0 && (
+                            <span className="text-xs font-bold px-3 py-1 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20">
+                                Examen {selectedCourse.weightExam}%
+                            </span>
+                        )}
+                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-white/5 text-slate-400 border border-white/10">
+                            Total: {
+                                (selectedCourse.weightQuiz + selectedCourse.weightLab + selectedCourse.weightForum +
+                                selectedCourse.weightProject + selectedCourse.weightExam)
+                            }%
+                        </span>
+                    </div>
+                </div>
+            )}
+
+            {/* Table */}
             <div className="glass-effect rounded-3xl border border-[var(--border-color)] overflow-hidden bg-[var(--card-bg)]">
                 <div className="p-6 border-b border-[var(--border-color)] flex flex-col md:flex-row md:items-center justify-between gap-4 bg-black/5">
+                    {/* Search */}
                     <div className="relative flex-grow max-w-md">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" size={18} />
                         <input
@@ -214,6 +381,21 @@ export default function AdminGradesClient({
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full bg-[var(--background)] border border-[var(--border-color)] rounded-xl py-2.5 pl-11 pr-4 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--color-primary)] transition-all"
                         />
+                    </div>
+
+                    {/* Course filter */}
+                    <div className="relative">
+                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] pointer-events-none" size={15} />
+                        <select
+                            value={selectedCourseId}
+                            onChange={(e) => setSelectedCourseId(e.target.value)}
+                            className="appearance-none bg-[var(--background)] border border-[var(--border-color)] rounded-xl py-2.5 pl-9 pr-8 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--color-primary)] transition-all cursor-pointer"
+                        >
+                            <option value="all">Todos los cursos</option>
+                            {courses.map(c => (
+                                <option key={c.id} value={c.id}>{c.title}</option>
+                            ))}
+                        </select>
                     </div>
                 </div>
 
@@ -283,6 +465,7 @@ export default function AdminGradesClient({
                                                 </button>
                                             </td>
                                         </tr>
+
                                         {/* Expanded Details Row */}
                                         {isExpanded && (
                                             <tr className="bg-black/40 border-t-0 shadow-inner">
@@ -310,6 +493,7 @@ export default function AdminGradesClient({
                                                                                 ${sub.assignmentType === 'FORUM' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : ''}
                                                                                 ${sub.assignmentType === 'PROJECT' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : ''}
                                                                                 ${sub.assignmentType === 'PRACTICE' ? 'bg-slate-500/10 text-slate-400 border border-slate-500/20' : ''}
+                                                                                ${sub.assignmentType === 'EXAM' ? 'bg-pink-500/10 text-pink-400 border border-pink-500/20' : ''}
                                                                             `}>
                                                                                 {sub.assignmentType === 'PRACTICE' ? 'PRÁCTICA' : sub.assignmentType}
                                                                             </span>
@@ -334,11 +518,11 @@ export default function AdminGradesClient({
                                                                                 </button>
                                                                             )}
                                                                         </div>
-                                                                        <div 
-                                            className="text-[10px] text-slate-400 mt-1 line-clamp-3 cursor-pointer hover:bg-white/5 p-1 rounded transition-colors group/f"
-                                            onClick={(e) => { e.stopPropagation(); setSelectedFeedback({ sub, name: row.name }); }}
-                                            title="Click para ver feedback completo"
-                                        >
+                                                                        <div
+                                                                            className="text-[10px] text-slate-400 mt-1 line-clamp-3 cursor-pointer hover:bg-white/5 p-1 rounded transition-colors group/f"
+                                                                            onClick={(e) => { e.stopPropagation(); setSelectedFeedback({ sub, name: row.name }); }}
+                                                                            title="Click para ver feedback completo"
+                                                                        >
                                                                             {sub.feedback && typeof sub.feedback === 'object' ? (
                                                                                 <>
                                                                                     {sub.feedback.text ? sub.feedback.text : (

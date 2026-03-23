@@ -2,7 +2,23 @@ import prisma from "@/lib/prisma";
 import AdminGradesClient from "./AdminGradesClient";
 import { calculateCourseGrade } from "@/lib/grades-utils";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminGradesPage() {
+    // Fetch all courses for the filter dropdown
+    const courses = await prisma.course.findMany({
+        select: {
+            id: true,
+            title: true,
+            weightQuiz: true,
+            weightLab: true,
+            weightForum: true,
+            weightProject: true,
+            weightExam: true,
+        },
+        orderBy: { title: "asc" }
+    });
+
     // Fetch all students with their enrollments and submissions.
     // We embed submissions inside each day (as grades-utils expects) via a per-student relation.
     const students = await prisma.user.findMany({
@@ -93,6 +109,7 @@ export default async function AdminGradesPage() {
     return (
         <AdminGradesClient
             tableData={tableData}
+            courses={courses}
             totalStudents={totalStudents}
             avgScore={avgScore}
             passRate={passRate}
