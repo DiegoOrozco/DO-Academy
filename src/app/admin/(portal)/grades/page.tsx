@@ -1,8 +1,10 @@
 import prisma from "@/lib/prisma";
 import AdminGradesClient from "./AdminGradesClient";
+import { calculateCourseGrade } from "@/lib/grades-utils";
 
 export default async function AdminGradesPage() {
-    // Fetch all students with their enrollments and submissions
+    // Fetch all students with their enrollments and submissions.
+    // We embed submissions inside each day (as grades-utils expects) via a per-student relation.
     const students = await prisma.user.findMany({
         where: { role: "STUDENT" },
         include: {
@@ -11,16 +13,16 @@ export default async function AdminGradesPage() {
                     course: {
                         include: {
                             weeks: {
-                                include: { days: true }
+                                include: {
+                                    days: {
+                                        include: {
+                                            submissions: true,      // all submissions for this day
+                                            videoProgresses: true   // needed by calculateCourseGrade
+                                        }
+                                    }
+                                }
                             }
                         }
-                    }
-                }
-            },
-            submissions: {
-                include: {
-                    day: {
-                        include: { week: true }
                     }
                 }
             }
@@ -28,87 +30,54 @@ export default async function AdminGradesPage() {
         orderBy: { name: "asc" }
     });
 
-    // Helper to calculate student's grade in a specific course
-    const calculateGrade = (student: any, course: any) => {
-        const courseSubs = student.submissions.filter((s: any) => s.day.week.courseId === course.id);
-
+    // Build a flat deliverable list for a student+course so the admin UI can show the detail panel.
+    const buildDeliverables = (student: any, course: any) => {
         const allDeliverables: any[] = [];
-        let qEarned = 0, qCount = 0;
-        let lEarned = 0, lCount = 0;
-        let fEarned = 0, fCount = 0;
-        let pEarned = 0, pCount = 0;
-
         course.weeks.forEach((w: any) => {
-            w.days.filter((d: any) => d.isDeliveryDay && d.assignmentType).forEach((d: any) => {
-                const sub = courseSubs.find((s: any) => s.dayId === d.id);
-                const grade = sub?.grade || 0;
-
-                allDeliverables.push({
-                    id: sub?.id || `no-sub-${d.id}`,
-                    dayId: d.id,
-                    grade: sub?.grade !== null && sub?.grade !== undefined ? sub.grade : null,
-                    feedback: sub?.feedback,
-                    createdAt: sub?.createdAt || null,
-                    assignmentType: d.assignmentType,
-                    title: d.title,
-                    content: sub?.content || null,
-                    fileName: sub?.fileName || null
+            w.days
+                .filter((d: any) => d.isDeliveryDay && d.assignmentType)
+                .forEach((d: any) => {
+                    const sub = d.submissions?.find((s: any) => s.userId === student.id);
+                    allDeliverables.push({
+                        id: sub?.id || `no-sub-${d.id}`,
+                        dayId: d.id,
+                        grade: sub?.grade !== null && sub?.grade !== undefined ? sub.grade : null,
+                        feedback: sub?.feedback,
+                        createdAt: sub?.createdAt || null,
+                        assignmentType: d.assignmentType,
+                        title: d.title,
+                        content: sub?.content || null,
+                        fileName: sub?.fileName || null
+                    });
                 });
-
-                if (sub?.grade !== null && sub?.grade !== undefined) {
-                    if (d.assignmentType === "QUIZ") { qEarned += grade; qCount++; }
-                    if (d.assignmentType === "LAB") { lEarned += grade; lCount++; }
-                    if (d.assignmentType === "FORUM") { fEarned += grade; fCount++; }
-                    if (d.assignmentType === "PROJECT") { pEarned += grade; pCount++; }
-                }
-            });
         });
-
-        const qAvg = qCount > 0 ? (qEarned / qCount) : null;
-        const lAvg = lCount > 0 ? (lEarned / lCount) : null;
-        const fAvg = fCount > 0 ? (fEarned / fCount) : null;
-        const pAvg = pCount > 0 ? (pEarned / pCount) : null;
-
-        let earnedScore = 0;
-        let possibleWeight = 0;
-
-        if (qAvg !== null) { earnedScore += qAvg * (course.weightQuiz / 100); possibleWeight += (course.weightQuiz / 100); }
-        if (lAvg !== null) { earnedScore += lAvg * (course.weightLab / 100); possibleWeight += (course.weightLab / 100); }
-        if (fAvg !== null) { earnedScore += fAvg * (course.weightForum / 100); possibleWeight += (course.weightForum / 100); }
-        if (pAvg !== null) { earnedScore += pAvg * (course.weightProject / 100); possibleWeight += (course.weightProject / 100); }
-
-        const total = earnedScore;
-
-        return {
-            total: Math.round(total),
-            qAvg: qAvg !== null ? Math.round(qAvg) : 0,
-            lAvg: lAvg !== null ? Math.round(lAvg) : 0,
-            fAvg: fAvg !== null ? Math.round(fAvg) : 0,
-            pAvg: pAvg !== null ? Math.round(pAvg) : 0,
-            weights: {
-                QUIZ: course.weightQuiz,
-                LAB: course.weightLab,
-                FORUM: course.weightForum,
-                PROJECT: course.weightProject
-            },
-            subsCount: courseSubs.length,
-            courseSubs: allDeliverables
-        };
+        return allDeliverables;
     };
 
     // Flatten data for table view: 1 row per Student per Course
     const tableData = students.flatMap((student) =>
         student.enrollments.map((enr: any) => {
-            const gradeData = calculateGrade(student, enr.course);
+            // Use the shared utility so EXAM and all rubrics are counted correctly
+            const gradeData = calculateCourseGrade(enr.course, student.id);
+            const deliverables = buildDeliverables(student, enr.course);
             return {
                 studentId: student.id,
                 name: student.name,
                 email: student.email,
                 courseId: enr.course.id,
                 courseTitle: enr.course.title,
-                gradeData: gradeData,
+                gradeData: {
+                    ...gradeData,
+                    weights: {
+                        QUIZ: enr.course.weightQuiz,
+                        LAB: enr.course.weightLab,
+                        FORUM: enr.course.weightForum,
+                        PROJECT: enr.course.weightProject,
+                        EXAM: enr.course.weightExam ?? 0
+                    }
+                },
                 status: enr.status,
-                submissions: gradeData.courseSubs
+                submissions: deliverables
             }
         })
     );
