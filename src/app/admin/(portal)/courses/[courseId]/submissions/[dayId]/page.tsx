@@ -35,14 +35,30 @@ export default async function DaySubmissionsPage({
         }
     });
 
+    // Fetch course groups to check for group submissions
+    const groups = await (prisma as any).group.findMany({
+        where: { courseId },
+        include: { members: { select: { id: true } } }
+    });
+
     // Get all submissions for this day
-    const submissions = await prisma.submission.findMany({
+    const allSubmissions = await prisma.submission.findMany({
         where: { dayId }
     });
 
     // Merge data
     const tableData = enrollments.map(e => {
-        const sub = submissions.find(s => s.userId === e.user.id);
+        // Find individual submission
+        let sub = (allSubmissions as any[]).find(s => s.userId === e.user.id);
+        
+        // If not found, check if their group submitted anything
+        if (!sub) {
+            const userGroup = (groups as any[]).find(g => g.members.some((m: any) => m.id === e.user.id));
+            if (userGroup) {
+                sub = (allSubmissions as any[]).find(s => s.groupId === userGroup.id);
+            }
+        }
+
         return {
             studentId: e.user.id,
             studentName: e.user.name || e.user.email,
