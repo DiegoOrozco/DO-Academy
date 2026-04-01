@@ -73,14 +73,25 @@ export async function POST(req: NextRequest) {
 
         const dbContent = blob.url;
 
-        // Cleanup: If there's an existing submission with a blob URL, delete the old blob
+        // Fetch student group for this course
+        const studentGroup = await prisma.group.findFirst({
+            where: {
+                course: { weeks: { some: { days: { some: { id: dayId } } } } },
+                members: { some: { id: user.id } }
+            },
+            select: { id: true }
+        });
+        const groupId = studentGroup?.id || null;
+
+        // Cleanup: If there's an existing submission (individual or group), delete the old blob
         try {
-            const existingSubmission = await prisma.submission.findUnique({
+            const existingSubmission = await prisma.submission.findFirst({
                 where: {
-                    userId_dayId: {
-                        userId: user.id,
-                        dayId: dayId
-                    }
+                    dayId,
+                    OR: [
+                        { userId: user.id },
+                        groupId ? { groupId } : { id: 'none' }
+                    ]
                 }
             });
 
@@ -89,35 +100,35 @@ export async function POST(req: NextRequest) {
                 await del(existingSubmission.content);
                 console.log(`[CLEANUP] Deleted old blob: ${existingSubmission.content}`);
             }
-        } catch (cleanupError) {
-            console.error("[CLEANUP] Error deleting old blob:", cleanupError);
-            // Non-blocking: continue with the submission even if cleanup fails
-        }
 
-        const submission = await prisma.submission.upsert({
-            where: {
-                userId_dayId: {
-                    userId: user.id,
-                    dayId: dayId
-                }
-            } as any,
-            update: {
+            const submissionData = {
+                userId: user.id,
+                groupId,
+                dayId: dayId,
                 content: dbContent,
                 fileName: fileName,
                 status: "PENDING",
                 grade: null,
                 feedback: {},
-            },
-            create: {
-                userId: user.id,
-                dayId: dayId,
-                content: dbContent,
-                fileName: fileName,
-                status: "PENDING",
-            }
-        });
+            };
 
-        return NextResponse.json(submission);
+            let submission;
+            if (existingSubmission) {
+                submission = await prisma.submission.update({
+                    where: { id: existingSubmission.id },
+                    data: (submissionData as any)
+                });
+            } else {
+                submission = await prisma.submission.create({
+                    data: (submissionData as any)
+                });
+            }
+
+            return NextResponse.json(submission);
+        } catch (subError) {
+            console.error("[SUBMISSION] Error saving to DB:", subError);
+            return NextResponse.json({ error: "Error al guardar la entrega" }, { status: 500 });
+        }
 
     } catch (error) {
         console.error("Submission API error:", error);

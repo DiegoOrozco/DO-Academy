@@ -27,6 +27,7 @@ model User {
   videoProgresses    VideoProgress[]
   deadlineExceptions DeadlineException[]
   attendanceLogs     AttendanceLog[]
+  groups             Group[]             @relation("GroupMembers")
 }
 
 model Course {
@@ -45,6 +46,7 @@ model Course {
   enableCopyPaste Boolean    @default(false)
   enrollments   Enrollment[]
   weeks         Week[]
+  groups        Group[]
 }
 
 model Enrollment {
@@ -160,10 +162,23 @@ model Submission {
   createdAt DateTime @default(now())
   day       Day      @relation(fields: [dayId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupId   String?
+  group     Group?   @relation(fields: [groupId], references: [id], onDelete: SetNull)
 
-  @@unique([userId, dayId])
+  @@unique([userId, dayId, groupId])
   @@index([userId])
   @@index([dayId])
+  @@index([groupId])
+}
+
+model Group {
+  id        String   @id @default(cuid())
+  name      String
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  members   User[]   @relation("GroupMembers")
+  submissions Submission[]
+  createdAt DateTime @default(now())
 }
 
 model Communication {

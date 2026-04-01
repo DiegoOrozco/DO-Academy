@@ -4,7 +4,10 @@ import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Save, Settings, List, Plus, Trash2, GripVertical, Video, Link2, Loader2, FileText, Upload, ChevronDown, ChevronRight, Tags, Calendar, Code, Lock, ShieldAlert, Copy, Eye, EyeOff, BarChart3 } from "lucide-react";
 import { saveCourseData } from "@/actions/admin-course";
+import { deleteAllCourseFiles } from "@/actions/admin-grades";
 import { useRouter } from "next/navigation";
+import GroupManagement from "@/components/admin/GroupManagement";
+import { Users } from "lucide-react";
 
 // Converts a UTC date string from DB to a local time string for datetime-local input
 // e.g. "2026-03-11T17:00:00.000Z" (UTC) → "2026-03-11T11:00" (Costa Rica UTC-6)
@@ -87,7 +90,7 @@ function DragHandle({ className, children }: { className?: string, children: Rea
 
 export default function AdminCourseEditorClient({ initialCourse }: { initialCourse: any }) {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<"settings" | "curriculum">("curriculum");
+    const [activeTab, setActiveTab] = useState<"settings" | "curriculum" | "groups">("curriculum");
     const [isSaving, setIsSaving] = useState(false);
     const [expandedWeeks, setExpandedWeeks] = useState<string[]>(initialCourse.weeks?.map((w: any) => w.id) || []);
     const [expandedDays, setExpandedDays] = useState<string[]>([]);
@@ -378,6 +381,27 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
         }
     };
 
+    const [isDeletingFiles, setIsDeletingFiles] = useState(false);
+    const handleDeleteFiles = async () => {
+        if (!confirm("⚠️ ATENCIÓN: Estás a punto de borrar TODOS los archivos de entrega de este curso permanentemente (para liberar espacio en la nube). \n\nLas NOTAS y los COMENTARIOS se mantendrán intactos. ¿Deseas continuar?")) {
+            return;
+        }
+
+        setIsDeletingFiles(true);
+        try {
+            const res = await deleteAllCourseFiles(course.id);
+            if (res.success) {
+                alert(`¡Éxito! Se han procesado ${res.deletedCount || 0} archivos.`);
+            } else {
+                alert("Error: " + res.error);
+            }
+        } catch (e) {
+            alert("Error de conexión");
+        } finally {
+            setIsDeletingFiles(false);
+        }
+    };
+
     return (
         <div className="flex flex-col gap-6 lg:h-[calc(100vh-80px)] overflow-visible lg:overflow-hidden">
             {/* Editor Header */}
@@ -440,6 +464,17 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                     >
                         <List size={18} />
                         Currículo / Temario
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab("groups")}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all text-sm whitespace-nowrap ${activeTab === "groups"
+                            ? "bg-[var(--color-primary)]/20 text-[var(--color-primary)] border border-[var(--color-primary)]/30"
+                            : "text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent"
+                            }`}
+                    >
+                        <Users size={18} />
+                        Grupos de Estudiantes
                     </button>
                 </div>
 
@@ -583,6 +618,27 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                     <span className={`font-bold ${(course.weightQuiz + course.weightLab + course.weightForum + course.weightProject + course.weightExam) === 100 ? "text-emerald-400" : "text-red-400"}`}>
                                         {course.weightQuiz + course.weightLab + course.weightForum + course.weightProject + course.weightExam}%
                                     </span>
+                                </div>
+                            </div>
+
+                            <div className="pt-8 border-t border-rose-500/20 bg-rose-500/5 p-6 rounded-2xl">
+                                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                                    <div className="space-y-1">
+                                        <h3 className="text-sm font-black text-rose-400 uppercase tracking-widest flex items-center gap-2">
+                                            <ShieldAlert size={16} /> Zona de Mantenimiento
+                                        </h3>
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase leading-relaxed max-w-md">
+                                            Elimina los archivos físicos (blobs) de las entregas de este curso para liberar espacio. Las notas se conservarán.
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={handleDeleteFiles}
+                                        disabled={isDeletingFiles}
+                                        className="w-full md:w-auto px-6 py-3 bg-rose-600/10 hover:bg-rose-600 text-rose-500 hover:text-white border border-rose-500/30 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                                    >
+                                        {isDeletingFiles ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                                        {isDeletingFiles ? "Borrando..." : "Limpiar Archivos de Curso"}
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -1154,6 +1210,22 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                     </div>
                                 </SortableContext>
                             </DndContext>
+                        </div>
+                    )}
+
+                    {/* TAB 3: GROUPS */}
+                    {activeTab === "groups" && (
+                        <div className="h-full flex flex-col">
+                            <div className="mb-6">
+                                <h2 className="text-sm md:text-xl font-bold text-white mb-2 italic flex items-center gap-2">
+                                    <Users className="text-[var(--color-primary)]" size={24} />
+                                    Gestionar Grupos
+                                </h2>
+                                <p className="text-xs md:text-sm text-slate-400">
+                                    Crea grupos para entregas compartidas. Si un integrante del grupo hace una entrega, contará para todos los miembros.
+                                </p>
+                            </div>
+                            <GroupManagement courseId={course.id} />
                         </div>
                     )}
                 </div>

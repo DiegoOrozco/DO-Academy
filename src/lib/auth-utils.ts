@@ -24,7 +24,7 @@ export async function getAuthUser() {
     try {
         const student = await prisma.user.findUnique({
             where: { id: studentId },
-            select: { id: true, name: true, email: true, emailVerified: true }
+            select: { id: true, name: true, email: true, emailVerified: true, role: true }
         });
 
         if (!student) return null;
@@ -33,7 +33,7 @@ export async function getAuthUser() {
             name: student.name,
             email: student.email,
             emailVerified: student.emailVerified,
-            role: "STUDENT"
+            role: student.role || "STUDENT"
         };
     } catch (error) {
         return null;

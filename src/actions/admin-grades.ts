@@ -194,3 +194,61 @@ export async function deleteSubmission(userId: string, dayId: string) {
         return { success: false, error: error.message };
     }
 }
+
+export async function deleteAllCourseFiles(courseId: string) {
+    try {
+        await ensureAdmin();
+
+        // 1. Find all submissions for this course that have file content (blobs)
+        const submissions = await prisma.submission.findMany({
+            where: {
+                day: {
+                    week: {
+                        courseId: courseId
+                    }
+                },
+                OR: [
+                    { content: { contains: "vercel-storage.com" } },
+                    { content: { contains: "http" } }
+                ]
+            }
+        });
+
+        if (submissions.length === 0) {
+            return { success: true, message: "No se encontraron archivos para eliminar." };
+        }
+
+        const { del } = await import("@vercel/blob");
+        let deletedCount = 0;
+
+        for (const sub of submissions) {
+            // Delete blob if it's a vercel storage URL
+            if (sub.content && sub.content.includes("vercel-storage.com")) {
+                try {
+                    await del(sub.content);
+                    deletedCount++;
+                } catch (blobError) {
+                    console.error(`[BATCH DELETE] Error deleting blob for sub ${sub.id}:`, blobError);
+                }
+            }
+
+            // Update database record to clear the file but KEEP the grade and feedback
+            await prisma.submission.update({
+                where: { id: sub.id },
+                data: {
+                    content: "[Archivo eliminado por administración para liberar espacio]",
+                    fileName: "archivo_removido.txt"
+                }
+            });
+        }
+
+        revalidatePath("/admin/grades");
+        revalidatePath(`/admin/courses/${courseId}/submissions/[dayId]`, "layout");
+        revalidatePath("/");
+
+        return { success: true, deletedCount };
+    } catch (error: any) {
+        console.error("Error in deleteAllCourseFiles:", error);
+        return { success: false, error: error.message };
+    }
+}

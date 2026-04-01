@@ -421,3 +421,32 @@ export async function listAvailableModels() {
         return { success: false, error: error.message };
     }
 }
+
+export async function customAIGradeAction(formData: FormData) {
+    try {
+        const file = formData.get("file") as File;
+        const severityStr = formData.get("severity") as string;
+        const prompt = formData.get("prompt") as string;
+
+        if (!file) return { success: false, error: "No file uploaded." };
+
+        const severity = parseInt(severityStr) || 1;
+        const mimeType = file.type || "text/plain";
+        const buffer = Buffer.from(await file.arrayBuffer());
+
+        console.log(`[CUSTOM AI GRADING] Evaluating uploaded file: ${file.name}`);
+
+        const gradingResult = await gradeSubmission(
+            file.name,
+            buffer,
+            mimeType,
+            severity,
+            prompt // pasing custom instructions
+        );
+
+        return { success: true, result: gradingResult };
+    } catch (error: any) {
+        console.error("[CUSTOM AI GRADING ERROR]", error);
+        return { success: false, error: error.message || "Error during AI evaluation" };
+    }
+}

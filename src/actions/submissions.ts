@@ -81,34 +81,54 @@ export async function submitCodingExercise(rawInput: any) {
             isAiGraded = true;
         }
 
-        const submission = await prisma.submission.upsert({
+        // Find the student's group for the course this day belongs to
+        const studentGroup = await prisma.group.findFirst({
             where: {
-                userId_dayId: { userId, dayId },
-            } as any,
-            update: {
-                content: code,
-                status: isAiGraded ? "PENDING" : "GRADED",
-                grade: grade,
-                feedback: { 
-                    text: feedbackText,
-                    isAiGraded,
-                    ...(isAiGraded ? {} : { outputs })
-                } as any,
-                fileName: "solution.py",
+                course: { weeks: { some: { days: { some: { id: dayId } } } } },
+                members: { some: { id: userId } }
             },
-            create: {
-                userId,
-                dayId,
-                content: code,
-                status: isAiGraded ? "PENDING" : "GRADED",
-                grade: grade,
-                feedback: { 
-                    text: feedbackText,
-                    isAiGraded 
-                } as any,
-                fileName: "solution.py",
-            },
+            select: { id: true }
         });
+
+        const groupId = studentGroup?.id || null;
+
+        // Use a more flexible where clause for the upsert since we changed the unique constraint
+        const existingSubmission = await prisma.submission.findFirst({
+            where: {
+                dayId,
+                OR: [
+                    { userId },
+                    groupId ? { groupId } : { id: 'none' }
+                ]
+            }
+        });
+
+        const submissionData = {
+            userId,
+            groupId,
+            dayId,
+            content: code,
+            status: isAiGraded ? "PENDING" : "GRADED",
+            grade: grade,
+            feedback: { 
+                text: feedbackText,
+                isAiGraded,
+                ...(isAiGraded ? {} : { outputs })
+            } as any,
+            fileName: "solution.py",
+        };
+
+        let submission;
+        if (existingSubmission) {
+            submission = await prisma.submission.update({
+                where: { id: existingSubmission.id },
+                data: submissionData
+            });
+        } else {
+            submission = await prisma.submission.create({
+                data: submissionData
+            });
+        }
 
         console.log(`[Submission] Saved for user ${userId} on day ${dayId}. Status: ${submission.status}`);
 

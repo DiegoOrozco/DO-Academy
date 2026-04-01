@@ -22,6 +22,14 @@ export default async function CourseViewerPage({ params }: { params: Promise<{ c
 
     const studentId = student.id;
 
+    const studentGroup = await prisma.group.findFirst({
+        where: {
+            courseId: courseId,
+            members: { some: { id: studentId } }
+        },
+        select: { id: true }
+    });
+
     const course = await prisma.course.findUnique({
         where: { id: courseId },
         include: {
@@ -44,7 +52,12 @@ export default async function CourseViewerPage({ params }: { params: Promise<{ c
                                 }
                             },
                             submissions: {
-                                where: { userId: studentId },
+                                where: {
+                                    OR: [
+                                        { userId: studentId },
+                                        { groupId: studentGroup?.id || "no-group" }
+                                    ]
+                                },
                                 orderBy: { createdAt: 'desc' },
                                 take: 1
                             },

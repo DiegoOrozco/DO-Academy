@@ -1,15 +1,16 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { ArrowLeft, Download, FileDown, Search, User, CheckCircle2, Clock, XCircle, Cpu, Loader2, Edit2, Check, FileArchive } from "lucide-react";
+import { ArrowLeft, Download, FileDown, Search, User, CheckCircle2, Clock, XCircle, Cpu, Loader2, Edit2, Check, FileArchive, Trash2, Sparkles } from "lucide-react";
 import JSZip from "jszip";
 import Link from "next/link";
 import { triggerAiGradingForDay, processNextPendingSubmission, triggerIndividualAiGrading, gradeIndividualSubmissionAction, testAiConnection, getAiGradingPreviewAction } from "@/actions/admin-grading";
 import { updateManualGrade, deleteSubmission } from "@/actions/admin-grades";
-import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import FeedbackModal from "@/components/FeedbackModal";
 import ManualGradingModal from "@/components/ManualGradingModal";
+import AIGradingUploadModal from "@/components/AIGradingUploadModal";
+import BatchAIGradingModal from "@/components/BatchAIGradingModal";
 
 interface StudentSubmission {
     studentId: string;
@@ -101,6 +102,8 @@ export default function DaySubmissionsClient({
     const [isZipping, setIsZipping] = useState(false);
     const [selectedFeedback, setSelectedFeedback] = useState<{ submission: StudentSubmission; dayTitle: string } | null>(null);
     const [manualGrading, setManualGrading] = useState<StudentSubmission | null>(null);
+    const [uploadModalUser, setUploadModalUser] = useState<{ id: string, name: string } | null>(null);
+    const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
 
     const filteredData = initialData.filter(s =>
         s.studentName.toLowerCase().includes(search.toLowerCase())
@@ -331,6 +334,14 @@ export default function DaySubmissionsClient({
 
                 <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
                     <button
+                        onClick={() => setIsBatchModalOpen(true)}
+                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20 font-bold py-2.5 px-6 rounded-xl transition-all min-w-[200px]"
+                    >
+                        <Sparkles size={18} />
+                        Calificación Lote (IA)
+                    </button>
+
+                    <button
                         onClick={handleAiGrading}
                         disabled={isAiGrading}
                         className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-bold py-2.5 px-6 rounded-xl transition-all disabled:opacity-50 min-w-[200px]"
@@ -517,6 +528,14 @@ export default function DaySubmissionsClient({
                                                     )}
                                                 </button>
                                             )}
+                                            
+                                            <button
+                                                onClick={() => setUploadModalUser({ id: row.studentId, name: row.studentName })}
+                                                title="Subir Archivo & Evaluar IA (Exportar Docx)"
+                                                className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase text-purple-400 hover:text-white transition-colors bg-purple-500/5 px-3 py-1.5 rounded-lg border border-purple-500/10 hover:border-purple-500/30"
+                                            >
+                                                Subir & IA
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -540,6 +559,21 @@ export default function DaySubmissionsClient({
                     dayTitle={dayTitle}
                     initialFeedback={manualGrading.feedback}
                     initialGrade={manualGrading.grade}
+                />
+            )}
+            
+            {uploadModalUser && (
+                <AIGradingUploadModal
+                    isOpen={!!uploadModalUser}
+                    onClose={() => setUploadModalUser(null)}
+                    studentName={uploadModalUser.name}
+                />
+            )}
+
+            {isBatchModalOpen && (
+                <BatchAIGradingModal
+                    isOpen={isBatchModalOpen}
+                    onClose={() => setIsBatchModalOpen(false)}
                 />
             )}
             </div>

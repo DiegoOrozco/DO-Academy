@@ -13,11 +13,28 @@ export async function ensureAdmin() {
     const adminSession = cookieStore.get("admin_session")?.value;
     const verifiedValue = verifySession(adminSession);
 
-    if (verifiedValue !== "valid") {
-        throw new Error("Unauthorized: Admin access required");
+    // 1. Check for explicit admin session (shared password)
+    if (verifiedValue === "valid") {
+        return true;
     }
 
-    return true;
+    // 2. Fallback: Check if user is logged in as a student but has ADMIN role in DB
+    const studentSession = cookieStore.get("student_id")?.value;
+    const studentId = verifySession(studentSession);
+
+    if (studentId) {
+        const user = await prisma.user.findUnique({
+            where: { id: studentId },
+            select: { role: true }
+        });
+
+        if (user?.role === "ADMIN") {
+            return true;
+        }
+    }
+
+    console.error("[AUTH DEBUG] Admin check failed. Session value:", adminSession ? "exists" : "missing", "Verified value:", verifiedValue);
+    throw new Error("Unauthorized: Admin access required");
 }
 
 /**
