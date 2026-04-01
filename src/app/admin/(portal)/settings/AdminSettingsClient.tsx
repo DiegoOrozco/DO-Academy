@@ -1,76 +1,50 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { updateSiteConfig } from "@/actions/admin-settings";
-import { Save, User, Home, Share2, Award, Mail, MessageCircle, X, Github, Linkedin, Twitter, Instagram, Link as LinkIcon, Info, Settings, Cpu, Loader2 } from "lucide-react";
+import { updateSiteConfig, refreshTechNewsAI } from "@/actions/admin-settings";
+import { Save, User, Home, Cpu, Loader2, Sparkles, X, Info } from "lucide-react";
 import { processAllPendingSubmissions } from "@/actions/admin-grading";
 
 export default function AdminSettingsClient({ initialConfigs }: { initialConfigs: any }) {
     const [configs, setConfigs] = useState(initialConfigs);
     const [isSaving, setIsSaving] = useState(false);
     const [isGrading, setIsGrading] = useState(false);
+    const [isRefreshingNews, setIsRefreshingNews] = useState(false);
     const [activeTab, setActiveTab] = useState("home");
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const handleManualGrading = async () => {
+        const customPrompt = window.prompt("Opcional: Añade instrucciones especiales o enunciados para la IA (ej. 'Revisar indentación'). Si lo dejas en blanco, se usará el enunciado predeterminado.");
+
         setIsGrading(true);
         try {
-            const res: any = await processAllPendingSubmissions();
+            const res: any = await processAllPendingSubmissions(customPrompt || undefined);
             if (res.success) {
-                if (res.quotaExceeded) {
-                    alert(`Se han calificado ${res.processedCount} entregas. \u26a0\ufe0f La cuota de IA de hoy se agot\u00f3. Las entregas restantes est\u00e1n en cola y se procesar\u00e1n autom\u00e1ticamente ma\u00f1ana.`);
-                } else {
-                    const failedMsg = res.failedCount > 0 ? ` (${res.failedCount} tuvieron error)` : '';
-                    alert(`\u00a1Proceso completado! Se han calificado ${res.processedCount} entregas${failedMsg} y se han enviado los correos.`);
-                }
+                alert(`¡Proceso completado! Se han calificado ${res.processedCount} entregas.`);
             } else {
-                alert("Hubo un error al procesar las calificaciones: " + res.error);
+                alert("Error: " + res.error);
             }
         } catch (error) {
-            alert("Error de conexión al procesar.");
+            alert("Error de conexión.");
         } finally {
             setIsGrading(false);
         }
     };
 
-    const home = Object.keys(configs.home || {}).length > 0 ? configs.home : {
+    const home = configs.home || {
         heroTitle: "Domina la Tecnología con DO Academy",
-        heroSubtitle: "Accede a contenido exclusivo diseñado por expertos para llevar tus habilidades al siguiente nivel profesional.",
+        heroSubtitle: "Accede a contenido exclusivo diseñado por expertos.",
         heroButtonText: "Empezar Ahora",
-        heroButtonLink: "/register"
+        heroButtonLink: "/register",
+        news: []
     };
-
-    const about = Object.keys(configs.about || {}).length > 0 ? configs.about : {
-        name: "Diego Orozco",
-        title: "Creador de Experiencias Digitales & Mentor Tech",
-        bio: "Apasionado por la educación y el desarrollo de software. He dedicado los últimos años a construir plataformas que ayudan a miles de estudiantes a dominar nuevas tecnologías.\n\nEn DO Academy, mi misión es democratizar el acceso al conocimiento técnico de alta calidad, creando no solo cursos, sino experiencias de aprendizaje que transformen carreras.",
-        stats: [
-            { label: "Años Exp.", value: "8+" },
-            { label: "Cursos", value: "12" },
-            { label: "Estudiantes", value: "5k+" },
-            { label: "Cafés/Día", value: "3" }
-        ],
-        socialLinks: [
-            { platform: "GitHub", url: "#" },
-            { platform: "LinkedIn", url: "#" }
-        ],
-        contacts: [
-            { type: "Email", value: "diego@doacademy.com" },
-            { type: "WhatsApp", value: "#" }
-        ]
-    };
-
 
     const handleSave = async (key: string, value: any) => {
         setIsSaving(true);
         const res = await updateSiteConfig(key, value);
         setIsSaving(false);
-
-        if (res.success) {
-            alert("Configuración guardada correctamente.");
-        } else {
-            alert("Error al guardar: " + res.error);
-        }
+        if (res.success) alert("Configuración guardada correctamente.");
+        else alert("Error al guardar: " + res.error);
     };
 
     const updateHome = (updates: any) => {
@@ -80,437 +54,194 @@ export default function AdminSettingsClient({ initialConfigs }: { initialConfigs
         }));
     };
 
-    const updateAbout = (updates: any) => {
-        setConfigs((prev: any) => ({
-            ...prev,
-            about: { ...prev.about, ...updates }
-        }));
-    };
-
     return (
         <div className="space-y-8">
             {/* Tabs */}
-            <div className="flex gap-2 p-1 bg-white/5 rounded-2xl border border-white/5 w-full sm:w-fit overflow-x-auto custom-scrollbar">
-                <TabButton
-                    active={activeTab === "home"}
-                    onClick={() => setActiveTab("home")}
-                    icon={<Home size={18} />}
-                    label="Inicio"
-                />
-                <TabButton
-                    active={activeTab === "about"}
-                    onClick={() => setActiveTab("about")}
-                    icon={<User size={18} />}
-                    label="Sobre Mí"
-                />
-                <TabButton
-                    active={activeTab === "system"}
-                    onClick={() => setActiveTab("system")}
-                    icon={<Settings size={18} />}
-                    label="Sistema & IA"
-                />
+            <div className="flex gap-2 p-2 bg-white/5 rounded-2xl border border-white/10 w-fit">
+                <button onClick={() => setActiveTab("home")} className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${activeTab === 'home' ? 'bg-[#cde641] text-black' : 'text-white/40 hover:text-white'}`}>Inicio</button>
+                <button onClick={() => setActiveTab("system")} className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${activeTab === 'system' ? 'bg-[#cde641] text-black' : 'text-white/40 hover:text-white'}`}>Sistema & IA</button>
             </div>
 
-            {activeTab === "system" && (
-                <div className="glass-effect rounded-3xl border border-rose-500/20 p-8 space-y-6 animate-in fade-in slide-in-from-bottom-4">
-                    <div className="flex items-center gap-3 pb-6 border-b border-white/5">
-                        <Cpu className="text-rose-400" />
-                        <h2 className="text-xl font-bold text-white">Sistema & Inteligencia Artificial</h2>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-black/20 p-6 rounded-2xl border border-white/5 space-y-4">
-                            <div>
-                                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                    <Cpu size={18} className="text-emerald-400" />
-                                    Cola de Calificación AI
-                                </h3>
-                                <p className="text-sm text-slate-400 mt-2">
-                                    La calificación de entregas (PDFs y SQL) ocurre asíncronamente para prevenir caídas. Puedes disparar la validación y el envío de correos manualmente aquí, o esperar a que el Cron Job lo haga todos los días a la 1:00 PM.
-                                </p>
-                            </div>
-
-                            <button
-                                onClick={handleManualGrading}
-                                disabled={isGrading}
-                                className="w-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 font-bold py-3 px-6 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
-                            >
-                                {isGrading ? (
-                                    <>
-                                        <Loader2 size={18} className="animate-spin" />
-                                        Calificando Entregas... (No cierres)
-                                    </>
-                                ) : (
-                                    <>
-                                        <Cpu size={18} />
-                                        Forzar Revisión Inmediata de Pendientes
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {activeTab === "home" && (
-                <div className="glass-effect rounded-3xl border border-white/10 p-8 space-y-6 animate-in fade-in slide-in-from-bottom-4">
+                <div className="glass-effect rounded-3xl border border-white/10 p-8 space-y-8 animate-in fade-in">
                     <div className="flex items-center gap-3 pb-6 border-b border-white/5">
-                        <Home className="text-[var(--color-primary)]" />
-                        <h2 className="text-xl font-bold text-white">Configuración de Inicio</h2>
+                        <Home className="text-[#cde641]" />
+                        <h2 className="text-xl font-bold text-white tracking-tight">Configuración de Inicio</h2>
                     </div>
 
                     <div className="grid grid-cols-1 gap-6">
-                        <FormField
-                            label="Título Hero"
-                            value={home.heroTitle}
-                            onChange={(v) => updateHome({ heroTitle: v })}
-                        />
-                        <FormField
-                            label="Subtítulo Hero"
-                            textarea
-                            value={home.heroSubtitle}
-                            onChange={(v) => updateHome({ heroSubtitle: v })}
-                        />
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Título Principal (Hero)</label>
+                            <input 
+                                className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white focus:border-[#cde641] transition-all outline-none"
+                                value={home.heroTitle}
+                                onChange={(e) => updateHome({ heroTitle: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Subtítulo (Hero)</label>
+                            <textarea 
+                                className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white min-h-[100px] focus:border-[#cde641] transition-all outline-none"
+                                value={home.heroSubtitle}
+                                onChange={(e) => updateHome({ heroSubtitle: e.target.value })}
+                            />
+                        </div>
 
+                        {/* NEWS SUB-EDITOR */}
+                        <div className="pt-10 border-t border-white/5 space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2 italic">
+                                    <Sparkles size={16} className="text-[#cde641]" /> NOTICIAS & INSIGHTS
+                                </h3>
+                                <div className="flex gap-2">
+                                    <button 
+                                        onClick={async () => {
+                                            setIsRefreshingNews(true);
+                                            try {
+                                                const res = await refreshTechNewsAI();
+                                                if (res.success) {
+                                                    updateHome({ news: res.news });
+                                                    alert("¡IA Generó nuevas noticias!");
+                                                } else {
+                                                    alert("Error de IA: " + res.error);
+                                                }
+                                            } catch (e: any) {
+                                                alert("Error de conexión: " + e.message);
+                                            } finally {
+                                                setIsRefreshingNews(false);
+                                            }
+                                        }}
+                                        disabled={isRefreshingNews}
+                                        className="bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 text-[10px] font-black uppercase tracking-widest px-4 py-2 border border-purple-500/20 rounded-lg flex items-center gap-2 transition-all disabled:opacity-50"
+                                    >
+                                        <Sparkles size={14} className={isRefreshingNews ? "animate-spin" : ""} />
+                                        Refrescar con IA
+                                    </button>
+                                    <button 
+                                        onClick={() => {
+                                            const next = [...(home.news || []), { title: "Nueva Noticia", date: "HOY", summary: "", search_url: "", source: "DO Academy" }];
+                                            updateHome({ news: next });
+                                        }}
+                                        className="text-[#cde641] text-[10px] font-black uppercase tracking-widest px-4 py-2 border border-[#cde641]/20 rounded-lg hover:bg-[#cde641]/10"
+                                    >
+                                        + Añadir Manual
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {(home.news || []).map((n: any, idx: number) => (
+                                    <div key={idx} className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 space-y-4 relative group hover:border-[#cde641]/20 transition-all">
+                                        <button 
+                                            onClick={() => {
+                                                const next = home.news.filter((_: any, i: number) => i !== idx);
+                                                updateHome({ news: next });
+                                            }}
+                                            className="absolute top-4 right-4 text-white/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                                        >
+                                            <X size={16} />
+                                        </button>
+
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] font-black text-white/20 uppercase tracking-widest">Título de Noticia</label>
+                                            <input 
+                                                className="w-full bg-black/60 border border-white/5 rounded-lg p-2 text-sm text-white focus:border-[#cde641]/40 outline-none"
+                                                value={n.title}
+                                                onChange={(e) => {
+                                                    const next = [...home.news];
+                                                    next[idx] = { ...n, title: e.target.value };
+                                                    updateHome({ news: next });
+                                                }}
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] font-black text-white/20 uppercase tracking-widest">Resumen / Descripción Corta</label>
+                                            <textarea 
+                                                className="w-full bg-black/60 border border-white/5 rounded-lg p-2 text-xs text-white/60 h-20 focus:border-[#cde641]/40 outline-none"
+                                                value={n.summary || ''}
+                                                onChange={(e) => {
+                                                    const next = [...home.news];
+                                                    next[idx] = { ...n, summary: e.target.value };
+                                                    updateHome({ news: next });
+                                                }}
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <label className="text-[9px] font-black text-white/20 uppercase tracking-widest">Fecha/Tag</label>
+                                                <input 
+                                                    className="w-full bg-black/60 border border-white/5 rounded-lg p-2 text-xs text-white"
+                                                    value={n.date}
+                                                    onChange={(e) => {
+                                                        const next = [...home.news];
+                                                        next[idx] = { ...n, date: e.target.value };
+                                                        updateHome({ news: next });
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[9px] font-black text-white/20 uppercase tracking-widest">Fuente (Web)</label>
+                                                <input 
+                                                    className="w-full bg-black/60 border border-white/5 rounded-lg p-2 text-xs text-white"
+                                                    value={n.source || ''}
+                                                    onChange={(e) => {
+                                                        const next = [...home.news];
+                                                        next[idx] = { ...n, source: e.target.value };
+                                                        updateHome({ news: next });
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-1 pt-2">
+                                            <label className="text-[9px] font-black text-[#cde641] uppercase tracking-widest">URL Directa (EL ENLACE REAL)</label>
+                                            <input 
+                                                className="w-full bg-[#cde641]/5 border border-[#cde641]/20 rounded-lg p-3 text-[10px] text-[#cde641] font-mono"
+                                                placeholder="https://..."
+                                                value={n.search_url || ''}
+                                                onChange={(e) => {
+                                                    const next = [...home.news];
+                                                    next[idx] = { ...n, search_url: e.target.value };
+                                                    updateHome({ news: next });
+                                                }}
+                                            />
+                                            <p className="text-[8px] text-white/20 italic">Debe empezar por https:// para que funcione en el Home.</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="flex justify-end pt-4">
+                    <div className="flex justify-end pt-8 border-t border-white/5">
                         <button
                             onClick={() => handleSave("home", home)}
                             disabled={isSaving}
-                            className="bg-[var(--color-primary)] hover:bg-blue-600 disabled:opacity-50 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-blue-500/20 flex items-center gap-2"
+                            className="bg-[#cde641] hover:shadow-[0_0_30px_rgba(205,230,65,0.3)] disabled:opacity-50 text-black font-black py-4 px-10 rounded-2xl transition-all flex items-center gap-3 uppercase italic tracking-tighter"
                         >
                             <Save size={18} />
-                            {isSaving ? "Guardando..." : "Guardar Cambios de Inicio"}
+                            {isSaving ? "Guardando..." : "PUBLICAR CAMBIOS"}
                         </button>
                     </div>
                 </div>
             )}
 
-            {activeTab === "about" && (
-                <div className="glass-effect rounded-3xl border border-white/10 p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4">
+            {activeTab === "system" && (
+                <div className="glass-effect rounded-3xl border border-red-500/20 p-8 space-y-6 animate-in fade-in">
                     <div className="flex items-center gap-3 pb-6 border-b border-white/5">
-                        <User className="text-[var(--color-primary)]" />
-                        <h2 className="text-xl font-bold text-white">Configuración "Sobre Mí"</h2>
+                        <Cpu className="text-red-400" />
+                        <h2 className="text-xl font-bold text-white">Mantenimiento & IA</h2>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                            label="Nombre"
-                            value={about.name}
-                            onChange={(v) => updateAbout({ name: v })}
-                        />
-                        <FormField
-                            label="Título Profesional"
-                            value={about.title}
-                            onChange={(v) => updateAbout({ title: v })}
-                        />
-                        <FormField
-                            label="URL de Foto de Perfil"
-                            value={about.imageUrl}
-                            onChange={(v) => updateAbout({ imageUrl: v })}
-                        />
-                    </div>
-
-                    {/* Uploader de imagen con optimización */}
-                    <div className="space-y-3">
-                        <label className="text-sm font-bold text-slate-400 uppercase tracking-widest">Subir Foto de Perfil</label>
-                        <div className="flex items-center gap-4 flex-wrap">
-                            {about.imageUrl && (
-                                <img
-                                    src={about.imageUrl}
-                                    alt="Preview"
-                                    className="w-20 h-20 rounded-full object-cover border border-white/10"
-                                />
-                            )}
-                            <div className="flex items-center gap-2">
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (!file) return;
-
-                                        const reader = new FileReader();
-                                        reader.onload = (event) => {
-                                            const img = new Image();
-                                            img.onload = () => {
-                                                // Optimización de imagen usando Canvas
-                                                const canvas = document.createElement("canvas");
-                                                const MAX_WIDTH = 600;
-                                                let width = img.width;
-                                                let height = img.height;
-
-                                                if (width > MAX_WIDTH) {
-                                                    height *= MAX_WIDTH / width;
-                                                    width = MAX_WIDTH;
-                                                }
-
-                                                canvas.width = width;
-                                                canvas.height = height;
-                                                const ctx = canvas.getContext("2d");
-                                                ctx?.drawImage(img, 0, 0, width, height);
-
-                                                // Comprimir a JPEG con calidad 0.7 para ahorrar espacio drásticamente
-                                                const optimizedDataUrl = canvas.toDataURL("image/jpeg", 0.7);
-                                                updateAbout({ imageUrl: optimizedDataUrl });
-                                            };
-                                            img.src = event.target?.result as string;
-                                        };
-                                        reader.readAsDataURL(file);
-                                    }}
-                                />
-                                <button
-                                    type="button"
-                                    className="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-4 py-2 rounded-lg border border-white/10 transition-colors"
-                                    onClick={() => fileInputRef.current?.click()}
-                                >
-                                    Optimizar y Seleccionar Imagen
-                                </button>
-                                {about.imageUrl && (
-                                    <button
-                                        type="button"
-                                        className="text-red-400 hover:text-red-300 text-sm px-3 py-2 font-medium"
-                                        onClick={() => updateAbout({ imageUrl: "" })}
-                                    >
-                                        Quitar
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                        <p className="text-xs text-slate-500">
-                            La imagen se redimensionará y comprimirá automáticamente para un guardado instantáneo.
-                        </p>
-                    </div>
-
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <label className="text-sm font-bold text-slate-400 uppercase tracking-widest">Biografía (Markdown)</label>
-                            <div className="flex items-center gap-2 text-[10px] text-slate-500 font-bold bg-white/5 px-2 py-1 rounded">
-                                <Info size={12} />
-                                Soporta **negrita**, *cursiva*, # títulos y - listas
-                            </div>
-                        </div>
-                        <textarea
-                            value={about.bio || (about.bioParagraphs || []).join("\n\n")}
-                            onChange={(e) => updateAbout({ bio: e.target.value })}
-                            placeholder="Escribe tu biografía aquí usando Markdown..."
-                            className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-[var(--color-primary)] transition-all min-h-[300px] font-mono text-sm leading-relaxed"
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <Award size={16} /> Estadísticas
-                            </h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                {about.stats?.map((s: any, i: number) => (
-                                    <div key={i} className="space-y-2">
-                                        <input
-                                            value={s.label}
-                                            placeholder="Label"
-                                            onChange={(e) => {
-                                                const next = [...about.stats];
-                                                next[i] = { ...next[i], label: e.target.value };
-                                                updateAbout({ stats: next });
-                                            }}
-                                            className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-slate-400 font-bold"
-                                        />
-                                        <input
-                                            value={s.value}
-                                            placeholder="Valor"
-                                            onChange={(e) => {
-                                                const next = [...about.stats];
-                                                next[i] = { ...next[i], value: e.target.value };
-                                                updateAbout({ stats: next });
-                                            }}
-                                            className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-white font-bold"
-                                        />
-                                        <button
-                                            onClick={() => {
-                                                const next = about.stats.filter((_: any, idx: number) => idx !== i);
-                                                updateAbout({ stats: next });
-                                            }}
-                                            className="ml-auto text-red-500 hover:text-red-400 text-[10px] uppercase font-bold"
-                                        >
-                                            Quitar
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                            <button
-                                onClick={() => {
-                                    const next = [...(about.stats || []), { label: "", value: "" }];
-                                    updateAbout({ stats: next });
-                                }}
-                                className="w-full py-2 border border-dashed border-white/10 rounded-lg text-slate-500 hover:text-white hover:border-white/20 transition-all text-xs font-bold"
-                            >
-                                + Añadir Estadística
-                            </button>
-                        </div>
-
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <Share2 size={16} /> Redes Sociales
-                            </h3>
-                            <div className="space-y-3">
-                                {(about.socialLinks || []).map((link: any, i: number) => (
-                                    <div key={i} className="flex gap-2 items-end">
-                                        <div className="flex-1 space-y-2">
-                                            <select
-                                                value={link.platform}
-                                                onChange={(e) => {
-                                                    const next = [...about.socialLinks];
-                                                    next[i] = { ...link, platform: e.target.value };
-                                                    updateAbout({ socialLinks: next });
-                                                }}
-                                                className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-[10px] text-slate-400 uppercase font-black"
-                                            >
-                                                <option value="GitHub">GitHub</option>
-                                                <option value="LinkedIn">LinkedIn</option>
-                                                <option value="Twitter">Twitter (X)</option>
-                                                <option value="Instagram">Instagram</option>
-                                                <option value="Email">Email / Correo</option>
-                                                <option value="Web">Sitio Web / Link</option>
-                                            </select>
-                                            <input
-                                                value={link.url}
-                                                placeholder={link.platform === "Email" ? "ej: hola@dominio.com" : "URL (https://...)"}
-                                                onChange={(e) => {
-                                                    const next = [...about.socialLinks];
-                                                    next[i] = { ...link, url: e.target.value };
-                                                    updateAbout({ socialLinks: next });
-                                                }}
-                                                className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white"
-                                            />
-                                        </div>
-                                        <button
-                                            onClick={() => {
-                                                const next = about.socialLinks.filter((_: any, idx: number) => idx !== i);
-                                                updateAbout({ socialLinks: next });
-                                            }}
-                                            className="p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-                                        >
-                                            <X size={14} />
-                                        </button>
-                                    </div>
-                                ))}
-                                <button
-                                    onClick={() => {
-                                        const next = [...(about.socialLinks || []), { platform: "GitHub", url: "" }];
-                                        updateAbout({ socialLinks: next });
-                                    }}
-                                    className="w-full py-2 border border-dashed border-white/10 rounded-lg text-slate-500 hover:text-white hover:border-white/20 transition-all text-xs font-bold"
-                                >
-                                    + Añadir Red Social
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <Mail size={16} /> Métodos de Directos (Bio)
-                            </h3>
-                            <div className="space-y-3">
-                                {about.contacts?.map((c: any, i: number) => (
-                                    <div key={i} className="flex gap-2 items-end">
-                                        <div className="flex-1 space-y-2">
-                                            <input
-                                                value={c.type}
-                                                placeholder="Tipo (Email, Telegram, etc.)"
-                                                onChange={(e) => {
-                                                    const next = [...about.contacts];
-                                                    next[i] = { ...c, type: e.target.value };
-                                                    updateAbout({ contacts: next });
-                                                }}
-                                                className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-[10px] text-slate-400 uppercase font-bold"
-                                            />
-                                            <input
-                                                value={c.value}
-                                                placeholder="Enlace o Valor"
-                                                onChange={(e) => {
-                                                    const next = [...about.contacts];
-                                                    next[i] = { ...c, value: e.target.value };
-                                                    updateAbout({ contacts: next });
-                                                }}
-                                                className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white"
-                                            />
-                                        </div>
-                                        <button
-                                            onClick={() => {
-                                                const next = about.contacts.filter((_: any, idx: number) => idx !== i);
-                                                updateAbout({ contacts: next });
-                                            }}
-                                            className="p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-                                        >
-                                            <X size={14} />
-                                        </button>
-                                    </div>
-                                ))}
-                                <button
-                                    onClick={() => {
-                                        const next = [...(about.contacts || []), { type: "Nuevo", value: "" }];
-                                        updateAbout({ contacts: next });
-                                    }}
-                                    className="w-full py-2 border border-dashed border-white/10 rounded-lg text-slate-500 hover:text-white hover:border-white/20 transition-all text-xs font-bold"
-                                >
-                                    + Añadir Método de Contacto
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex justify-end pt-4">
-                        <button
-                            onClick={() => handleSave("about", about)}
-                            disabled={isSaving}
-                            className="bg-[var(--color-primary)] hover:bg-blue-600 disabled:opacity-50 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-blue-500/20 flex items-center gap-2"
-                        >
-                            <Save size={18} />
-                            {isSaving ? "Guardando..." : "Guardar Cambios de Perfil"}
+                    <div className="p-6 bg-black/20 rounded-2xl border border-white/5 space-y-4">
+                        <p className="text-sm text-white/50">Forzar calificación inmediata de todas las entregas pendientes de alumnos usando la IA.</p>
+                        <button onClick={handleManualGrading} disabled={isGrading} className="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl disabled:opacity-50 flex items-center justify-center gap-2">
+                             {isGrading ? <Loader2 className="animate-spin" /> : <Cpu size={18} />}
+                             Calificar Pendientes Ahora
                         </button>
                     </div>
                 </div>
-            )}
-        </div>
-    );
-}
-
-function TabButton({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
-    return (
-        <button
-            onClick={onClick}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all duration-300 font-bold text-sm ${active
-                ? "bg-[var(--color-primary)] text-white shadow-lg shadow-blue-500/20"
-                : "text-slate-400 hover:text-white hover:bg-white/5"
-                }`}
-        >
-            {icon}
-            {label}
-        </button>
-    );
-}
-
-function FormField({ label, value, onChange, textarea, small }: { label: string, value: string, onChange: (v: string) => void, textarea?: boolean, small?: boolean }) {
-    return (
-        <div className="space-y-2">
-            <label className={`${small ? "text-[10px]" : "text-sm"} font-bold text-slate-400 uppercase tracking-widest`}>{label}</label>
-            {textarea ? (
-                <textarea
-                    value={value || ""}
-                    onChange={(e) => onChange(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-[var(--color-primary)] transition-all min-h-[120px]"
-                />
-            ) : (
-                <input
-                    type="text"
-                    value={value || ""}
-                    onChange={(e) => onChange(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-[var(--color-primary)] transition-all"
-                />
             )}
         </div>
     );

@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { GraduationCap, Search, Download, User, ChevronRight, BookOpen, Check, Edit2, FileDown, Loader2, Filter } from "lucide-react";
+import { GraduationCap, Search, Download, User, ChevronRight, BookOpen, Check, Edit2, FileDown, Loader2, Filter, Sparkles } from "lucide-react";
 import JSZip from "jszip";
 import { updateManualGrade } from "../../../../actions/admin-grades";
 import FeedbackModal from "@/components/FeedbackModal";
+import BatchAIGradingModal from "@/components/BatchAIGradingModal";
 
 // ───────────────────────────────────────────────
 // Types
@@ -152,6 +153,7 @@ export default function AdminGradesClient({
     const [expandedRows, setExpandedRows] = useState<string[]>([]);
     const [selectedFeedback, setSelectedFeedback] = useState<{ sub: any; name: string } | null>(null);
     const [isZipping, setIsZipping] = useState(false);
+    const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
 
     // ── Filtered data ──────────────────────────
     const filteredData = tableData.filter(row => {
@@ -285,44 +287,93 @@ export default function AdminGradesClient({
     const selectedCourse = courses.find(c => c.id === selectedCourseId);
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                    <h1 className="text-3xl font-black text-[var(--text-primary)] tracking-tight">Libro de Calificaciones</h1>
-                    <p className="text-[var(--text-secondary)] mt-1">Supervisa y descarga el reporte de notas finales ponderadas.</p>
-                </div>
+        <div className="space-y-8 pb-20 animate-in fade-in duration-700">
+            {/* Batch AI Grading Modal */}
+            <BatchAIGradingModal 
+                isOpen={isBatchModalOpen} 
+                onClose={() => setIsBatchModalOpen(false)} 
+            />
 
-                <button
-                    onClick={handleExportCSV}
-                    className="flex items-center gap-2 bg-[var(--color-primary)] hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-2xl transition-all shadow-xl shadow-blue-500/20 glow-accent"
-                >
-                    <Download size={20} />
-                    Exportar Reporte (CSV)
-                </button>
+            {/* Background Watermark */}
+            <div className="fixed top-0 right-0 p-10 opacity-[0.03] pointer-events-none select-none z-0">
+                <GraduationCap size={400} />
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="glass-effect p-6 rounded-2xl border border-[var(--border-color)] flex flex-col gap-1 bg-[var(--card-bg)]">
-                    <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">
-                        {selectedCourseId === "all" ? "Estudiantes Activos" : "Registros Filtrados"}
-                    </span>
-                    <span className="text-3xl font-black text-[var(--text-primary)]">
-                        {selectedCourseId === "all" ? totalStudents : filteredData.length}
-                    </span>
-                </div>
-                <div className="glass-effect p-6 rounded-2xl border border-[var(--border-color)] flex flex-col gap-1 bg-[var(--card-bg)]">
-                    <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Promedio</span>
-                    <span className="text-3xl font-black text-[var(--text-primary)]">
-                        {(selectedCourseId === "all" ? avgScore : filteredAvg).toFixed(1)}
-                    </span>
-                </div>
-                <div className="glass-effect p-6 rounded-2xl border border-[var(--border-color)] flex flex-col gap-1 bg-[var(--card-bg)]">
-                    <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Tasa de Aprobación</span>
-                    <span className="text-3xl font-black text-[var(--text-primary)]">
-                        {(selectedCourseId === "all" ? passRate : filteredPassRate).toFixed(0)}%
-                    </span>
+            {/* Header section with Stats */}
+            <div className="relative z-10">
+                <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                            <span className="raw-label bg-[var(--raw-accent)] text-[var(--raw-bg)] px-3 py-1">ADMINISTRACIÓN</span>
+                            <span className="raw-label">/ CONTROL ACADÉMICO</span>
+                        </div>
+                        <h1 className="font-black tracking-tighter leading-none" style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', color: 'var(--raw-on-surface)' }}>
+                            CENTRO DE <span style={{ color: 'var(--raw-accent)' }}>NOTAS.</span>
+                        </h1>
+                    </div>
+
+                    <div className="flex items-center gap-3 bg-black/40 backdrop-blur-xl border border-white/5 rounded-2xl p-2 h-fit">
+                        <div className="px-6 py-2 border-r border-white/5">
+                            <span className="block text-[9px] font-black uppercase text-slate-500 tracking-widest leading-none mb-1">Pass Rate</span>
+                            <span className="text-xl font-black text-emerald-400">{Math.round(selectedCourseId === "all" ? passRate : filteredPassRate)}%</span>
+                        </div>
+                        <div className="px-6 py-2">
+                            <span className="block text-[9px] font-black uppercase text-slate-500 tracking-widest leading-none mb-1">Avg Score</span>
+                            <span className="text-xl font-black text-white">{Math.round(selectedCourseId === "all" ? avgScore : filteredAvg)}</span>
+                        </div>
+                    </div>
+                </header>
+
+                {/* Search & Actions Strip */}
+                <div className="flex flex-col lg:flex-row gap-4 mb-4">
+                    <div className="flex-1 relative group">
+                        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-[var(--raw-accent)] transition-colors">
+                            <Search size={18} />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Buscar por nombre de alumno o curso..."
+                            className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white text-sm focus:outline-none focus:border-[var(--raw-accent)]/50 transition-all placeholder:text-slate-600"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-500">
+                                <Filter size={16} />
+                            </div>
+                            <select
+                                className="bg-black/40 border border-white/10 rounded-2xl py-4 pl-10 pr-10 text-white text-xs font-bold uppercase tracking-widest appearance-none focus:outline-none focus:border-[var(--raw-accent)]/50 cursor-pointer"
+                                value={selectedCourseId}
+                                onChange={(e) => setSelectedCourseId(e.target.value)}
+                            >
+                                <option value="all">TODOS LOS CURSOS</option>
+                                {courses.map(course => (
+                                    <option key={course.id} value={course.id}>
+                                        {course.title.toUpperCase()}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <button
+                            onClick={() => setIsBatchModalOpen(true)}
+                            className="bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border border-purple-600/30 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 transition-all shadow-xl shadow-purple-500/5 group"
+                        >
+                            <Sparkles size={16} className="group-hover:rotate-12 transition-transform" />
+                            Calificación IA (Lote)
+                        </button>
+
+                        <button
+                            onClick={handleExportCSV}
+                            className="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 transition-all"
+                        >
+                            <FileDown size={16} />
+                            Exportar CSV
+                        </button>
+                    </div>
                 </div>
             </div>
 

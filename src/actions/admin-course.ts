@@ -13,6 +13,7 @@ const courseDataSchema = z.object({
     password: z.string().optional(),
     thumbnail: z.string().optional(),
     enableCopyPaste: z.boolean().optional().default(false),
+    category: z.string().min(1).default("Programación"),
     weightQuiz: z.union([z.number(), z.string()]).transform(v => parseInt(v.toString()) || 0),
     weightLab: z.union([z.number(), z.string()]).transform(v => parseInt(v.toString()) || 0),
     weightForum: z.union([z.number(), z.string()]).transform(v => parseInt(v.toString()) || 0),
@@ -61,6 +62,7 @@ export async function saveCourseData(courseId: string, rawData: any) {
                 password: data.password?.trim() || "",
                 thumbnail: data.thumbnail,
                 enableCopyPaste: !!data.enableCopyPaste,
+                category: data.category || "Programación",
                 weightQuiz: data.weightQuiz ?? 20,
                 weightLab: data.weightLab ?? 30,
                 weightForum: data.weightForum ?? 10,
@@ -250,8 +252,9 @@ export async function createEmptyCourse() {
                 description: "Descripción breve de tu nuevo curso.",
                 password: "",
                 thumbnail: "/thumbnails/default.png",
-                status: "draft"
-            }
+                status: "draft",
+                category: "Programación"
+            } as any
         });
 
         revalidatePath(`/admin/courses`);

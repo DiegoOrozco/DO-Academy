@@ -138,6 +138,8 @@ export default function DaySubmissionsClient({
             return;
         }
 
+        const customInstructions = window.prompt("Opcional: Añade instrucciones especiales o el enunciado de la tarea para la IA (ej. 'Revisar indentación y que las variables estén en inglés'). Si lo dejas en blanco, se usará el enunciado por defecto.");
+
         setIsAiGrading(true);
         setProcessingUser("Iniciando cola...");
         try {
@@ -164,7 +166,7 @@ export default function DaySubmissionsClient({
 
             while (!finished) {
                 setProcessingUser(`Buscando siguiente entrega (${processed + 1}/${pendingCount})...`);
-                const res: any = await processNextPendingSubmission(dayId);
+                const res: any = await processNextPendingSubmission(dayId, customInstructions || undefined);
 
                 if (res.processed) {
                     processed++;

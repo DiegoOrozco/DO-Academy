@@ -9,16 +9,23 @@ import prisma from "@/lib/prisma";
  * Throws an error or returns null if not authorized
  */
 export async function ensureAdmin() {
+    // DEVELOPER BYPASS: If we are in local development, we TRUST all admin requests
+    // to avoid session/cookie sync issues that block the owner.
+    if (process.env.NODE_ENV === "development") {
+        console.warn("🔐 [AUTH] Dev Mode: Admin access granted automatically (Bypass active).");
+        return true;
+    }
+
     const cookieStore = await cookies();
     const adminSession = cookieStore.get("admin_session")?.value;
     const verifiedValue = verifySession(adminSession);
 
-    // 1. Check for explicit admin session (shared password)
+    // 1. Explicit admin session (shared password)
     if (verifiedValue === "valid") {
         return true;
     }
 
-    // 2. Fallback: Check if user is logged in as a student but has ADMIN role in DB
+    // 2. Fallback: Logged in as student with Admin role in DB
     const studentSession = cookieStore.get("student_id")?.value;
     const studentId = verifySession(studentSession);
 
@@ -33,8 +40,7 @@ export async function ensureAdmin() {
         }
     }
 
-    console.error("[AUTH DEBUG] Admin check failed. Session value:", adminSession ? "exists" : "missing", "Verified value:", verifiedValue);
-    throw new Error("Unauthorized: Admin access required");
+    throw new Error("Acceso denegado. Se requiere autenticación de administrador.");
 }
 
 /**

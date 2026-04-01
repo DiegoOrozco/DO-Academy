@@ -14,6 +14,8 @@ import remarkGfm from "remark-gfm";
 
 import SocialLink from "@/components/SocialLink";
 import { getStudent } from "@/lib/student-auth";
+import CourseCatalog from "@/components/CourseCatalog";
+import prisma from "@/lib/prisma";
 
 export default async function AboutPage() {
     const student = await getStudent();
@@ -37,6 +39,27 @@ export default async function AboutPage() {
         contactEmail: "diego@doacademy.com",
         contactWhatsapp: "#"
     };
+
+    const allCourses = await prisma.course.findMany({
+        where: { status: "published" },
+        orderBy: { id: 'asc' },
+        include: {
+            weeks: {
+                where: { isVisible: true },
+                include: {
+                    days: {
+                        where: { isVisible: true },
+                        include: {
+                            submissions: { where: { userId: student?.id || "" } },
+                            videoProgresses: { where: { userId: student?.id || "" } }
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const enrolledCourseIds = student?.enrollments?.map((e: any) => e.courseId) || [];
 
     return (
         <div className="min-h-screen bg-[var(--background)] relative overflow-hidden">

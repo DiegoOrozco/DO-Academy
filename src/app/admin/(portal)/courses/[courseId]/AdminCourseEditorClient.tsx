@@ -144,6 +144,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
         status: ic.status || "published",
         password: ic.password || "doacademy",
         thumbnail: ic.thumbnail || "",
+        category: ic.category || "Programación",
         enableCopyPaste: !!ic.enableCopyPaste,
         weightQuiz: ic.weightQuiz ?? 20,
         weightLab: ic.weightLab ?? 30,
@@ -535,6 +536,32 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                     type="text"
                                     value={course.thumbnail}
                                     onChange={(e) => setCourse({ ...course, thumbnail: e.target.value })}
+                                    className="w-full bg-[rgba(0,0,0,0.3)] border border-slate-700/50 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[var(--color-primary)] transition-all"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Categoría del Curso</label>
+                                <div className="flex flex-wrap gap-2 mb-3">
+                                    {["Programación", "Bases de Datos", "Desarrollo Web", "Cloud", "Sistemas Operativos", "IA", "Scripting", "Seguridad"].map((cat) => (
+                                        <button
+                                            key={cat}
+                                            onClick={() => setCourse({ ...course, category: cat })}
+                                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
+                                                course.category === cat 
+                                                ? "bg-[var(--color-primary)] text-white" 
+                                                : "bg-white/5 text-slate-500 hover:bg-white/10 hover:text-slate-300"
+                                            }`}
+                                        >
+                                            {cat}
+                                        </button>
+                                    ))}
+                                </div>
+                                <input
+                                    type="text"
+                                    value={course.category}
+                                    onChange={(e) => setCourse({ ...course, category: e.target.value })}
+                                    placeholder="O escribe una categoría personalizada..."
                                     className="w-full bg-[rgba(0,0,0,0.3)] border border-slate-700/50 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[var(--color-primary)] transition-all"
                                 />
                             </div>

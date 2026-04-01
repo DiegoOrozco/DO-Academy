@@ -18,6 +18,7 @@ export default function BatchAIGradingModal({ isOpen, onClose }: BatchAIGradingM
     const [studentNames, setStudentNames] = useState<Record<number, string>>({});
     const [results, setResults] = useState<Record<number, GradingResult>>({});
     const [severity, setSeverity] = useState("1");
+    const [prompt, setPrompt] = useState("");
     const [isPending, startTransition] = useTransition();
     const [previewContent, setPreviewContent] = useState<string | null>(null);
 
@@ -70,7 +71,7 @@ export default function BatchAIGradingModal({ isOpen, onClose }: BatchAIGradingM
         const formData = new FormData();
         formData.append("file", file);
         formData.append("severity", severity);
-        formData.append("prompt", ""); // Can add a batch prompt if needed
+        formData.append("prompt", prompt);
 
         startTransition(async () => {
             const res = await customAIGradeAction(formData);
@@ -201,6 +202,16 @@ export default function BatchAIGradingModal({ isOpen, onClose }: BatchAIGradingM
                                             className="relative w-full bg-black/60 border border-white/10 rounded-2xl p-5 text-xl font-bold text-white focus:outline-none focus:border-purple-500/50 transition-all"
                                         />
                                     </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest mb-2">Instrucciones Especiales y/o Enunciado</label>
+                                    <textarea
+                                        value={prompt}
+                                        onChange={(e) => setPrompt(e.target.value)}
+                                        placeholder="Añade el enunciado del problema, reglas o detalles específicos a revisar (ej. Revisa minuciosamente variables en inglés)..."
+                                        className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-purple-500 transition-all min-h-[100px] resize-y custom-scrollbar"
+                                    />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-6">

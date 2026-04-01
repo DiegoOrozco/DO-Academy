@@ -50,6 +50,7 @@ export default function Navbar({ user }: NavbarProps) {
 
     const navLinks = [
         { name: "Inicio", href: "/", icon: <Home size={18} /> },
+        { name: "Cursos", href: "/courses", icon: <BookOpen size={18} /> },
     ];
 
     if (!user) {
@@ -64,171 +65,206 @@ export default function Navbar({ user }: NavbarProps) {
     }
 
     return (
+        <>
         <nav
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled || user?.role === "ADMIN"
-                ? "py-3 bg-[var(--nav-bg)] backdrop-blur-xl border-b border-[var(--border-color)] shadow-2xl"
-                : "py-6 bg-transparent"
-                }`}
+            className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 nav-blur"
+            style={{
+                background: isScrolled ? 'rgba(14,14,19,0.98)' : 'rgba(14,14,19,0.88)',
+                borderBottom: '1px solid var(--raw-outline-dim)',
+                fontFamily: "'Space Grotesk', sans-serif",
+                paddingTop: 'var(--safe-top)'
+            }}
         >
             {user?.role === "ADMIN" && (
-                <div className="bg-[var(--color-primary)] text-white text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] py-2 px-4 flex items-center justify-center gap-4 border-b border-white/10 shadow-[0_4px_20px_rgba(59,130,246,0.2)]">
-                    <span className="flex items-center gap-1.5 backdrop-blur-md bg-white/10 px-2 py-0.5 rounded-md">
-                        <Shield size={12} fill="currentColor" className="opacity-80" />
-                        Modo Vista Previa
-                    </span>
-                    <span className="hidden sm:inline opacity-60">|</span>
-                    <Link href="/admin" className="hover:underline flex items-center gap-1 group/back">
-                        Volver al Panel Admin
-                        <ArrowRight size={10} className="group-hover/back:translate-x-0.5 transition-transform" />
+                <div
+                    className="text-[10px] font-black uppercase tracking-[0.2em] py-1.5 px-4 flex items-center justify-center gap-4"
+                    style={{ background: 'var(--raw-accent)', color: 'var(--raw-bg)' }}
+                >
+                    <Shield size={11} />
+                    Modo Admin
+                    <span style={{ opacity: 0.4 }}>·</span>
+                    <Link href="/admin" className="underline flex items-center gap-1">
+                        Ir al Panel <ArrowRight size={10} />
                     </Link>
                 </div>
             )}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center">
+
+            <div className="max-w-[1400px] mx-auto px-6 lg:px-10 flex justify-between items-center h-16 md:h-20">
                 {/* Logo */}
-                <Link href="/" className="flex items-center gap-2 group">
-                    <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-[var(--color-primary)] to-blue-400 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
-                        <span className="text-white font-black text-lg md:text-xl">DO</span>
+                <Link href="/" style={{ textDecoration: 'none' }}>
+                    <div className="flex flex-col">
+                        <span
+                            className="font-black text-lg md:text-xl tracking-tighter leading-none"
+                            style={{ color: 'var(--raw-accent)', letterSpacing: '-0.03em' }}
+                        >
+                            DO ACADEMY
+                        </span>
                     </div>
-                    <span className="text-lg md:text-xl font-bold tracking-tight text-[var(--text-primary)] group-hover:text-[var(--color-primary)] transition-colors">
-                        Academy
-                    </span>
                 </Link>
 
-                {/* Desktop Navigation */}
+                {/* Desktop nav */}
                 <div className="hidden md:flex items-center gap-8">
-                    <div className="flex items-center gap-2 p-1 bg-white/5 rounded-2xl border border-white/10">
+                    <div className="flex items-center gap-1">
                         {navLinks.map((link) => {
                             const isActive = pathname === link.href;
                             return (
                                 <Link
                                     key={link.name}
                                     href={link.href}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${isActive
-                                        ? "bg-[var(--color-primary)] text-white shadow-lg shadow-blue-500/30"
-                                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]"
-                                        }`}
+                                    className="text-[11px] font-black uppercase tracking-widest px-4 py-2 transition-all hover:text-[var(--raw-accent)]"
+                                    style={{
+                                        color: isActive ? 'var(--raw-accent)' : 'var(--raw-slate)',
+                                    }}
                                 >
-                                    {link.icon}
                                     {link.name}
                                 </Link>
                             );
                         })}
                     </div>
 
-                    <div className="w-px h-6 bg-slate-800"></div>
+                    <div style={{ width: '1px', height: '24px', background: 'var(--raw-outline-dim)' }} />
 
                     {user ? (
                         <div className="flex items-center gap-4">
-                            <ThemeToggle />
-                            <div className="flex flex-col items-end mr-2">
-                                <span className="text-xs font-bold text-[var(--text-primary)] leading-none">{user.name}</span>
-                                <span className="text-[10px] text-[var(--text-secondary)] font-medium uppercase tracking-wider mt-1">
-                                    {user.role === "ADMIN" ? "Administrador" : "Estudiante"}
+                            <div className="flex flex-col items-end">
+                                <span className="text-[11px] font-black uppercase tracking-widest text-white">
+                                    {user.name.split(" ")[0]}
+                                </span>
+                                <span className="text-[9px] uppercase tracking-widest" style={{ color: 'var(--raw-accent)' }}>
+                                    {user.role === "ADMIN" ? "ADMINISTRADOR" : "ESTUDIANTE"}
                                 </span>
                             </div>
                             <div className="relative group">
-                                <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 overflow-hidden cursor-pointer group-hover:border-[var(--color-primary)] transition-colors">
-                                    <UserIcon size={20} />
+                                <div
+                                    className="w-10 h-10 flex items-center justify-center text-sm font-black cursor-pointer rounded-full overflow-hidden"
+                                    style={{
+                                        background: 'var(--raw-surface-highest)',
+                                        border: '1px solid var(--raw-accent)',
+                                        color: 'var(--raw-accent)',
+                                    }}
+                                >
+                                    {user.name.split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
                                 </div>
-                                <div className="absolute right-0 top-full mt-2 w-48 py-2 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all transform translate-y-2 group-hover:translate-y-0 z-50">
+                                <div
+                                    className="absolute right-0 top-full mt-2 w-48 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 rounded-xl"
+                                    style={{ background: 'var(--raw-surface-low)', border: '1px solid var(--raw-outline-dim)', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}
+                                >
                                     <Link
                                         href="/profile"
-                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-white/5 transition-colors font-semibold border-b border-[var(--border-color)]"
+                                        className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-white/5 transition-colors"
+                                        style={{ color: 'var(--raw-slate)' }}
                                     >
-                                        <UserIcon size={16} />
-                                        Mi Perfil
+                                        <UserIcon size={14} /> Mi Perfil
                                     </Link>
                                     <button
                                         onClick={() => handleLogout()}
-                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors font-semibold"
+                                        className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 transition-colors"
+                                        style={{ color: 'var(--raw-error)' }}
                                     >
-                                        <LogOut size={16} />
-                                        Cerrar Sesión
+                                        <LogOut size={14} /> Cerrar Sesión
                                     </button>
                                 </div>
                             </div>
                         </div>
                     ) : (
-                        <div className="flex items-center gap-4 font-bold">
-                            <ThemeToggle />
-                            <Link href="/login" className="text-sm text-slate-400 hover:text-white transition-colors">
-                                Entrar
+                        <div className="flex items-center gap-4">
+                            <Link
+                                href="/login"
+                                className="text-[11px] font-black uppercase tracking-widest transition-colors hover:text-white"
+                                style={{ color: 'var(--raw-slate)' }}
+                            >
+                                Iniciar Sesión
                             </Link>
                             <Link
                                 href="/register"
-                                className="bg-[var(--color-primary)] hover:bg-blue-600 text-white text-sm px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-blue-500/20"
+                                className="raw-btn-primary text-[11px] py-3 px-6"
                             >
-                                Empezar Gratis
+                                Registrarse →
                             </Link>
                         </div>
                     )}
                 </div>
 
-                <div className="md:hidden flex items-center gap-2">
-                    <ThemeToggle />
-                    <button
-                        className="p-2 text-slate-400 hover:text-white transition-colors"
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    >
-                        {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                    </button>
-                </div>
+                {/* Mobile toggle */}
+                <button
+                    className="md:hidden flex items-center gap-2 text-[10px] font-black uppercase bg-white/5 px-4 py-2 rounded-full border border-white/10 relative z-[110]"
+                    style={{ color: 'var(--raw-on-surface)' }}
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                >
+                    {isMobileMenuOpen ? "CERRAR" : "MENÚ"}
+                    {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+                </button>
             </div>
+        </nav>
 
-            {/* Mobile Menu */}
-            <div className={`fixed inset-0 top-[72px] bg-[var(--background)] z-40 transition-all duration-300 md:hidden ${isMobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
-                }`}>
-                <div className="p-6 space-y-6">
-                    <div className="flex flex-col gap-2">
+            {/* Mobile menu - Rendered outside <nav> to avoid backdrop-filter clipping */}
+            <div
+                className={`fixed inset-0 md:hidden transition-all duration-300 ${isMobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"}`}
+                style={{ 
+                    background: 'rgba(14,14,19,0.98)', 
+                    backdropFilter: 'blur(20px)',
+                    zIndex: 100, 
+                    top: 0 
+                }}
+            >
+                <div className="flex flex-col h-full">
+                    {/* Mobile menu header */}
+                    <div className="flex justify-between items-center h-14 px-6 border-b border-[var(--raw-outline-dim)]">
+                        <span className="font-black text-sm tracking-tighter" style={{ color: 'var(--raw-accent)' }}>
+                            DO ACADEMY
+                        </span>
+                        <button
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            style={{ color: 'var(--raw-slate)' }}
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+
+                    <div className="p-8 flex flex-col gap-2 overflow-y-auto">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.name}
                                 href={link.href}
                                 onClick={() => setIsMobileMenuOpen(false)}
-                                className={`flex items-center gap-4 p-4 rounded-2xl text-lg font-bold transition-all ${pathname === link.href
-                                    ? "bg-[var(--color-primary)] text-white shadow-xl"
-                                    : "bg-[var(--card-bg)] text-[var(--text-secondary)] border border-[var(--border-color)]"
-                                    }`}
+                                className="flex items-center gap-4 py-5 text-lg font-black uppercase tracking-[0.15em]"
+                                style={{
+                                    color: pathname === link.href ? 'var(--raw-accent)' : 'var(--raw-slate)',
+                                    borderBottom: '1px solid var(--raw-outline-dim)',
+                                }}
                             >
-                                {link.icon}
                                 {link.name}
                             </Link>
                         ))}
-                    </div>
-
-                    <div className="pt-6 border-t border-slate-800 flex flex-col gap-4">
-                        {user ? (
-                            <button
-                                onClick={() => {
-                                    setIsMobileMenuOpen(false);
-                                    handleLogout();
-                                }}
-                                className="flex items-center justify-center gap-3 p-4 rounded-2xl bg-red-500/10 text-red-500 font-bold border border-red-500/20"
-                            >
-                                <LogOut size={20} />
-                                Cerrar Sesión
-                            </button>
-                        ) : (
-                            <>
-                                <Link
-                                    href="/login"
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                    className="flex items-center justify-center p-4 rounded-2xl bg-[var(--card-bg)] text-[var(--text-primary)] font-bold border border-[var(--border-color)]"
+                        
+                        <div className="mt-10 flex flex-col gap-4">
+                            {user ? (
+                                <button
+                                    onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
+                                    className="flex items-center justify-center gap-2 p-5 text-sm font-black uppercase tracking-widest w-full"
+                                    style={{ color: 'var(--raw-error)', border: '1px solid var(--raw-error)', opacity: 0.8 }}
                                 >
-                                    Iniciar Sesión
-                                </Link>
-                                <Link
-                                    href="/register"
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                    className="flex items-center justify-center p-4 rounded-2xl bg-[var(--color-primary)] text-white font-bold shadow-xl shadow-blue-600/20"
-                                >
-                                    Crear Cuenta
-                                </Link>
-                            </>
-                        )}
+                                    <LogOut size={16} /> Cerrar Sesión
+                                </button>
+                            ) : (
+                                <>
+                                    <Link 
+                                        href="/login" 
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className="flex items-center justify-center p-5 text-sm font-black uppercase tracking-widest w-full"
+                                        style={{ color: 'var(--raw-on-surface)', border: '1px solid var(--raw-outline-dim)' }}
+                                    >Iniciar Sesión</Link>
+                                    <Link 
+                                        href="/register" 
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className="raw-btn-primary flex items-center justify-center p-5 text-sm w-full"
+                                    >Registrarse →</Link>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
-        </nav>
+        </>
     );
 }

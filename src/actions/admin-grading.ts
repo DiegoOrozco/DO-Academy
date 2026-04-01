@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import { gradeSubmission } from "@/lib/gemini";
 import { sendEmail } from "@/lib/email";
 
-export async function processNextPendingSubmission(dayId?: string) {
+export async function processNextPendingSubmission(dayId?: string, customPrompt?: string) {
     console.log(`[GRADING PROCESSOR] Fetching oldest PENDING submission ${dayId ? `for day ${dayId}` : "globally"}...`);
 
     // Find the oldest pending submission, optionally scoped by day
@@ -36,17 +36,11 @@ export async function processNextPendingSubmission(dayId?: string) {
     console.log(`[GRADING PROCESSOR] Processing submission ${submission.id} for user ${submission.user.email}`);
 
     try {
-        // We only have string content in DB now. If it's a PDF, we might have lost the binary unless we fetch it from blob storage. 
-        // Wait, in our current architecture, we aren't saving the PDF binary to the DB if it's large, we were just passing it to Gemini in the same request.
-        // If we want to async grade PDFs, we need the binary. Let's check how the new API saves it.
-        // It saves `dbContent = "[PDF Document: file.pdf]"`. This means we lost the PDF binary!
-
         let contentToGrade = submission.content;
         let mimeType = "text/plain";
         let buffer: Buffer;
 
         if (contentToGrade.startsWith("http")) {
-            // New logic: fetch content from blob storage
             const response = await fetch(contentToGrade);
             const arrayBuffer = await response.arrayBuffer();
             buffer = Buffer.from(arrayBuffer);
@@ -55,12 +49,17 @@ export async function processNextPendingSubmission(dayId?: string) {
             else if (submission.fileName.endsWith(".sql")) mimeType = "application/sql";
             else if (submission.fileName.endsWith(".py")) mimeType = "text/x-python";
         } else if (contentToGrade.startsWith("[PDF Document:")) {
-            // FALLBACK: If we lost the PDF binary because we made it async without blob storage (OLD DATA)
             buffer = Buffer.from("Por favor califica el contenido basado en los metadatos disponibles. El estudiante subió un PDF que ya no está en memoria.");
         } else {
             buffer = Buffer.from(contentToGrade, "utf-8");
             if (submission.fileName.endsWith(".sql")) mimeType = "application/sql";
             else if (submission.fileName.endsWith(".py")) mimeType = "text/x-python";
+        }
+
+        // Determinar enunciado final (mezcla el de la base de datos y/o el custom proporcionado ahora)
+        let finalPrompt = submission.day.exerciseDescription || "";
+        if (customPrompt && customPrompt.trim() !== "") {
+            finalPrompt += `\n\n=== INSTRUCCIONES ESPECÍFICAS DE REVISIÓN ===\n${customPrompt}`;
         }
 
         // Call Gemini for grading
@@ -69,7 +68,7 @@ export async function processNextPendingSubmission(dayId?: string) {
             buffer,
             mimeType,
             submission.day.gradingSeverity || 1,
-            submission.day.exerciseDescription || undefined
+            finalPrompt || undefined
         );
 
         console.log(`[GRADING PROCESSOR] Gemini Result for ${submission.user.email}:`, JSON.stringify(gradingResult, null, 2));
@@ -165,7 +164,7 @@ export async function processNextPendingSubmission(dayId?: string) {
     }
 }
 
-export async function processAllPendingSubmissions() {
+export async function processAllPendingSubmissions(customPrompt?: string) {
     console.log("[GRADING BATCH] Started processing ALL pending submissions manually...");
 
     let processedCount = 0;
@@ -180,7 +179,7 @@ export async function processAllPendingSubmissions() {
         console.log(`[GRADING BATCH] Found ${pendingSubmissions.length} pending submissions.`);
 
         for (const _sub of pendingSubmissions) {
-            const result: any = await processNextPendingSubmission();
+            const result: any = await processNextPendingSubmission(undefined, customPrompt);
 
             if (result.quotaExceeded) {
                 // Quota exhausted — stop immediately, leave rest as PENDING for tomorrow

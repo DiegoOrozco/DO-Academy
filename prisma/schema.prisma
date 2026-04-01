@@ -18,35 +18,36 @@ model User {
   resetToken         String?             @unique
   resetTokenExpiry   DateTime?
   verificationToken  String?             @unique
-  pendingEmail       String?
   googleId           String?             @unique
+  pendingEmail       String?
+  attendanceLogs     AttendanceLog[]
+  deadlineExceptions DeadlineException[]
   enrollments        Enrollment[]
   posts              Post[]
   replies            Reply[]
   submissions        Submission[]
   videoProgresses    VideoProgress[]
-  deadlineExceptions DeadlineException[]
-  attendanceLogs     AttendanceLog[]
   groups             Group[]             @relation("GroupMembers")
 }
 
 model Course {
-  id            String       @id @default(cuid())
-  title         String
-  description   String?
-  thumbnail     String?
-  status        String       @default("published")
-  password      String       @default("doacademy")
-  createdAt     DateTime     @default(now())
-  weightForum   Int          @default(10)
-  weightLab     Int          @default(30)
-  weightProject Int          @default(40)
-  weightQuiz    Int          @default(20)
-  weightExam    Int          @default(0)
-  enableCopyPaste Boolean    @default(false)
-  enrollments   Enrollment[]
-  weeks         Week[]
-  groups        Group[]
+  id              String       @id @default(cuid())
+  title           String
+  description     String?
+  thumbnail       String?
+  status          String       @default("published")
+  password        String       @default("doacademy")
+  createdAt       DateTime     @default(now())
+  weightForum     Int          @default(10)
+  weightLab       Int          @default(30)
+  weightProject   Int          @default(40)
+  weightQuiz      Int          @default(20)
+  weightExam      Int          @default(0)
+  enableCopyPaste Boolean      @default(false)
+  category        String       @default("Programación")
+  enrollments     Enrollment[]
+  groups          Group[]
+  weeks           Week[]
 }
 
 model Enrollment {
@@ -62,13 +63,13 @@ model Enrollment {
 }
 
 model Week {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   title     String
   order     Int
   isVisible Boolean @default(true)
   courseId  String
   days      Day[]
-  course    Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
 
 model Day {
@@ -95,11 +96,11 @@ model Day {
   testCases           Json?
   summaryUrl          String?
   week                Week                @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  deadlineExceptions  DeadlineException[]
   posts               Post[]
   resources           Resource[]
   submissions         Submission[]
   videoProgresses     VideoProgress[]
-  deadlineExceptions  DeadlineException[]
 }
 
 model Resource {
@@ -160,10 +161,10 @@ model Submission {
   grade     Float?
   feedback  Json?
   createdAt DateTime @default(now())
-  day       Day      @relation(fields: [dayId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   groupId   String?
-  group     Group?   @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  day       Day      @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  group     Group?   @relation(fields: [groupId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, dayId, groupId])
   @@index([userId])
@@ -172,13 +173,13 @@ model Submission {
 }
 
 model Group {
-  id        String   @id @default(cuid())
-  name      String
-  courseId  String
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  members   User[]   @relation("GroupMembers")
+  id          String       @id @default(cuid())
+  name        String
+  courseId    String
+  createdAt   DateTime     @default(now())
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
   submissions Submission[]
-  createdAt DateTime @default(now())
+  members     User[]       @relation("GroupMembers")
 }
 
 model Communication {
@@ -206,9 +207,8 @@ model DeadlineException {
   dayId      String
   newDueDate DateTime
   createdAt  DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  day  Day  @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  day        Day      @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, dayId])
   @@index([userId])
@@ -216,19 +216,17 @@ model DeadlineException {
 }
 
 model AttendanceLog {
-  id          String   @id @default(cuid())
-  userId      String
-  studentName String
-  dateText    String   // e.g. "2026-03-09"
-  sheetName   String
-  checkIns       Int      @default(0) // 1 for first check-in, 2 for fully completed
-  firstSessionId String?
+  id             String   @id @default(cuid())
+  userId         String
+  studentName    String
+  dateText       String
+  sheetName      String
+  checkIns       Int      @default(0)
   createdAt      DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  updatedAt      DateTime @updatedAt
+  firstSessionId String?
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, dateText, sheetName])
   @@index([userId])
 }
-

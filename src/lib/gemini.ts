@@ -191,3 +191,47 @@ Feedback general: Implacable, puramente técnico y matemático.`
         throw error;
     }
 }
+
+export async function generateTechNewsAI() {
+    try {
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-2.5-flash",
+            systemInstruction: "Eres el editor en jefe de un portal tecnológico de élite. Tu misión es proporcionar información real y precisa en formato JSON estrictamente válido.",
+            tools: [{ googleSearch: {} } as any]
+        }, { apiVersion: "v1beta" });
+
+        // Obtenemos la fecha exacta de hoy para forzar a la IA a buscar en esa fecha
+        const today = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        const prompt = `ACTIVA TU HERRAMIENTA DE BÚSQUEDA DE GOOGLE AHORA MISMO.
+        Busca las noticias tecnológicas más importantes de HOY (${today}).
+        No inventes respuestas. Usa la web.
+        
+        TODO EN ESPAÑOL.
+        Genera un JSON con 4 noticias MUNDIALES de altísimo impacto sobre: IA, Desarrollo de Software, SpaceTech o Big Tech.
+        
+        REGLAS PARA search_url:
+        - Crea una URL de búsqueda en Google News con los términos exactos de la noticia.
+        - Formato: https://www.google.com/search?q=[SITIO+ORIGEN]+[TITULO+CORTO]&tbm=nws
+        
+        JSON Structure:
+        { "news": [{ "title": "Título corto y real", "summary": "Resumen", "date": "HOY", "source": "Xataka", "search_url": "https://www.google.com/search?q=Xataka+Apple+Vision+Pro&tbm=nws", "image_keyword": "tech glowing blue", "grad": "from-blue-600/30 to-transparent" }] }`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        let text = response.text();
+        
+        if (text.includes("```json")) {
+            text = text.split("```json")[1].split("```")[0];
+        } else if (text.includes("```")) {
+            text = text.split("```")[1].split("```")[0];
+        }
+        
+        const parsed = JSON.parse(text);
+        if (!parsed.news || !Array.isArray(parsed.news)) throw new Error("Estructura JSON inválida: Falta array 'news'");
+        return parsed.news;
+    } catch (error: any) {
+        console.error("Error generating news with AI:", error);
+        throw new Error("Fallo de Modelo AI: " + (error.message || "Error Desconocido"));
+    }
+}

@@ -119,6 +119,16 @@ export default function AIGradingUploadModal({ isOpen, onClose, studentName }: A
                         </div>
                     </div>
 
+                    <div>
+                        <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest mb-2">Instrucciones Especiales y/o Enunciado</label>
+                        <textarea
+                            value={prompt}
+                            onChange={(e) => setPrompt(e.target.value)}
+                            placeholder="Añade el enunciado del problema, reglas o detalles específicos a revisar (ej. Revisa miniciosamente variables en inglés)..."
+                            className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-purple-500 transition-all min-h-[100px] resize-y custom-scrollbar"
+                        />
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest mb-2">Exigencia</label>

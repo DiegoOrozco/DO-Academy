@@ -14,3 +14,11 @@ export async function getAllSiteConfigs() {
         [curr.key]: curr.value
     }), {} as Record<string, any>);
 }
+export async function updateSiteConfig(key: string, value: any) {
+    const config = await prisma.siteConfig.upsert({
+        where: { key },
+        update: { value },
+        create: { key, value }
+    });
+    return config.value as any;
+}
