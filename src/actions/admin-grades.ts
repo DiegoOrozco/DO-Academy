@@ -11,30 +11,51 @@ export async function updateManualGrade(userId: string, dayId: string, grade: nu
         // Ensure valid grade bounds
         const finalGrade = Math.max(0, Math.min(100, Math.round(grade)));
 
-        // Create or Update a Submission for this user/day pair
-        // even if they never uploaded a file
-        await prisma.submission.upsert({
+        // Find the student's group for this course
+        const studentGroup = await prisma.group.findFirst({
             where: {
-                userId_dayId: {
-                    userId,
-                    dayId
-                }
+                course: { weeks: { some: { days: { some: { id: dayId } } } } },
+                members: { some: { id: userId } }
             },
-            create: {
-                userId,
+            select: { id: true }
+        });
+        const groupId = studentGroup?.id || null;
+
+        // Find existing submission (individual or group)
+        const existingSubmission = await prisma.submission.findFirst({
+            where: {
                 dayId,
-                content: "Assigned manually by Administrator",
-                fileName: "manual_grade.txt",
-                status: "GRADED",
-                grade: finalGrade,
-                feedback: { text: "Calificación asignada manualmente por el profesor." }
-            },
-            update: {
-                status: "GRADED",
-                grade: finalGrade,
-                // Do not overwrite previous feedback immediately, unless you want to append
+                OR: [
+                    { userId },
+                    groupId ? { groupId } : { id: 'none' }
+                ]
             }
         });
+
+        const submissionData = {
+            userId,
+            groupId,
+            dayId,
+            content: "Assigned manually by Administrator",
+            fileName: "manual_grade.txt",
+            status: "GRADED",
+            grade: finalGrade,
+            feedback: { text: "Calificación asignada manualmente por el profesor." }
+        };
+
+        if (existingSubmission) {
+            await prisma.submission.update({
+                where: { id: existingSubmission.id },
+                data: {
+                    status: "GRADED",
+                    grade: finalGrade,
+                }
+            });
+        } else {
+            await prisma.submission.create({
+                data: submissionData
+            });
+        }
 
         revalidatePath("/admin/grades");
         revalidatePath("/admin/(portal)/courses/[courseId]/submissions/[dayId]", "page");
@@ -62,32 +83,61 @@ export async function updateDetailedManualGrade(
 
         const finalGrade = Math.max(0, Math.min(100, Math.round(grade)));
 
-        const submission = await prisma.submission.upsert({
+        // Find the student's group for this course
+        const studentGroup = await prisma.group.findFirst({
             where: {
-                userId_dayId: {
-                    userId,
-                    dayId
-                }
+                course: { weeks: { some: { days: { some: { id: dayId } } } } },
+                members: { some: { id: userId } }
             },
-            create: {
-                userId,
+            select: { id: true }
+        });
+        const groupId = studentGroup?.id || null;
+
+        // Find existing
+        const existingSubmission = await prisma.submission.findFirst({
+            where: {
                 dayId,
-                content: "Assigned manually by Administrator",
-                fileName: "manual_grade.txt",
-                status: "GRADED",
-                grade: finalGrade,
-                feedback: feedback
-            },
-            update: {
-                status: "GRADED",
-                grade: finalGrade,
-                feedback: feedback
-            },
-            include: {
-                user: { select: { email: true, name: true } },
-                day: { select: { title: true } }
+                OR: [
+                    { userId },
+                    groupId ? { groupId } : { id: 'none' }
+                ]
             }
         });
+
+        const submissionData = {
+            userId,
+            groupId,
+            dayId,
+            content: "Assigned manually by Administrator",
+            fileName: "manual_grade.txt",
+            status: "GRADED",
+            grade: finalGrade,
+            feedback: feedback
+        };
+
+        let submission;
+        if (existingSubmission) {
+            submission = await prisma.submission.update({
+                where: { id: existingSubmission.id },
+                data: {
+                    status: "GRADED",
+                    grade: finalGrade,
+                    feedback: feedback
+                },
+                include: {
+                    user: { select: { email: true, name: true } },
+                    day: { select: { title: true } }
+                }
+            });
+        } else {
+            submission = await prisma.submission.create({
+                data: submissionData,
+                include: {
+                    user: { select: { email: true, name: true } },
+                    day: { select: { title: true } }
+                }
+            });
+        }
 
         // SEND EMAIL NOTIFICATION
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://doacademy.vercel.app";
@@ -148,14 +198,16 @@ export async function deleteSubmission(userId: string, dayId: string) {
         await ensureAdmin();
 
         // 1. Find the submission to check for associated blob
-        const submission = await prisma.submission.findUnique({
+        // 1. Find the submission to check for associated blob
+        const submission = await prisma.submission.findFirst({
             where: {
-                userId_dayId: {
-                    userId,
-                    dayId
-                }
+                dayId,
+                userId
             }
         });
+        
+        // If not found by user, could it be a group submission?
+        // But the admin-grades view usually identifies submissions by user
 
         if (!submission) {
             return { success: false, error: "Entrega no encontrada." };
@@ -175,12 +227,7 @@ export async function deleteSubmission(userId: string, dayId: string) {
 
         // 3. Delete from database
         await prisma.submission.delete({
-            where: {
-                userId_dayId: {
-                    userId,
-                    dayId
-                }
-            }
+            where: { id: submission.id }
         });
 
         // 4. Revalidate paths
