@@ -234,7 +234,7 @@ export default function DayDelivery({ day, studentId, initialSubmission, userRol
                                 id="file-upload"
                                 type="file"
                                 className="hidden"
-                                accept=".py,.sql,.pdf"
+                                accept=".py,.sql,.pdf,.zip"
                                 onChange={handleFileChange}
                             />
                             {file ? (
@@ -252,7 +252,7 @@ export default function DayDelivery({ day, studentId, initialSubmission, userRol
                                 <>
                                     <Upload size={32} className="text-slate-500 mb-2" />
                                     <p className="text-slate-300 font-medium">Arrastra tu tarea aquí o haz clic para subir</p>
-                                    <p className="text-xs text-slate-500 mt-1">Formatos aceptados: .py, .sql, .pdf</p>
+                                    <p className="text-xs text-slate-500 mt-1">Formatos aceptados: .py, .sql, .pdf, .zip</p>
                                     {isLate && (
                                         <p className="text-xs font-bold text-rose-400 mt-2 bg-rose-500/10 px-3 py-1 rounded inline-block">
                                             Fecha límite expirada
