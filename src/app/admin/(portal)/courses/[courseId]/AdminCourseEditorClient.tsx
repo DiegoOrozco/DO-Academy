@@ -1025,7 +1025,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                                                             type="file"
                                                                                                             id={`upload-${day.id}`}
                                                                                                             className="hidden"
-                                                                                                            accept=".pdf,.doc,.docx"
+                                                                                                            accept=".pdf,.doc,.docx,.zip"
                                                                                                             onChange={(e) => {
                                                                                                                 const f = e.target.files?.[0];
                                                                                                                 if (f) handleFileUpload(week.id, day.id, f, "assignmentUrl");
@@ -1041,7 +1041,7 @@ export default function AdminCourseEditorClient({ initialCourse }: { initialCour
                                                                                                             ) : (
                                                                                                                 <Upload size={12} />
                                                                                                             )}
-                                                                                                            {isUploadingFile === `${day.id}-assignmentUrl` ? "Subiendo..." : "Subir PDF"}
+                                                                                                            {isUploadingFile === `${day.id}-assignmentUrl` ? "Subiendo..." : "Subir Archivo"}
                                                                                                         </button>
                                                                                                     </div>
                                                                                                 </div>
